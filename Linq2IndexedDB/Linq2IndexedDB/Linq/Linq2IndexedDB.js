@@ -247,18 +247,19 @@
                             try {
                                 var objectStore;
                                 if (transaction.db.objectStoreNames.contains(objectStoreName)) {
-                                    objectStore = transaction.objectStore(objectStoreName);
+                                    store = transaction.objectStore(objectStoreName);
+                                    log("ObjectStore Promise completed", store);
+                                    dfd.resolve(store);
                                 }
                                 else if(!databaseConfiguration.objectStoreConfiguration){
                                     var version = GetDatabaseVersion(transaction.db) + 1
                                     promise.db(version, function(dbConnection, txn){
                                         $.when(promise.createObjectStore(self(txn), objectStoreName)).then(function(store){
-                                                objectStore = store
+                                                log("ObjectStore Promise completed", store);
+                                                dfd.resolve(store);
                                             });
                                         });
                                 }
-                                log("ObjectStore Promise completed", objectStore);
-                                dfd.resolve(objectStore);
                             }
                             catch (e) {
                                 log("Error in Object Store Promise", e);
@@ -376,17 +377,18 @@
                             try {
                                 if(objectStore.indexNames.contains(propertyName + "-index")){
                                     var index = objectStore.index(propertyName + "-index");
+                                    log("Index Promise compelted", index);
+                                    dfd.resolve(index);
                                 }
                                 else if(!databaseConfiguration.objectStoreConfiguration){
                                     var version = GetDatabaseVersion(transaction.db) + 1
                                     promise.db(version, function(dbConnection, txn){
-                                        $.when(promise.createIndex(propertyName, promise.createObjectStore(self(txn), objectStoreName))).then(function(newIndex){
-                                                index = newIndex
+                                        $.when(promise.createIndex(propertyName, promise.createObjectStore(self(txn), objectStoreName))).then(function(index){
+                                                log("Index Promise compelted", index);
+                                                dfd.resolve(index);
                                             });
                                         });
                                 }
-                                log("Index Promise compelted", index);
-                                dfd.resolve(index);
                             }
                             catch (e) {
                                 var name = objectStore.transaction.db.name;
