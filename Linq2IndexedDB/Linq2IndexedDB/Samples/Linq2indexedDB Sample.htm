@@ -15,7 +15,7 @@
         dbConfiguration.Name = "test";
         var db = $.linq2indexeddb(dbConfiguration)
         db.InsertData("person", { Name: "test", Firstname: "test" }, function () {
-            db.ReadAll("person", function (data) {
+            db.SearchData("person", "Name", "test", function (data) {
                 var tekst = $("#txtLog").val();
                 for (var i = 0; i < data.length; i++) {
                     tekst += "Id: " + data[i].id + " Name: " + data[i].Name + " Firstname: " + data[i].Firstname + "\n\r";
