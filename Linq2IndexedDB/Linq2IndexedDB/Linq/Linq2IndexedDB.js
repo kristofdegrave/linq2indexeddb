@@ -4,9 +4,8 @@
 
 (function($){
     $.extend({
-        linq2indexeddb: function(databaseConfiguration, objectStores){
+        linq2indexeddb: function(databaseConfiguration){
             var prototype = Initialize_IndexedDB();
-            var currentVersion;
             var logging = true;
 
             log = function (msg, param1, param2, param3) {            
@@ -64,32 +63,32 @@
                             }
 
                             req.onsuccess = function (e) {
-                                var dbConnection;
+                                var result;
 
-                                if (prototype) dbConnection = e.result;
-                                if (req.result) dbConnection = req.result;
+                                if (prototype) result = e.result;
+                                if (req.result) result = req.result;
 
-                                dbConnection.onabort = function(e){
-                                    log("DB abort", e, dbConnection);
-                                    dbConnection.close();
+                                result.onabort = function(e){
+                                    log("DB abort", e, result);
+                                    result.close();
                                 }
 
-                                dbConnection.onerror = function(e){
-                                    log("DB error", e, dbConnection);
-                                    dbConnection.close();
+                                result.onerror = function(e){
+                                    log("DB error", e, result);
+                                    result.close();
                                 }
 
-                                dbConnection.onversionchange = function(e){
-                                    log("DB versionchange", e, dbConnection);
-                                    dbConnection.close();
+                                result.onversionchange = function(e){
+                                    log("DB versionchange", e, result);
+                                    result.close();
                                 }  
                                 
-                                var dbver = GetDatabaseVersion(dbConnection);                      
+                                var dbver = GetDatabaseVersion(result);                      
 
                                 if(databaseVersion && dbver < databaseVersion){
-                                    log("DB Promise upgradeneeded", dbConnection);
+                                    log("DB Promise upgradeneeded", result);
                                      try {
-                                        var versionChangePromise = promise.changeDatabaseStructure(promise.self(dbConnection), databaseVersion, function (){
+                                        var versionChangePromise = promise.changeDatabaseStructure(promise.self(result), databaseVersion, function (){
                                             log("DB Promise upgradeneeded completed");
                                             $.when(promise.db()).then(function (dbConnection){
                                                     dfd.resolve(dbConnection);
@@ -97,17 +96,17 @@
                                         });
 
                                         $.when(versionChangePromise).then(function(txn){
-                                            initVersion(dbConnection, txn, dbver, databaseVersion);
+                                            initVersion(txn, dbver, databaseVersion);
                                         }, dfd.reject);
                                     }
                                     catch (e) {
-                                        log("Upgrade exception", e);
+                                        log("Upgrade exception", e, result);
                                         dfd.reject(e, result);
                                     }
                                 }
                                 else{
-                                    log("DB Promise resolved", dbConnection);
-                                    dfd.resolve(dbConnection);
+                                    log("DB Promise resolved", result);
+                                    dfd.resolve(result);
                                 }
                             }
 
@@ -131,14 +130,14 @@
                                 
                                 req.transaction.oncomplete = function () {
                                     log("DB Promise upgradeneeded completed", req.transaction);
-                                    closeDatabaseConnection(req.transaction);
+                                    closeDatabaseConnection(req.transaction.db);
                                     $.when(promise.db()).then(function (dbConnection){
                                         dfd.resolve(dbConnection)
                                     }, dfd.reject);
                                 }
 
                                 if(initVersion && typeof(initVersion) === 'function'){
-                                    initVersion(result, req.transaction, e.oldVersion, e.newVersion)
+                                    initVersion(req.transaction, e.oldVersion, e.newVersion)
                                 }
                             }
 
@@ -179,7 +178,7 @@
                                     
                                     txn.oncomplete = function () {
                                         log("Version Change Transaction transaction completed", txn);
-                                        closeDatabaseConnection(txn);
+                                        closeDatabaseConnection(txn.db);
                                         if (typeof(onTransactionCompleted) === 'function') onTransactionCompleted();
                                     }
 
@@ -224,7 +223,7 @@
                                     }
                                 }
 
-                                if(nonExistingObjectStores.length > 0 && !databaseConfiguration.objectStoreConfiguration)
+                                if(nonExistingObjectStores.length > 0 && !databaseConfiguration && !databaseConfiguration.objectStoreConfiguration)
                                 {
                                     var version = GetDatabaseVersion(db) + 1
                                     log("Transaction Promise database upgrade needed: " + db);
@@ -235,8 +234,8 @@
                                             promise.createObjectStore(promise.self(txn), nonExistingObjectStores[j])
                                         }
                                     })).then(function(){
-                                        $.when(promise.transaction(promise.db(), objectStoreNames, transactionType, onTransactionCompleted)).then(function(trans){
-                                            dfd.resolve(trans);
+                                        $.when(promise.transaction(promise.db(), objectStoreNames, transactionType, onTransactionCompleted)).then(function(txn){
+                                            dfd.resolve(txn);
                                         }, dfd.reject);
                                     });
                                 }
@@ -245,7 +244,7 @@
                                     var txn = db.transaction(objectStoreNames, transactionType);
                                     txn.oncomplete = function () {
                                         log("Transaction completed");
-                                        closeDatabaseConnection(txn);
+                                        closeDatabaseConnection(txn.db);
                                         if (typeof(onTransactionCompleted) === 'function') onTransactionCompleted();
                                     }
 
@@ -273,30 +272,17 @@
 
                 objectStore: function (transactionPromise, objectStoreName) {
                     return $.Deferred(function (dfd) {
-                        $.when(transactionPromise).then(function (transaction) {
+                        $.when(transactionPromise).then(function (txn) {
                             log("ObjectStore Promise started", transactionPromise, objectStoreName);
                             try {
-                                var objectStore;
-                                if (transaction.db.objectStoreNames.contains(objectStoreName)) {
-                                    store = transaction.objectStore(objectStoreName);
-                                    log("ObjectStore Promise completed", store);
-                                    dfd.resolve(store, transaction);
-                                }
-                                else if(!databaseConfiguration.objectStoreConfiguration){
-                                    closeDatabaseConnection(transaction);
-                                    var version = GetDatabaseVersion(transaction.db) + 1
-                                    store = promise.db(version, function(dbConnection, txn){
-                                                $.when(promise.createObjectStore(self(txn), objectStoreName)).then(function(store){
-                                                        log("ObjectStore Promise completed", store);
-                                                        dfd.resolve(store, transaction);
-                                                    });
-                                                });
-                                }
+                                var store = txn.objectStore(objectStoreName);
+                                log("ObjectStore Promise completed", store);
+                                dfd.resolve(store, txn);
                             }
                             catch (e) {
                                 log("Error in Object Store Promise", e);
-                                abortTransaction(transaction);
-                                dfd.reject(e, transaction.db);
+                                abortTransaction(txn);
+                                dfd.reject(e, txn.db);
                             }
                         }, dfd.reject);
                     }).promise();
@@ -304,32 +290,32 @@
 
                 createObjectStore: function (changeDatabaseStructurePromise, objectStoreName, objectStoreOptions) {
                     return $.Deferred(function (dfd) {
-                        $.when(changeDatabaseStructurePromise).then(function (transaction) {
+                        $.when(changeDatabaseStructurePromise).then(function (txn) {
                             log("createObjectStore Promise started", changeDatabaseStructurePromise, objectStoreName, objectStoreOptions);
                             try {
                                 
-                                if (!transaction.db.objectStoreNames.contains(objectStoreName)) {
-                                    var store = transaction.db.createObjectStore(objectStoreName, {
+                                if (!txn.db.objectStoreNames.contains(objectStoreName)) {
+                                    var store = txn.db.createObjectStore(objectStoreName, {
                                                     "autoIncrement": objectStoreOptions ? objectStoreOptions.autoIncrement : true,
                                                     "keyPath": objectStoreOptions ? objectStoreOptions.keyPath : "id"
                                                 }, objectStoreOptions ? objectStoreOptions.autoIncrement : true);
 
                                     log("ObjectStore Created", store);
                                     log("createObjectStore Promise completed", store);
-                                    dfd.resolve(store, transaction);
+                                    dfd.resolve(store, txn);
                                 }
                                 else {
-                                    $.when(promise.objectStore(promise.self(transaction), objectStoreName)).then(function(store){
+                                    $.when(promise.objectStore(promise.self(txn), objectStoreName)).then(function(store){
                                         log("ObjectStore Found", store);
                                         log("createObjectStore Promise completed", store);
-                                        dfd.resolve(store, transaction);
+                                        dfd.resolve(store, txn);
                                     }, dfd.reject);
                                 }
                             }
                             catch (e) {
                                 log("Error in createObjectStore Promise", e);
-                                abortTransaction(transaction);
-                                dfd.reject(e, transaction.db);
+                                abortTransaction(txn);
+                                dfd.reject(e, txn.db);
                             }
                         }, dfd.reject);
                     }).promise();
@@ -337,11 +323,11 @@
                 
                 deleteObjectStore: function (changeDatabaseStructurePromise, objectStoreName) {
                     return $.Deferred(function (dfd) {
-                        $.when(changeDatabaseStructurePromise).then(function (transaction) {
+                        $.when(changeDatabaseStructurePromise).then(function (txn) {
                             log("deleteObjectStore Promise started", changeDatabaseStructurePromise, objectStoreName, objectStoreOptions);
                             try {
-                                if (!transaction.db.objectStoreNames.contains(objectStoreName)) {
-                                    store = transaction.db.deleteObjectStore(objectStoreName)
+                                if (!txn.db.objectStoreNames.contains(objectStoreName)) {
+                                    store = txn.db.deleteObjectStore(objectStoreName)
                                     log("ObjectStore Deleted", objectStoreName);
                                 }
                                 else {
@@ -353,8 +339,8 @@
                             }
                             catch (e) {
                                 log("Error in deleteObjectStore Promise", e);
-                                abortTransaction(transaction);
-                                dfd.reject(e, transaction.db);
+                                abortTransaction(txn);
+                                dfd.reject(e, txn.db);
                             }
                         }, dfd.reject);
                     }).promise();
@@ -378,8 +364,7 @@
                             }
                             catch (e) {
                                 log("createIndex Promise Failed", e);
-                                abortTransaction(objectStore.transaction);
-                                dfd.reject(e, objectStore.transaction);
+                                dfd.reject(e, objectStore);
                             }
                         }, dfd.reject);
                     }).promise();
@@ -397,8 +382,7 @@
                             }
                             catch (e) {
                                 log("deleteIndex Promise Failed", e);
-                                abortTransaction(objectStore.transaction);
-                                dfd.reject(e, objectStore.transaction);
+                                dfd.reject(e, objectStore);
                             }
                         }, dfd.reject);
                     }).promise();
@@ -406,7 +390,7 @@
 
                 index: function (propertyName, objectStorePromise) {
                     return $.Deferred(function (dfd) {
-                        $.when(objectStorePromise).then(function (objectStore, transaction) {
+                        $.when(objectStorePromise).then(function (objectStore, txn) {
                             log("Index Promise started", objectStore)
                             try {
                                 if(objectStore.indexNames.contains(propertyName + "-index")){
@@ -414,8 +398,8 @@
                                     log("Index Promise compelted", index);
                                     dfd.resolve(index);
                                 }
-                                else if(!databaseConfiguration.objectStoreConfiguration){
-                                    var version = GetDatabaseVersion(transaction.db) + 1
+                                else if(!databaseConfiguration && !databaseConfiguration.objectStoreConfiguration){
+                                    var version = GetDatabaseVersion(txn.db) + 1
                                     promise.db(version, function(dbConnection, txn){
                                         $.when(promise.createIndex(propertyName, promise.createObjectStore(promise.self(txn), objectStore.name))).then(function(index){
                                                 log("Index Promise compelted", index);
@@ -426,7 +410,6 @@
                             }
                             catch (e) {
                                 log("Index Promise exception", e);
-                                abortTransaction(objectStore.transaction);
                                 dfd.reject(e, propertyName)
                             }
                         }, dfd.reject);
@@ -716,15 +699,15 @@
 
             };// end of all promise definations
 
-            function closeDatabaseConnection(transaction) {
-                log("Close database Connection: " + transaction.db);
-                transaction.db.close();
+            function closeDatabaseConnection(db) {
+                log("Close database Connection: " + db);
+                db.close();
             }
 
             function abortTransaction(transaction) {
-                log("Abort transaction: " + db);
+                log("Abort transaction: " + transaction);
                 transaction.abort();
-                closeDatabaseConnection(transaction);
+                closeDatabaseConnection(transaction.db);
             }
 
             function Initialize_IndexedDB() {
@@ -840,14 +823,20 @@
                 }
             }
 
-            function InitializeDatabse(dbConnection, txn, oldVersion, newVersion){
-                for (var version = oldVersion + 1; version == newVersion; a++) {
-                    var data = GetDataByVersion(version, databaseConfiguration.objectStoreConfiguration);
-                    InitializeVersion(dbConnection, txn, data)
+            function InitializeDatabse(txn, oldVersion, newVersion){
+                if(databaseConfiguration && databaseConfiguration.objectStoreConfiguration)
+                {
+                    for (var version = oldVersion + 1; version == newVersion; a++) {
+                        var data = GetDataByVersion(version, databaseConfiguration.objectStoreConfiguration);
+                        InitializeVersion(txn, data)
+                        // Provide a function so the developpers can handle a version change.
+                        // This is the place where conversion scripts are possible.
+                        // onVersionInitialized(txn, oldVersion, newVersion)
+                    }
                 }
             }
 
-            function InitializeVersion(dbConnection, txn, data) {
+            function InitializeVersion(txn, data) {
                 for (var i = 0; i < data.length; i++) {
                     try {
                         var storeConfig = data[i];
@@ -882,9 +871,8 @@
                     }
                     catch (e) { 
                         error("createIndex exception: " + e.message);  
-                        txn.abort();  
+                        abortTransaction(txn);
                     }
-                    
                 }
             }
 
@@ -920,17 +908,10 @@
                     }
                 },
 
-                CreateObjectStore: function(name, objectStoreOptions){
-                    return promise.createObjectStore(promise.changeDatabaseStructure(promise.db()),name,objectStoreOptions);
-                },
-
-                CreateIndex: function(properyName, ObjectStoreName, indexOptions){
-                    return promise.createIndex(properyName, promise.createObjectStore(promise.changeDatabaseStructure(promise.db()),name), indexOptions);
-                },
-
                 ReadAll: function(objectStoreName, success, error){
                     var cursorPromise = promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName));
-                    $.when(cursorPromise).then(function(returnData){
+                    $.when(cursorPromise).then(function(returnData, txn){
+                        closeDatabaseConnection(txn.db);
                         if(typeof(success) === 'function'){
                             success(returnData);
                         }
@@ -939,7 +920,8 @@
 
                 GetData: function(objectStoreName, key, success, error){
                     var getPromise = promise.get(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), key);
-                    $.when(getPromise).then(function(returnData){
+                    $.when(getPromise).then(function(returnData, txn){
+                        closeDatabaseConnection(txn.db);
                         if(typeof(success) === 'function'){
                             success(returnData);
                         }
@@ -948,7 +930,8 @@
 
                 SearchData: function (objectStoreName, propertyName, searchValue, success, error) {
                     var cursorPromise = promise.cursor(promise.index(propertyName, promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName)), IDBKeyRange.only(searchValue));
-                    $.when(cursorPromise).then(function(returnData){
+                    $.when(cursorPromise).then(function(returnData, txn){
+                        closeDatabaseConnection(txn.db);
                         if(typeof(success) === 'function'){
                             success(returnData);
                         }
@@ -958,7 +941,7 @@
                 InsertData: function(objectStoreName, data, success, error){
                     var insertPromise = promise.insert(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data);
                     $.when(insertPromise).then(function(returnData, txn){
-                        closeDatabaseConnection(txn);
+                        closeDatabaseConnection(txn.db);
                         if(typeof(success) === 'function'){
                             success(returnData);
                         }
@@ -967,7 +950,8 @@
   
                 UpdateData: function(objectStoreName, data, success, error){
                     var updatePromise = promise.update(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data);
-                    $.when(updatePromise).then(function(returnData){
+                    $.when(updatePromise).then(function(returnData, txn){
+                        closeDatabaseConnection(txn.db);
                         if(typeof(success) === 'function'){
                             success(returnData);
                         }
@@ -976,7 +960,8 @@
 
                 DeleteData: function(objectStoreName, key, success, error){
                     var deletePromise = promise.remove(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), key);
-                    $.when(deletePromise).then(function(returnData){
+                    $.when(deletePromise).then(function(returnData, txn){
+                        closeDatabaseConnection(txn.db);
                         if(typeof(success) === 'function'){
                             success();
                         }
