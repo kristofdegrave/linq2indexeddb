@@ -1,7 +1,6 @@
 /// <reference path="jquery-1.7.1-vsdoc.js" />
 /// <reference path="jquery-1.7.1.js" />
 
-
 (function($){
     $.extend({
         linq2indexeddb: function(databaseConfiguration){
@@ -897,11 +896,20 @@
             }
 
             return{
+                Insert: function(data, key){
+                    return {
+                        Into: function(objectStoreName){
+                            return promise.insert(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key);
+                        }
+                    }
+                },
+
+                Update: function(objectStoreName, data, key){
+                    return promise.update(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key); 
+                },
+
                 From: function(objectStoreName){
                     return {
-                        Insert: function(data, key){
-                            return promise.insert(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key);
-                        },
                         Get: function(key){
                             return promise.get(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName),key);
                         }
