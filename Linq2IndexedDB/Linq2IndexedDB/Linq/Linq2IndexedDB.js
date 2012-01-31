@@ -899,13 +899,17 @@
                 Insert: function(data, key){
                     return {
                         Into: function(objectStoreName){
-                            return promise.insert(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key);
+                            return promise.insert(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key)
                         }
                     }
                 },
 
                 Update: function(objectStoreName, data, key){
                     return promise.update(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key); 
+                },
+
+                Delete: function(objectStoreName, key){
+                    return promise.remove(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), key); 
                 },
 
                 From: function(objectStoreName){
