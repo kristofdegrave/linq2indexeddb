@@ -397,7 +397,7 @@
                                     log("Index Promise compelted", index);
                                     dfd.resolve(index);
                                 }
-                                else if(!databaseConfiguration && !databaseConfiguration.objectStoreConfiguration){
+                                else if(!databaseConfiguration || !databaseConfiguration.objectStoreConfiguration){
                                     var version = GetDatabaseVersion(txn.db) + 1
                                     promise.db(version, function(txn){
                                         $.when(promise.createIndex(propertyName, promise.createObjectStore(promise.self(txn), objectStore.name))).then(function(index){
@@ -947,10 +947,10 @@
 
                             if(propertyNames)
                             {
-                                for (var d in data) {
+                                for (var i = 0; i < data.length; i++) {
                                     var obj = new Object();
-                                    for (var property in properties) {
-                                        obj[property] = d[property];
+                                    for (var j = 0; j < propertyNames.length; j++) {
+                                        obj[propertyName[j]] = data[i][propertyName[j]];
                                     }
                                     returnData.push(obj);
                                 }
@@ -966,22 +966,21 @@
                     },
                     forEach: function(callback){
                         $.when(cursorPromis).then(function(data){
-                            for (var d in data) {
+                            for (var i = 0; i < data.length; i++) {
                                 var obj;
                                 if(propertyNames)
                                 {
                                     obj = new Object();
-                                    for (var property in properties) {
-                                        obj[property] = d[property];
+                                    for (var j = 0; j < propertyNames.length; j++) {
+                                        obj[propertyNames[j]] = data[i][propertyNames[j]];
                                     }
-                                    returnData.push(obj);
                                 }
                                 else{
                                     obj = d;
                                 }
 
                                 if(typeof(callback) === 'function'){
-                                    callback(returnData);
+                                    callback(obj);
                                 }
                             }
                         });
