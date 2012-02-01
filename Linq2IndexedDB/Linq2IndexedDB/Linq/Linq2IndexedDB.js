@@ -222,13 +222,13 @@
                                     }
                                 }
 
-                                if(nonExistingObjectStores.length > 0 && !databaseConfiguration && !databaseConfiguration.objectStoreConfiguration)
+                                if(nonExistingObjectStores.length > 0 && (!databaseConfiguration || !databaseConfiguration.objectStoreConfiguration))
                                 {
                                     var version = GetDatabaseVersion(db) + 1
                                     log("Transaction Promise database upgrade needed: " + db);
                                     db.close();
                                     log("Close database Connection: " + db);
-                                    $.when(promise.db(version, function(dbConnection, txn){
+                                    $.when(promise.db(version, function(txn){
                                         for (var j = 0; j < nonExistingObjectStores.length; j++) {
                                             promise.createObjectStore(promise.self(txn), nonExistingObjectStores[j])
                                         }
@@ -399,7 +399,7 @@
                                 }
                                 else if(!databaseConfiguration && !databaseConfiguration.objectStoreConfiguration){
                                     var version = GetDatabaseVersion(txn.db) + 1
-                                    promise.db(version, function(dbConnection, txn){
+                                    promise.db(version, function(txn){
                                         $.when(promise.createIndex(propertyName, promise.createObjectStore(promise.self(txn), objectStore.name))).then(function(index){
                                                 log("Index Promise compelted", index);
                                                 dfd.resolve(index);
@@ -895,6 +895,100 @@
                 }
             }
 
+            function whereInternal(objectStorePromise, propertyName){
+                return {
+                    Equals: function(value){
+                        var cursorPromis = promise.cursor(promise.index(propertyName,objectStorePromise), IDBKeyRange.only(value));
+                        return {
+                            Select: function(propertyNames){
+                                return SelectInternal(cursorPromis, propertyNames);
+                            }
+                        }
+                    },
+                    GreaterThen: function(value, valueIncluded){
+                        var cursorPromis =  promise.cursor(promise.index(propertyName, objectStorePromise), IDBKeyRange.lowerBound(value, typeof(valueIncluded) === 'undefined' ? false : valueIncluded));
+                        return {
+                            Select: function(propertyNames){
+                                return SelectInternal(cursorPromis, propertyNames);
+                            }
+                        }
+                    },
+                    SmallerThen: function(value, valueIncluded){
+                        var cursorPromis =  promise.cursor(promise.index(propertyName, objectStorePromise), IDBKeyRange.upperBound(value, typeof(valueIncluded) === 'undefined' ? false : valueIncluded));
+                        return {
+                            Select: function(propertyNames){
+                                return SelectInternal(cursorPromis, propertyNames);
+                            }
+                        }
+                    },
+                    Between: function(minValue, maxValue, minValueIncluded, maxValueIncluded){
+                        var cursorPromis =  promise.cursor(promise.index(propertyName, objectStorePromise), IDBKeyRange.bound(minValue, maxValue, typeof(minValueIncluded) === 'undefined' ? false : minValueIncluded), typeof(maxValueIncluded) === 'undefined' ? false : maxValueIncluded);
+                        return {
+                            Select: function(propertyNames){
+                                return SelectInternal(cursorPromis, propertyNames);
+                            }
+                        }
+                    }
+                }
+            }
+
+            function SelectInternal(cursorPromis, propertyNames) {
+                var properties = undefined
+                if(propertyNames)
+                {
+                    if(!$.isArray(propertyNames)){
+                        properties = propertyNames
+                    }
+                }
+                return {
+                    All: function(callback){
+                        $.when(cursorPromis).then(function(data){
+                            var returnData = [];
+
+                            if(propertyNames)
+                            {
+                                for (var d in data) {
+                                    var obj = new Object();
+                                    for (var property in properties) {
+                                        obj[property] = d[property];
+                                    }
+                                    returnData.push(obj);
+                                }
+                            }
+                            else {
+                                returnData = data;
+                            }
+
+                            if(typeof(callback) === 'function'){
+                                callback(returnData);
+                            }
+                        });
+                    },
+                    forEach: function(callback){
+                        $.when(cursorPromis).then(function(data){
+                            for (var d in data) {
+                                var obj;
+                                if(propertyNames)
+                                {
+                                    obj = new Object();
+                                    for (var property in properties) {
+                                        obj[property] = d[property];
+                                    }
+                                    returnData.push(obj);
+                                }
+                                else{
+                                    obj = d;
+                                }
+
+                                if(typeof(callback) === 'function'){
+                                    callback(returnData);
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+
             return{
                 Insert: function(data, key){
                     return {
@@ -914,6 +1008,9 @@
 
                 From: function(objectStoreName){
                     return {
+                        Where: function(propertyName){
+                            return whereInternal(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), propertyName);
+                        },
                         Get: function(key){
                             return promise.get(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName),key);
                         }

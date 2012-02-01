@@ -14,16 +14,32 @@
         var dbConfiguration = new Object();
         dbConfiguration.Name = "test";
         var db = $.linq2indexeddb(dbConfiguration)
-        db.InsertData("person", { Name: "test", Firstname: "test" }, function () {
-            db.SearchData("person", "Name", "test", function (data) {
-                var tekst = $("#txtLog").val();
-                for (var i = 0; i < data.length; i++) {
-                    tekst += "Id: " + data[i].id + " Name: " + data[i].Name + " Firstname: " + data[i].Firstname + "\n\r";
-                }
+//        db.Insert({ Name: "test1", Firstname: "test1", Age: 1 }).Into("person");
+//        db.Insert({ Name: "test2", Firstname: "test2", Age: 2 }).Into("person");
+//        db.Insert({ Name: "test3", Firstname: "test3", Age: 3 }).Into("person");
+//        db.Insert({ Name: "test4", Firstname: "test4", Age: 4 }).Into("person");
 
-                $("#txtLog").val(tekst);
-            });
-        })
+        db.From("person").Where("Name").Equals("test1").Select(["Name", "Firstname"]).forEach(function (data) {
+            var tekst = $("#txtLog").val();
+            tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + "\n\r";
+            $("#txtLog").val(tekst);
+        });
+
+        db.From("person").Where("Name").SmallerThen(3).Select(["Name", "Firstname"]).forEach(function (data) {
+            var tekst = $("#txtLog").val();
+            tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + "\n\r";
+            $("#txtLog").val(tekst);
+        });
+//        db.InsertData("person", { Name: "test", Firstname: "test" }, function () {
+//            db.SearchData("person", "Name", "test", function (data) {
+//                var tekst = $("#txtLog").val();
+//                for (var i = 0; i < data.length; i++) {
+//                    tekst += "Id: " + data[i].id + " Name: " + data[i].Name + " Firstname: " + data[i].Firstname + "\n\r";
+//                }
+
+//                $("#txtLog").val(tekst);
+//            });
+//        })
     </script>
 </head>
 <body>
