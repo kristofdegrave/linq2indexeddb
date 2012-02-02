@@ -1,0 +1,55 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <script src="../Scripts/jquery-1.7.1.js" type="text/javascript"></script>
+    <script src="../Linq/Linq2IndexedDB.js" type="text/javascript"></script>
+    <script>
+        $(function () {
+            var ObjectStores = [
+                 { name: "IdAuto", keyPath: "Id", autoIncrement: true, Version: 1, DefaultData: [], Indexes: [] },
+                 { name: "Auto", keyPath: undefined, autoIncrement: true, Version: 1, DefaultData: [], Indexes: [] },
+                 { name: "Id", keyPath: "Id", autoIncrement: false, Version: 1, DefaultData: [], Indexes: [] },
+                 { name: "None", keyPath: undefined, autoIncrement: false, Version: 1, DefaultData: [], Indexes: [] }
+            ]
+
+            var dbConfiguration = new Object();
+            dbConfiguration.Name = "test";
+            dbConfiguration.version = 1;
+            dbConfiguration.objectStoreConfiguration = ObjectStores;
+            var db = $.linq2indexeddb(dbConfiguration)
+
+            $.when(db.Insert({ Name: "test1" }).Into("IdAuto")).then(function () { log("test1 successfull") }, function () { log("test1 failed") });
+            $.when(db.Insert({ Id: 2, Name: "test2" }).Into("IdAuto")).then(function () { log("test2 successfull") }, function () { log("test2 failed") });
+            $.when(db.Insert({ Name: "test3" }, 3).Into("IdAuto")).then(function () { log("test3 successfull") }, function () { log("test3 failed") });
+            $.when(db.Insert({ Id: 4, Name: "test4" }, 4).Into("IdAuto")).then(function () { log("test4 successfull") }, function () { log("test4 failed") });
+
+            $.when(db.Insert({ Name: "test11" }).Into("Auto")).then(function () { log("test11 successfull") }, function () { log("test11 failed") });
+            $.when(db.Insert({ Id: 12, Name: "test12" }).Into("Auto")).then(function () { log("test12 successfull") }, function () { log("test12 failed") });
+            $.when(db.Insert({ Name: "test3" }, 13).Into("Auto")).then(function () { log("test13 successfull") }, function () { log("test13 failed") });
+            $.when(db.Insert({ Id: 14, Name: "test24" }, 14).Into("Auto")).then(function () { log("test14 successfull") }, function () { log("test14 failed") });
+
+            $.when(db.Insert({ Name: "test21" }).Into("Id")).then(function () { log("test21 successfull") }, function () { log("test21 failed") });
+            $.when(db.Insert({ Id: 22, Name: "test22" }).Into("Id")).then(function () { log("test22 successfull") }, function () { log("test22 failed") });
+            $.when(db.Insert({ Name: "test23" }, 3).Into("Id")).then(function () { log("test23 successfull") }, function () { log("test23 failed") });
+            $.when(db.Insert({ Id: 24, Name: "test24" }, 24).Into("Id")).then(function () { log("test24 successfull") }, function () { log("test24 failed") });
+
+            $.when(db.Insert({ Name: "test31" }).Into("None")).then(function () { log("test31 successfull") }, function () { log("test31 failed") });
+            $.when(db.Insert({ Id: 32, Name: "test32" }).Into("None")).then(function () { log("test32 successfull") }, function () { log("test32 failed") });
+            $.when(db.Insert({ Name: "test33" }, 33).Into("None")).then(function () { log("test33 successfull") }, function () { log("test33 failed") });
+            $.when(db.Insert({ Id: 34, Name: "test34" }, 34).Into("None")).then(function () { log("test34 successfull") }, function () { log("test34 failed") });
+
+            function log(msg) {
+                var tekst = $("#txtLog").val();
+                tekst += msg + "\n\r";
+                $("#txtLog").val(tekst);
+            }
+        });
+
+        
+    </script>
+</head>
+<body>
+<textarea id="txtLog"></textarea>
+</body>
+</html>

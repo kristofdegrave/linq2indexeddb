@@ -4,7 +4,7 @@
 (function($){
     $.extend({
         linq2indexeddb: function(databaseConfiguration){
-            var prototype = Initialize_IndexedDB();
+
             var logging = true;
 
             log = function (msg, param1, param2, param3) {            
@@ -36,6 +36,8 @@
                 }        
             };
 
+            var prototype = Initialize_IndexedDB();
+
             var promise = {
                 self: function(value){
                     return $.Deferred(function(dfd){ 
@@ -45,10 +47,10 @@
 
                 db : function(){
                     var version = databaseConfiguration ? databaseConfiguration.version : undefined
-                    return promise.db(version, InitializeDatabse)
+                    return promise.dbInternal(version, InitializeDatabse)
                 },
 
-                db: function(databaseVersion, initVersion){
+                dbInternal: function(databaseVersion, initVersion){
                     return $.Deferred(function(dfd){
                         try {
                             var req;
@@ -228,7 +230,7 @@
                                     log("Transaction Promise database upgrade needed: " + db);
                                     db.close();
                                     log("Close database Connection: " + db);
-                                    $.when(promise.db(version, function(txn){
+                                    $.when(promise.dbInternal(version, function(txn){
                                         for (var j = 0; j < nonExistingObjectStores.length; j++) {
                                             promise.createObjectStore(promise.self(txn), nonExistingObjectStores[j])
                                         }
@@ -399,7 +401,7 @@
                                 }
                                 else if(!databaseConfiguration || !databaseConfiguration.objectStoreConfiguration){
                                     var version = GetDatabaseVersion(txn.db) + 1
-                                    promise.db(version, function(txn){
+                                    promise.dbInternal(version, function(txn){
                                         $.when(promise.createIndex(propertyName, promise.createObjectStore(promise.self(txn), objectStore.name))).then(function(index){
                                                 log("Index Promise compelted", index);
                                                 dfd.resolve(index);
@@ -575,10 +577,11 @@
                             try {
                                 var req;
 
-                                if(key){
+                                if(key /*&& !store.keyPath*/){
                                     req = store.add(data, key);
                                 }
                                 else{
+                                    /*if(key) log("Key can't be provided when a keyPath is defined on the object store", store, key, data);*/
                                     req = store.add(data);
                                 }
 
@@ -717,6 +720,7 @@
                         window.IDBKeyRange = window.IDBKeyRange;
                         window.IDBTransaction = window.IDBTransaction;
 
+                        log("FireFox Initialized", window.indexedDB);
                         return false;
                     }
 
@@ -726,6 +730,7 @@
                         window.IDBKeyRange = window.webkitIDBKeyRange;
                         window.IDBTransaction = window.webkitIDBTransaction;
 
+                        log("Chrome Initialized", window.indexedDB);
                         return false;
                     }
 
@@ -733,6 +738,7 @@
                     else if (window.msIndexedDB) {
                         window.indexedDB = window.msIndexedDB;
 
+                        log("IE10+ Initialized", window.indexedDB);
                         return false;
                     }
 
@@ -825,7 +831,7 @@
             function InitializeDatabse(txn, oldVersion, newVersion){
                 if(databaseConfiguration && databaseConfiguration.objectStoreConfiguration)
                 {
-                    for (var version = oldVersion + 1; version == newVersion; a++) {
+                    for (var version = oldVersion + 1; version == newVersion; version++) {
                         var data = GetDataByVersion(version, databaseConfiguration.objectStoreConfiguration);
                         InitializeVersion(txn, data)
                         // Provide a function so the developpers can handle a version change.
@@ -976,7 +982,7 @@
                                     }
                                 }
                                 else{
-                                    obj = d;
+                                    obj = data[i];
                                 }
 
                                 if(typeof(callback) === 'function'){
@@ -1012,6 +1018,9 @@
                         },
                         Get: function(key){
                             return promise.get(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName),key);
+                        },
+                        Select: function(PropertyNames){
+                            return SelectInternal(promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName)), PropertyNames);
                         }
                     }
                 },
