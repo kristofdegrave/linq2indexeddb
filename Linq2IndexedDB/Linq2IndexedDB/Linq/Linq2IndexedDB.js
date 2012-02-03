@@ -905,91 +905,79 @@
                 return {
                     Equals: function(value){
                         var cursorPromis = promise.cursor(promise.index(propertyName,objectStorePromise), IDBKeyRange.only(value));
-                        return {
-                            Select: function(propertyNames){
-                                return SelectInternal(cursorPromis, propertyNames);
-                            }
-                        }
+                        return SelectInternal(cursorPromis)
                     },
                     GreaterThen: function(value, valueIncluded){
                         var cursorPromis =  promise.cursor(promise.index(propertyName, objectStorePromise), IDBKeyRange.lowerBound(value, typeof(valueIncluded) === 'undefined' ? false : valueIncluded));
-                        return {
-                            Select: function(propertyNames){
-                                return SelectInternal(cursorPromis, propertyNames);
-                            }
-                        }
+                        return SelectInternal(cursorPromis)
                     },
                     SmallerThen: function(value, valueIncluded){
                         var cursorPromis =  promise.cursor(promise.index(propertyName, objectStorePromise), IDBKeyRange.upperBound(value, typeof(valueIncluded) === 'undefined' ? false : valueIncluded));
-                        return {
-                            Select: function(propertyNames){
-                                return SelectInternal(cursorPromis, propertyNames);
-                            }
-                        }
+                        return SelectInternal(cursorPromis)
                     },
                     Between: function(minValue, maxValue, minValueIncluded, maxValueIncluded){
                         var cursorPromis =  promise.cursor(promise.index(propertyName, objectStorePromise), IDBKeyRange.bound(minValue, maxValue, typeof(minValueIncluded) === 'undefined' ? false : minValueIncluded), typeof(maxValueIncluded) === 'undefined' ? false : maxValueIncluded);
-                        return {
-                            Select: function(propertyNames){
-                                return SelectInternal(cursorPromis, propertyNames);
-                            }
-                        }
+                        return SelectInternal(cursorPromis)
                     }
                 }
             }
 
-            function SelectInternal(cursorPromis, propertyNames) {
-                var properties = undefined
-                if(propertyNames)
-                {
-                    if(!$.isArray(propertyNames)){
-                        properties = propertyNames
-                    }
-                }
+            function SelectInternal(cursorPromis) {
                 return {
-                    All: function(callback){
-                        $.when(cursorPromis).then(function(data){
-                            var returnData = [];
+                    Select: function(propertyNames){
+                        var properties = undefined
+                        if(propertyNames)
+                        {
+                            if(!$.isArray(propertyNames)){
+                                properties = propertyNames
+                            }
+                        }
+                        return {
+                            All: function(callback){
+                                $.when(cursorPromis).then(function(data){
+                                    var returnData = [];
 
-                            if(propertyNames)
-                            {
-                                for (var i = 0; i < data.length; i++) {
-                                    var obj = new Object();
-                                    for (var j = 0; j < propertyNames.length; j++) {
-                                        obj[propertyName[j]] = data[i][propertyName[j]];
+                                    if(propertyNames)
+                                    {
+                                        for (var i = 0; i < data.length; i++) {
+                                            var obj = new Object();
+                                            for (var j = 0; j < propertyNames.length; j++) {
+                                                obj[propertyName[j]] = data[i][propertyName[j]];
+                                            }
+                                            returnData.push(obj);
+                                        }
                                     }
-                                    returnData.push(obj);
-                                }
-                            }
-                            else {
-                                returnData = data;
-                            }
-
-                            if(typeof(callback) === 'function'){
-                                callback(returnData);
-                            }
-                        });
-                    },
-                    forEach: function(callback){
-                        $.when(cursorPromis).then(function(data){
-                            for (var i = 0; i < data.length; i++) {
-                                var obj;
-                                if(propertyNames)
-                                {
-                                    obj = new Object();
-                                    for (var j = 0; j < propertyNames.length; j++) {
-                                        obj[propertyNames[j]] = data[i][propertyNames[j]];
+                                    else {
+                                        returnData = data;
                                     }
-                                }
-                                else{
-                                    obj = data[i];
-                                }
 
-                                if(typeof(callback) === 'function'){
-                                    callback(obj);
-                                }
+                                    if(typeof(callback) === 'function'){
+                                        callback(returnData);
+                                    }
+                                });
+                            },
+                            forEach: function(callback){
+                                $.when(cursorPromis).then(function(data){
+                                    for (var i = 0; i < data.length; i++) {
+                                        var obj;
+                                        if(propertyNames)
+                                        {
+                                            obj = new Object();
+                                            for (var j = 0; j < propertyNames.length; j++) {
+                                                obj[propertyNames[j]] = data[i][propertyNames[j]];
+                                            }
+                                        }
+                                        else{
+                                            obj = data[i];
+                                        }
+
+                                        if(typeof(callback) === 'function'){
+                                            callback(obj);
+                                        }
+                                    }
+                                });
                             }
-                        });
+                        }
                     }
                 }
             }
@@ -1013,14 +1001,27 @@
 
                 From: function(objectStoreName){
                     return {
-                        Where: function(propertyName){
-                            return whereInternal(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), propertyName);
+                        Where: function(propertyName, clause){
+                            if(propertyName){
+                                if(clause){
+                                   if (clause.equals) {
+                                        return whereInternal(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), propertyName).Equals(clause.equals);
+                                   }
+                                   else if (clause.range) {
+                                        return whereInternal(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), propertyName).Between(clause.range[0], clause.range[1], clause.range[2], clause.range[3]);
+                                   }
+                                }
+                                else{
+                                    return whereInternal(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), propertyName);
+                                }
+                            }
+                            else{
+                                var cursorPromise = promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName));
+                                return SelectInternal(cursorPromise);
+                            }
                         },
                         Get: function(key){
                             return promise.get(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName),key);
-                        },
-                        Select: function(PropertyNames){
-                            return SelectInternal(promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName)), PropertyNames);
                         }
                     }
                 },
