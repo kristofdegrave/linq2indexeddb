@@ -1083,6 +1083,10 @@
                             success();
                         }
                     }, error);
+                },
+
+                Initialize: function(onsuccess, onerror){
+                    $.when(promise.db()).then(onsuccess, onerror)
                 }
             }
         }
