@@ -22,12 +22,10 @@
                         dfd.resolve(value);
                     });
                 },
-
                 db: function () {
                     var version = databaseConfiguration ? databaseConfiguration.version : undefined
                     return promise.dbInternal(version, InitializeDatabse)
                 },
-
                 dbInternal: function (databaseVersion, initVersion) {
                     return $.Deferred(function (dfd) {
                         try {
@@ -136,7 +134,6 @@
                         }
                     }).promise();
                 },
-
                 changeDatabaseStructure: function (dbPromise, version, onTransactionCompleted) {
                     return $.Deferred(function (dfd) {
                         $.when(dbPromise).then(function (db) {
@@ -185,7 +182,6 @@
                         }, dfd.reject);
                     }).promise();
                 },
-
                 transaction: function (dbPromise, objectStoreNames, transactionType, onTransactionCompleted) {
                     return $.Deferred(function (dfd) {
                         if (!$.isArray(objectStoreNames)) objectStoreNames = [objectStoreNames];
@@ -237,15 +233,12 @@
                     }).promise();
                     ;
                 },
-
                 readTransaction: function (dbPromise, objectStoreNames, onTransactionCompleted) {
                     return promise.transaction(dbPromise, objectStoreNames, IDBTransaction.READ_ONLY);
                 },
-
                 writeTransaction: function (dbPromise, objectStoreNames, onTransactionCompleted) {
                     return promise.transaction(dbPromise, objectStoreNames, IDBTransaction.READ_WRITE, onTransactionCompleted);
                 },
-
                 objectStore: function (transactionPromise, objectStoreName) {
                     return $.Deferred(function (dfd) {
                         $.when(transactionPromise).then(function (txn) {
@@ -263,7 +256,6 @@
                         }, dfd.reject);
                     }).promise();
                 },
-
                 createObjectStore: function (changeDatabaseStructurePromise, objectStoreName, objectStoreOptions) {
                     return $.Deferred(function (dfd) {
                         $.when(changeDatabaseStructurePromise).then(function (txn) {
@@ -296,7 +288,6 @@
                         }, dfd.reject);
                     }).promise();
                 },
-
                 deleteObjectStore: function (changeDatabaseStructurePromise, objectStoreName) {
                     return $.Deferred(function (dfd) {
                         $.when(changeDatabaseStructurePromise).then(function (txn) {
@@ -321,7 +312,6 @@
                         }, dfd.reject);
                     }).promise();
                 },
-
                 createIndex: function (propertyName, createObjectStorePromise, indexOptions) {
                     return $.Deferred(function (dfd) {
                         $.when(createObjectStorePromise).then(function (objectStore) {
@@ -345,7 +335,6 @@
                         }, dfd.reject);
                     }).promise();
                 },
-
                 deleteIndex: function (propertyName, createObjectStorePromise) {
                     return $.Deferred(function (dfd) {
                         $.when(createObjectStorePromise).then(function (objectStore) {
@@ -363,7 +352,6 @@
                         }, dfd.reject);
                     }).promise();
                 },
-
                 index: function (propertyName, objectStorePromise) {
                     return $.Deferred(function (dfd) {
                         $.when(objectStorePromise).then(function (objectStore, txn) {
@@ -391,7 +379,6 @@
                         }, dfd.reject);
                     }).promise();
                 },
-
                 cursor: function (sourcePromise, range, direction) {
                     return $.Deferred(function (dfd) {
                         $.when(sourcePromise).then(function (source) {
@@ -445,7 +432,6 @@
                         }, dfd.reject);
                     }).promise();
                 },
-
                 keyCursor: function (indexPromise, range, direction) {
                     return $.Deferred(function (dfd) {
                         $.when(indexPromise).then(function (index) {
@@ -497,7 +483,6 @@
                         }, dfd.reject);
                     }).promise();
                 },
-
                 get: function (sourcePromise, key) {
                     return $.Deferred(function (dfd) {
                         $.when(sourcePromise).then(function (source) {
@@ -521,7 +506,6 @@
                         }, dfd.reject);
                     }).promise();
                 },
-
                 getKey: function (indexPromise, key) {
                     return $.Deferred(function (dfd) {
                         $.when(indexPromise).then(function (index) {
@@ -545,7 +529,6 @@
                         }, dfd.reject);
                     }).promise();
                 },
-
                 insert: function (objectStorePromise, data, key) {
                     return $.Deferred(function (dfd) {
                         $.when(objectStorePromise).then(function (store) {
@@ -566,8 +549,9 @@
                                     if (prototype) result = e.result;
                                     if (req.result) result = req.result;
 
-                                    log("Insert Promise completed", req);
-                                    dfd.resolve(result, req.transaction);
+                                    log("Insert Promise completed", data, req, result);
+                                    dfd.resolve(data);
+                                    //dfd.resolve(result, req.transaction);
                                 };
                                 req.onerror = function (e) {
                                     log("Insert Promise error", e, req);
@@ -581,7 +565,6 @@
                         }, dfd.reject);
                     }).promise();
                 },
-
                 update: function (objectStorePromise, data, key) {
                     return $.Deferred(function (dfd) {
                         $.when(objectStorePromise).then(function (store) {
@@ -603,8 +586,9 @@
                                     if (prototype) result = e.result;
                                     if (req.result) result = req.result;
 
-                                    log("Update Promise completed", req, result);
-                                    dfd.resolve(result, req.transaction);
+                                    log("Update Promise completed", data, req, result);
+                                    dfd.resolve(data);
+                                    //dfd.resolve(result, req.transaction);
                                 };
                                 req.onerror = function (e) {
                                     log("Update Promise error", e, req);
@@ -618,7 +602,6 @@
                         }, dfd.reject);
                     }).promise();
                 },
-
                 remove: function (objectStorePromise, key) {
                     return $.Deferred(function (dfd) {
                         $.when(objectStorePromise).then(function (store) {
@@ -632,8 +615,9 @@
                                     if (prototype) result = e.result;
                                     if (req.result) result = req.result;
 
-                                    log("Remove Promise completed", req);
-                                    dfd.resolve(result, req.transaction);
+                                    log("Remove Promise completed", req, result);
+                                    dfd.resolve();
+                                    //dfd.resolve(result, req.transaction);
                                 };
                                 req.onerror = function (e) {
                                     log("Remove Promise error", e, req);
@@ -647,7 +631,6 @@
                         }, dfd.reject);
                     }).promise();
                 },
-
                 clear: function (objectStorePromise) {
                     return $.Deferred(function (dfd) {
                         $.when(objectStorePromise).then(function (store) {
@@ -661,8 +644,9 @@
                                     if (prototype) result = e.result;
                                     if (req.result) result = req.result;
 
-                                    log("Clear Promise completed", req);
-                                    dfd.resolve(result, req.transaction);
+                                    log("Clear Promise completed", req, result);
+                                    dfd.resolve();
+                                    //dfd.resolve(result, req.transaction);
                                 };
                                 req.onerror = function (e) {
                                     log("Clear Promise error", e, req);
@@ -676,7 +660,6 @@
                         }, dfd.reject);
                     }).promise();
                 },
-
                 deleteDb: function () {
                     return $.Deferred(function (dfd) {
                         var dbName = databaseConfiguration ? databaseConfiguration.Name : "Default"
@@ -704,7 +687,6 @@
                         }
                     });
                 }
-
             }; // end of all promise definations
 
             function closeDatabaseConnection(db) {
@@ -940,6 +922,10 @@
 
             function SelectData(data, propertyNames) {
                 if (propertyNames) {
+                    if (!$.isArray(propertyNames)) {
+                        propertyNames = [propertyNames];
+                    }
+
                     var obj = new Object();
                     for (var i = 0; i < propertyNames.length; i++) {
                         obj[propertyNames[i]] = data[propertyNames[i]];
@@ -952,12 +938,6 @@
             function SelectInternal(cursorPromis) {
                 return {
                     select: function (propertyNames) {
-                        var properties = undefined
-                        if (propertyNames) {
-                            if (!$.isArray(propertyNames)) {
-                                properties = propertyNames
-                            }
-                        }
                         return {
                             all: function (callback) {
                                 var returnData = [];
@@ -1008,20 +988,17 @@
                                 return SelectInternal(promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName)));
                             }
                         },
-                        get: function (key) {
-                            return promise.get(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), key);
+                        insert: function (data, key, onsuccess, onerror) {
+                            $.when(promise.insert(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key)).then(onsuccess, onerror);
                         },
-                        insert: function (data, key) {
-                            return promise.insert(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key)
+                        update: function (data, key, onsuccess, onerror) {
+                            $.when(promise.update(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key)).then(onsuccess, onerror);
                         },
-                        update: function (data, key) {
-                            return promise.update(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key);
+                        remove: function (key, onsuccess, onerror) {
+                            $.when(promise.remove(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), key)).then(onsuccess, onerror);
                         },
-                        remove: function (key) {
-                            return promise.remove(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), key);
-                        },
-                        clear: function () {
-                            return promise.clear(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName));
+                        clear: function (onsuccess, onerror) {
+                            $.when(promise.clear(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName))).then(onsuccess, onerror);
                         }
                     }
                 },
