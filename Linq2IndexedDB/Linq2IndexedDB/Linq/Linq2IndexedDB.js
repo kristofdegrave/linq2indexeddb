@@ -203,9 +203,9 @@
 
                                 if (nonExistingObjectStores.length > 0 && (!databaseConfiguration || !databaseConfiguration.objectStoreConfiguration)) {
                                     var version = GetDatabaseVersion(db) + 1
-                                    log("Transaction Promise database upgrade needed: " + db);
+                                    log("Transaction Promise database upgrade needed: ", db);
                                     db.close();
-                                    log("Close database Connection: " + db);
+                                    log("Close database Connection: ", db);
                                     $.when(promise.dbInternal(version, function (txn) {
                                         for (var j = 0; j < nonExistingObjectStores.length; j++) {
                                             promise.createObjectStore(promise.self(txn), nonExistingObjectStores[j])
@@ -219,7 +219,7 @@
                                 else {
                                     var txn = db.transaction(objectStoreNames, transactionType);
                                     txn.oncomplete = function () {
-                                        log("Transaction completed");
+                                        log("Transaction completed", txn);
                                         closeDatabaseConnection(txn.db);
                                         if (typeof (onTransactionCompleted) === 'function') onTransactionCompleted();
                                     }
@@ -229,7 +229,7 @@
                                 }
                             }
                             catch (e) {
-                                log("Transaction Promise exception", e);
+                                log("Transaction Promise exception", e, db);
                                 dfd.reject(e, db);
                             }
 
@@ -256,7 +256,7 @@
                                 dfd.resolve(store, txn);
                             }
                             catch (e) {
-                                log("Error in Object Store Promise", e);
+                                log("Error in Object Store Promise", e, txn);
                                 abortTransaction(txn);
                                 dfd.reject(e, txn.db);
                             }
@@ -554,11 +554,11 @@
                             try {
                                 var req;
 
-                                if (key /*&& !store.keyPath*/) {
+                                if (key && !store.keyPath) {
                                     req = store.add(data, key);
                                 }
                                 else {
-                                    /*if(key) log("Key can't be provided when a keyPath is defined on the object store", store, key, data);*/
+                                    if(key) log("Key can't be provided when a keyPath is defined on the object store", store, key, data);
                                     req = store.add(data);
                                 }
 
@@ -590,10 +590,11 @@
                             try {
                                 var req;
 
-                                if (key) {
+                                if (key && !store.keyPath) {
                                     req = store.put(data, key);
                                 }
                                 else {
+                                    if (key) log("Key can't be provided when a keyPath is defined on the object store", store, key, data);
                                     req = store.put(data);
                                 }
                                 req.onsuccess = function (e) {
@@ -674,6 +675,34 @@
                             }
                         }, dfd.reject);
                     }).promise();
+                },
+
+                deleteDb: function () {
+                    return $.deffered(function (dfd) {
+                        var dbName = databaseConfiguration ? databaseConfiguration.Name : "Default"
+                        try {
+                            if (typeof (window.indexedDB.deleteDatabase) != "undefined") {
+
+                                var dbreq = window.indexedDB.deleteDatabase(dbName);
+                                dbreq.onsuccess = function (e) {
+                                    log("Delete Database Promise completed", e, dbName);
+                                    dfd.resolved(e, dbName);
+                                }
+                                dbreq.onerror = function (e) {
+                                    log("Delete Database Promise error", e, dbName);
+                                    dfd.reject(e, dbName);
+                                }
+                            }
+                            else {
+                                log("Delete Database function not found", dbName);
+                                dfd.reject(dbName);
+                            }
+                        }
+                        catch (e) {
+                            log("Delete Database Promise exception", e, dbName);
+                            dfd.reject(e, dbName);
+                        }
+                    });
                 }
 
             }; // end of all promise definations
@@ -897,6 +926,17 @@
                 }
             }
 
+            function SelectData(data, propertyNames) {
+                if (propertyNames) {
+                    var obj = new Object();
+                    for (var i = 0; i < propertyNames.length; i++) {
+                        obj[propertyName[i]] = data[propertyName[i]];
+                    }
+                    return obj;
+                }
+                return data;
+            }
+
             function SelectInternal(cursorPromis) {
                 return {
                     Select: function (propertyNames) {
@@ -908,44 +948,25 @@
                         }
                         return {
                             All: function (callback) {
-                                $.when(cursorPromis).then(function (data) {
-                                    var returnData = [];
-
-                                    if (propertyNames) {
-                                        for (var i = 0; i < data.length; i++) {
-                                            var obj = new Object();
-                                            for (var j = 0; j < propertyNames.length; j++) {
-                                                obj[propertyName[j]] = data[i][propertyName[j]];
-                                            }
-                                            returnData.push(obj);
-                                        }
-                                    }
-                                    else {
-                                        returnData = data;
-                                    }
-
+                                var returnData = [];
+                                $.when(cursorPromis).then(function () {
                                     if (typeof (callback) === 'function') {
                                         callback(returnData);
                                     }
+                                }
+                                , function () { /*error handler*/ }
+                                , function (data, req) {
+                                    returnData.push(SelectData(data, propertyNames))
                                 });
                             },
                             forEach: function (callback) {
-                                $.when(cursorPromis).then(function (data) {
-                                    for (var i = 0; i < data.length; i++) {
-                                        var obj;
-                                        if (propertyNames) {
-                                            obj = new Object();
-                                            for (var j = 0; j < propertyNames.length; j++) {
-                                                obj[propertyNames[j]] = data[i][propertyNames[j]];
-                                            }
-                                        }
-                                        else {
-                                            obj = data[i];
-                                        }
-
-                                        if (typeof (callback) === 'function') {
-                                            callback(obj);
-                                        }
+                                $.when(cursorPromis).then(function () {
+                                    /* complete */
+                                }
+                                , function () { /* Error handler */ }
+                                , function (data, req) {
+                                    if (typeof (callback) === 'function') {
+                                        callback(SelectData(data, propertyNames));
                                     }
                                 });
                             }
@@ -1060,6 +1081,10 @@
 
                 Initialize: function (onsuccess, onerror) {
                     $.when(promise.db()).then(onsuccess, onerror)
+                },
+
+                DeleteDatabase: function (onsuccess, onerror) {
+                    $.when(promise.deleteDb()).then(onsuccess, onerror)
                 }
             }
         }
