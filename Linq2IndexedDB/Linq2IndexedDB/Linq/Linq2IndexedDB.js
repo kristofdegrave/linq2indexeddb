@@ -196,7 +196,7 @@
                                 var nonExistingObjectStores = [];
 
                                 for (var i = 0; i < objectStoreNames.length; i++) {
-                                    if (!db.objectStoreNames.contains(objectStoreNames[i])) {
+                                    if (!db.objectStoreNames || !db.objectStoreNames.contains(objectStoreNames[i])) {
                                         nonExistingObjectStores.push(objectStoreNames[i]);
                                     }
                                 }
@@ -558,7 +558,7 @@
                                     req = store.add(data, key);
                                 }
                                 else {
-                                    if(key) log("Key can't be provided when a keyPath is defined on the object store", store, key, data);
+                                    if (key) log("Key can't be provided when a keyPath is defined on the object store", store, key, data);
                                     req = store.add(data);
                                 }
 
@@ -678,7 +678,7 @@
                 },
 
                 deleteDb: function () {
-                    return $.deffered(function (dfd) {
+                    return $.Deferred(function (dfd) {
                         var dbName = databaseConfiguration ? databaseConfiguration.Name : "Default"
                         try {
                             if (typeof (window.indexedDB.deleteDatabase) != "undefined") {
@@ -686,7 +686,7 @@
                                 var dbreq = window.indexedDB.deleteDatabase(dbName);
                                 dbreq.onsuccess = function (e) {
                                     log("Delete Database Promise completed", e, dbName);
-                                    dfd.resolved(e, dbName);
+                                    dfd.resolve(e, dbName);
                                 }
                                 dbreq.onerror = function (e) {
                                     log("Delete Database Promise error", e, dbName);
@@ -913,19 +913,19 @@
 
             function whereInternal(objectStorePromise, propertyName) {
                 return {
-                    Equals: function (value) {
+                    equals: function (value) {
                         var cursorPromis = promise.cursor(promise.index(propertyName, objectStorePromise), IDBKeyRange.only(value));
                         return SelectInternal(cursorPromis)
                     },
-                    GreaterThen: function (value, valueIncluded) {
+                    greaterThen: function (value, valueIncluded) {
                         var cursorPromis = promise.cursor(promise.index(propertyName, objectStorePromise), IDBKeyRange.lowerBound(value, typeof (valueIncluded) === 'undefined' ? false : valueIncluded));
                         return SelectInternal(cursorPromis)
                     },
-                    SmallerThen: function (value, valueIncluded) {
+                    smallerThen: function (value, valueIncluded) {
                         var cursorPromis = promise.cursor(promise.index(propertyName, objectStorePromise), IDBKeyRange.upperBound(value, typeof (valueIncluded) === 'undefined' ? false : valueIncluded));
                         return SelectInternal(cursorPromis)
                     },
-                    Between: function (minValue, maxValue, minValueIncluded, maxValueIncluded) {
+                    between: function (minValue, maxValue, minValueIncluded, maxValueIncluded) {
                         var cursorPromis = promise.cursor(promise.index(propertyName, objectStorePromise), IDBKeyRange.bound(minValue, maxValue, typeof (minValueIncluded) === 'undefined' ? false : minValueIncluded), typeof (maxValueIncluded) === 'undefined' ? false : maxValueIncluded);
                         return SelectInternal(cursorPromis)
                     }
@@ -936,7 +936,7 @@
                 if (propertyNames) {
                     var obj = new Object();
                     for (var i = 0; i < propertyNames.length; i++) {
-                        obj[propertyName[i]] = data[propertyName[i]];
+                        obj[propertyNames[i]] = data[propertyNames[i]];
                     }
                     return obj;
                 }
@@ -945,7 +945,7 @@
 
             function SelectInternal(cursorPromis) {
                 return {
-                    Select: function (propertyNames) {
+                    select: function (propertyNames) {
                         var properties = undefined
                         if (propertyNames) {
                             if (!$.isArray(propertyNames)) {
@@ -953,7 +953,7 @@
                             }
                         }
                         return {
-                            All: function (callback) {
+                            all: function (callback) {
                                 var returnData = [];
                                 $.when(cursorPromis).then(function () {
                                     if (typeof (callback) === 'function') {
@@ -982,25 +982,9 @@
             }
 
             return {
-                Insert: function (data, key) {
+                from: function (objectStoreName) {
                     return {
-                        Into: function (objectStoreName) {
-                            return promise.insert(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key)
-                        }
-                    }
-                },
-
-                Update: function (objectStoreName, data, key) {
-                    return promise.update(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key);
-                },
-
-                Delete: function (objectStoreName, key) {
-                    return promise.remove(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), key);
-                },
-
-                From: function (objectStoreName) {
-                    return {
-                        Where: function (propertyName, clause) {
+                        where: function (propertyName, clause) {
                             if (propertyName) {
                                 if (clause) {
                                     if (clause.equals) {
@@ -1019,77 +1003,29 @@
                                 return SelectInternal(cursorPromise);
                             }
                         },
-                        Get: function (key) {
+                        get: function (key) {
                             return promise.get(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), key);
+                        },
+                        insert: function (data, key){
+                            return promise.insert(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key)
+                        },
+                        update: function (data, key){
+                            return promise.update(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key);
+                        },
+                        remove: function (key){
+                            return promise.remove(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), key);
+                        },
+                        clear: function () {
+                            return promise.clear(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName));
                         }
                     }
                 },
 
-                ReadAll: function (objectStoreName, success, error) {
-                    var cursorPromise = promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName));
-                    $.when(cursorPromise).then(function (returnData, txn) {
-                        closeDatabaseConnection(txn.db);
-                        if (typeof (success) === 'function') {
-                            success(returnData);
-                        }
-                    }, error);
-                },
-
-                GetData: function (objectStoreName, key, success, error) {
-                    var getPromise = promise.get(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), key);
-                    $.when(getPromise).then(function (returnData, txn) {
-                        closeDatabaseConnection(txn.db);
-                        if (typeof (success) === 'function') {
-                            success(returnData);
-                        }
-                    }, error);
-                },
-
-                SearchData: function (objectStoreName, propertyName, searchValue, success, error) {
-                    var cursorPromise = promise.cursor(promise.index(propertyName, promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName)), IDBKeyRange.only(searchValue));
-                    $.when(cursorPromise).then(function (returnData, txn) {
-                        closeDatabaseConnection(txn.db);
-                        if (typeof (success) === 'function') {
-                            success(returnData);
-                        }
-                    }, error);
-                },
-
-                InsertData: function (objectStoreName, data, success, error) {
-                    var insertPromise = promise.insert(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data);
-                    $.when(insertPromise).then(function (returnData, txn) {
-                        closeDatabaseConnection(txn.db);
-                        if (typeof (success) === 'function') {
-                            success(returnData);
-                        }
-                    }, error);
-                },
-
-                UpdateData: function (objectStoreName, data, success, error) {
-                    var updatePromise = promise.update(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data);
-                    $.when(updatePromise).then(function (returnData, txn) {
-                        closeDatabaseConnection(txn.db);
-                        if (typeof (success) === 'function') {
-                            success(returnData);
-                        }
-                    }, error);
-                },
-
-                DeleteData: function (objectStoreName, key, success, error) {
-                    var deletePromise = promise.remove(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), key);
-                    $.when(deletePromise).then(function (returnData, txn) {
-                        closeDatabaseConnection(txn.db);
-                        if (typeof (success) === 'function') {
-                            success();
-                        }
-                    }, error);
-                },
-
-                Initialize: function (onsuccess, onerror) {
+                initialize: function (onsuccess, onerror) {
                     $.when(promise.db()).then(onsuccess, onerror)
                 },
 
-                DeleteDatabase: function (onsuccess, onerror) {
+                deleteDatabase: function (onsuccess, onerror) {
                     $.when(promise.deleteDb()).then(onsuccess, onerror)
                 }
             }
