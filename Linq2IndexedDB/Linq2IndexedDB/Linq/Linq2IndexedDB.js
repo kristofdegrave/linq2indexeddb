@@ -1,43 +1,43 @@
 /// <reference path="jquery-1.7.1-vsdoc.js" />
 /// <reference path="jquery-1.7.1.js" />
 
-(function($){
+(function ($) {
     $.extend({
-        linq2indexeddb: function(databaseConfiguration){
+        linq2indexeddb: function (databaseConfiguration) {
 
             var logging = true;
 
-            log = function () {            
-                if (typeof(window.console) === "undefined" || !logging) {
-					 	return false;
-				}
-				return window.console.log.apply(console, arguments);	 
+            log = function () {
+                if (typeof (window.console) === "undefined" || !logging) {
+                    return false;
+                }
+                return window.console.log.apply(console, arguments);
             };
 
             var prototype = Initialize_IndexedDB();
 
             var promise = {
-                self: function(value){
-                    return $.Deferred(function(dfd){ 
+                self: function (value) {
+                    return $.Deferred(function (dfd) {
                         dfd.resolve(value);
                     });
                 },
 
-                db : function(){
+                db: function () {
                     var version = databaseConfiguration ? databaseConfiguration.version : undefined
                     return promise.dbInternal(version, InitializeDatabse)
                 },
 
-                dbInternal: function(databaseVersion, initVersion){
-                    return $.Deferred(function(dfd){
+                dbInternal: function (databaseVersion, initVersion) {
+                    return $.Deferred(function (dfd) {
                         try {
                             var req;
                             var name = databaseConfiguration ? databaseConfiguration.Name : "Default"
-                            
-                            if(databaseVersion){
+
+                            if (databaseVersion) {
                                 req = window.indexedDB.open(name, databaseVersion);
                             }
-                            else{
+                            else {
                                 req = window.indexedDB.open(name);
                             }
 
@@ -47,34 +47,34 @@
                                 if (prototype) result = e.result;
                                 if (req.result) result = req.result;
 
-                                result.onabort = function(e){
+                                result.onabort = function (e) {
                                     log("DB abort", e, result);
                                     result.close();
                                 }
 
-                                result.onerror = function(e){
+                                result.onerror = function (e) {
                                     log("DB error", e, result);
                                     result.close();
                                 }
 
-                                result.onversionchange = function(e){
+                                result.onversionchange = function (e) {
                                     log("DB versionchange", e, result);
                                     result.close();
-                                }  
-                                
-                                var dbver = GetDatabaseVersion(result);                      
+                                }
 
-                                if(databaseVersion && dbver < databaseVersion){
+                                var dbver = GetDatabaseVersion(result);
+
+                                if (databaseVersion && dbver < databaseVersion) {
                                     log("DB Promise upgradeneeded", result);
-                                     try {
-                                        var versionChangePromise = promise.changeDatabaseStructure(promise.self(result), databaseVersion, function (){
+                                    try {
+                                        var versionChangePromise = promise.changeDatabaseStructure(promise.self(result), databaseVersion, function () {
                                             log("DB Promise upgradeneeded completed");
-                                            $.when(promise.db()).then(function (dbConnection){
-                                                    dfd.resolve(dbConnection);
-                                                }, dfd.reject);
+                                            $.when(promise.db()).then(function (dbConnection) {
+                                                dfd.resolve(dbConnection);
+                                            }, dfd.reject);
                                         });
 
-                                        $.when(versionChangePromise).then(function(txn){
+                                        $.when(versionChangePromise).then(function (txn) {
                                             initVersion(txn, dbver, databaseVersion);
                                         }, dfd.reject);
                                     }
@@ -83,7 +83,7 @@
                                         dfd.reject(e, result);
                                     }
                                 }
-                                else{
+                                else {
                                     log("DB Promise resolved", result);
                                     dfd.resolve(result);
                                 }
@@ -99,28 +99,28 @@
                                 dfd.reject(e, req);
                             }
 
-                            req.onupgradeneeded = function (e){
+                            req.onupgradeneeded = function (e) {
                                 var result;
 
                                 if (prototype) result = e.result;
                                 if (req.result) result = req.result;
 
                                 log("DB Promise upgradeneeded", result);
-                                
+
                                 req.transaction.oncomplete = function () {
                                     log("DB Promise upgradeneeded completed", req.transaction);
                                     closeDatabaseConnection(req.transaction.db);
-                                    $.when(promise.db()).then(function (dbConnection){
+                                    $.when(promise.db()).then(function (dbConnection) {
                                         dfd.resolve(dbConnection)
                                     }, dfd.reject);
                                 }
 
-                                if(initVersion && typeof(initVersion) === 'function'){
+                                if (initVersion && typeof (initVersion) === 'function') {
                                     initVersion(req.transaction, e.oldVersion, e.newVersion)
                                 }
                             }
 
-                            req.onblocked = function (e){
+                            req.onblocked = function (e) {
                                 var result;
 
                                 if (prototype) result = e.result;
@@ -142,8 +142,7 @@
                         $.when(dbPromise).then(function (db) {
                             try {
                                 log("Version Change Transaction Promise started", db, version);
-                                if(!version)
-                                {
+                                if (!version) {
                                     version = GetDatabaseVersion(db)
                                 }
 
@@ -154,11 +153,11 @@
 
                                     if (prototype) txn = e.result;
                                     if (req.result) txn = req.result;
-                                    
+
                                     txn.oncomplete = function () {
                                         log("Version Change Transaction transaction completed", txn);
                                         closeDatabaseConnection(txn.db);
-                                        if (typeof(onTransactionCompleted) === 'function') onTransactionCompleted();
+                                        if (typeof (onTransactionCompleted) === 'function') onTransactionCompleted();
                                     }
 
                                     log("Version Change Transaction Promise completed", txn);
@@ -197,34 +196,32 @@
                                 var nonExistingObjectStores = [];
 
                                 for (var i = 0; i < objectStoreNames.length; i++) {
-                                    if(!db.objectStoreNames.contains(objectStoreNames[i])){
+                                    if (!db.objectStoreNames.contains(objectStoreNames[i])) {
                                         nonExistingObjectStores.push(objectStoreNames[i]);
                                     }
                                 }
 
-                                if(nonExistingObjectStores.length > 0 && (!databaseConfiguration || !databaseConfiguration.objectStoreConfiguration))
-                                {
+                                if (nonExistingObjectStores.length > 0 && (!databaseConfiguration || !databaseConfiguration.objectStoreConfiguration)) {
                                     var version = GetDatabaseVersion(db) + 1
                                     log("Transaction Promise database upgrade needed: " + db);
                                     db.close();
                                     log("Close database Connection: " + db);
-                                    $.when(promise.dbInternal(version, function(txn){
+                                    $.when(promise.dbInternal(version, function (txn) {
                                         for (var j = 0; j < nonExistingObjectStores.length; j++) {
                                             promise.createObjectStore(promise.self(txn), nonExistingObjectStores[j])
                                         }
-                                    })).then(function(){
-                                        $.when(promise.transaction(promise.db(), objectStoreNames, transactionType, onTransactionCompleted)).then(function(txn){
+                                    })).then(function () {
+                                        $.when(promise.transaction(promise.db(), objectStoreNames, transactionType, onTransactionCompleted)).then(function (txn) {
                                             dfd.resolve(txn);
                                         }, dfd.reject);
                                     });
                                 }
-                                else
-                                {
+                                else {
                                     var txn = db.transaction(objectStoreNames, transactionType);
                                     txn.oncomplete = function () {
                                         log("Transaction completed");
                                         closeDatabaseConnection(txn.db);
-                                        if (typeof(onTransactionCompleted) === 'function') onTransactionCompleted();
+                                        if (typeof (onTransactionCompleted) === 'function') onTransactionCompleted();
                                     }
 
                                     log("Transaction Promise completed", txn);
@@ -241,11 +238,11 @@
                     ;
                 },
 
-                readTransaction: function (dbPromise, objectStoreNames, onTransactionCompleted){
+                readTransaction: function (dbPromise, objectStoreNames, onTransactionCompleted) {
                     return promise.transaction(dbPromise, objectStoreNames, IDBTransaction.READ_ONLY);
                 },
 
-                writeTransaction: function (dbPromise, objectStoreNames, onTransactionCompleted){
+                writeTransaction: function (dbPromise, objectStoreNames, onTransactionCompleted) {
                     return promise.transaction(dbPromise, objectStoreNames, IDBTransaction.READ_WRITE, onTransactionCompleted);
                 },
 
@@ -272,19 +269,19 @@
                         $.when(changeDatabaseStructurePromise).then(function (txn) {
                             log("createObjectStore Promise started", changeDatabaseStructurePromise, objectStoreName, objectStoreOptions);
                             try {
-                                
+
                                 if (!txn.db.objectStoreNames.contains(objectStoreName)) {
                                     var store = txn.db.createObjectStore(objectStoreName, {
-                                                    "autoIncrement": objectStoreOptions ? objectStoreOptions.autoIncrement : true,
-                                                    "keyPath": objectStoreOptions ? objectStoreOptions.keyPath : "id"
-                                                }, objectStoreOptions ? objectStoreOptions.autoIncrement : true);
+                                        "autoIncrement": objectStoreOptions ? objectStoreOptions.autoIncrement : true,
+                                        "keyPath": objectStoreOptions ? objectStoreOptions.keyPath : "id"
+                                    }, objectStoreOptions ? objectStoreOptions.autoIncrement : true);
 
                                     log("ObjectStore Created", store);
                                     log("createObjectStore Promise completed", store);
                                     dfd.resolve(store, txn);
                                 }
                                 else {
-                                    $.when(promise.objectStore(promise.self(txn), objectStoreName)).then(function(store){
+                                    $.when(promise.objectStore(promise.self(txn), objectStoreName)).then(function (store) {
                                         log("ObjectStore Found", store);
                                         log("createObjectStore Promise completed", store);
                                         dfd.resolve(store, txn);
@@ -299,7 +296,7 @@
                         }, dfd.reject);
                     }).promise();
                 },
-                
+
                 deleteObjectStore: function (changeDatabaseStructurePromise, objectStoreName) {
                     return $.Deferred(function (dfd) {
                         $.when(changeDatabaseStructurePromise).then(function (txn) {
@@ -331,10 +328,10 @@
                             log("createIndex Promise started", objectStore)
                             try {
                                 var index;
-                                if(prototype){
+                                if (prototype) {
                                     index = objectStore.createIndex(propertyName + "-index", propertyName, indexOptions ? indexOptions.IsUnique : false);
                                 }
-                                else{
+                                else {
                                     index = objectStore.createIndex(propertyName + "-index", propertyName, { unique: indexOptions ? indexOptions.IsUnique : false/*, multirow: indexOptions ? indexOptions.Multirow : false*/ });
                                 }
 
@@ -355,7 +352,7 @@
                             log("deleteIndex Promise started", objectStore)
                             try {
                                 objectStore.deleteIndex(propertyName + "-index");
-                                
+
                                 log("deleteIndex Promise compelted", propertyName);
                                 dfd.resolve(index);
                             }
@@ -372,19 +369,19 @@
                         $.when(objectStorePromise).then(function (objectStore, txn) {
                             log("Index Promise started", objectStore)
                             try {
-                                if(objectStore.indexNames.contains(propertyName + "-index")){
+                                if (objectStore.indexNames.contains(propertyName + "-index")) {
                                     var index = objectStore.index(propertyName + "-index");
                                     log("Index Promise compelted", index);
                                     dfd.resolve(index);
                                 }
-                                else if(!databaseConfiguration || !databaseConfiguration.objectStoreConfiguration){
+                                else if (!databaseConfiguration || !databaseConfiguration.objectStoreConfiguration) {
                                     var version = GetDatabaseVersion(txn.db) + 1
-                                    promise.dbInternal(version, function(txn){
-                                        $.when(promise.createIndex(propertyName, promise.createObjectStore(promise.self(txn), objectStore.name))).then(function(index){
-                                                log("Index Promise compelted", index);
-                                                dfd.resolve(index);
-                                            });
+                                    promise.dbInternal(version, function (txn) {
+                                        $.when(promise.createIndex(propertyName, promise.createObjectStore(promise.self(txn), objectStore.name))).then(function (index) {
+                                            log("Index Promise compelted", index);
+                                            dfd.resolve(index);
                                         });
+                                    });
                                 }
                             }
                             catch (e) {
@@ -395,31 +392,31 @@
                     }).promise();
                 },
 
-                cursor: function(sourcePromise, range, direction){
-                    return $.Deferred(function(dfd){
-                        $.when(sourcePromise).then(function(source){
+                cursor: function (sourcePromise, range, direction) {
+                    return $.Deferred(function (dfd) {
+                        $.when(sourcePromise).then(function (source) {
                             log("Cursor Promise Started", source);
 
                             var req;
                             var returnData = [];
 
-                            if(prototype && typeof(source.openKeyCursor) === 'function') {
+                            if (prototype && typeof (source.openKeyCursor) === 'function') {
                                 req = source.openKeyCursor(range || IDBKeyRange.lowerBound(0), direction);
                             }
-                            else{
+                            else {
                                 req = source.openCursor(range || IDBKeyRange.lowerBound(0), direction);
                             }
-                            function handleCursorRequest(e){
+                            function handleCursorRequest(e) {
                                 var result;
 
                                 if (prototype) result = e.result;
                                 if (req.result) result = req.result;
 
-                                if(prototype){
-                                    result.move(); 
+                                if (prototype) {
+                                    result.move();
 
-                                    if(result.value)
-                                    {
+                                    if (result.value) {
+                                        dfd.notify(result.value, req);
                                         returnData.push(result.value);
                                         req.onsuccess = handleCursorRequest;
                                     }
@@ -427,12 +424,13 @@
 
                                 if (req.result) {
                                     if (result.value) {
+                                        dfd.notify(result.value, req);
                                         returnData.push(result.value);
                                     }
                                     result["continue"]();
                                 }
 
-                                if(!result){
+                                if (!result) {
                                     log("Cursor Promise completed", req);
                                     dfd.resolve(returnData, req.transaction);
                                 }
@@ -440,7 +438,7 @@
 
                             req.onsuccess = handleCursorRequest;
 
-                            req.onerror = function(e){
+                            req.onerror = function (e) {
                                 log("Cursor Promise error", e, req);
                                 dfd.reject(e, req);
                             };
@@ -448,30 +446,30 @@
                     }).promise();
                 },
 
-                keyCursor: function(indexPromise, range, direction){
-                    return $.Deferred(function(dfd){
-                        $.when(indexPromise).then(function(index){
+                keyCursor: function (indexPromise, range, direction) {
+                    return $.Deferred(function (dfd) {
+                        $.when(indexPromise).then(function (index) {
                             log("keyCursor Promise Started", index);
 
                             var req;
 
-                            if(prototype) {
+                            if (prototype) {
                                 req = index.openCursor(range || IDBKeyRange.lowerBound(0), direction);
                             }
-                            else{
+                            else {
                                 req = index.openKeyCursor(range, direction);
                             }
-                            function handleCursorRequest(e){
+                            function handleCursorRequest(e) {
                                 var result;
 
                                 if (prototype) result = e.result;
                                 if (req.result) result = req.result;
 
-                                if(prototype){
-                                    result.move(); 
+                                if (prototype) {
+                                    result.move();
 
-                                    if(result.value)
-                                    {
+                                    if (result.value) {
+                                        dfd.notify(result.value, req);
                                         returnData.push(result.value);
                                         req.onsuccess = handleCursorRequest;
                                     }
@@ -479,19 +477,20 @@
 
                                 if (req.result) {
                                     if (result.value) {
+                                        dfd.notify(result.value, req);
                                         returnData.push(result.value);
                                     }
                                     result["continue"]();
                                 }
 
-                                if(!result){
+                                if (!result) {
                                     log("keyCursor Promise completed", req);
                                     dfd.resolve(returnData, req.transaction);
                                 }
                             };
 
                             req.onsuccess = handleCursorRequest;
-                            req.onerror = function(e){
+                            req.onerror = function (e) {
                                 log("keyCursor Promise error", e, req);
                                 dfd.reject(e, req);
                             };
@@ -499,14 +498,14 @@
                     }).promise();
                 },
 
-                get: function(sourcePromise, key){
-                    return $.Deferred(function(dfd){
-                        $.when(sourcePromise).then(function(source){
+                get: function (sourcePromise, key) {
+                    return $.Deferred(function (dfd) {
+                        $.when(sourcePromise).then(function (source) {
                             log("Get Promise Started", source);
 
                             var req = source.get(key);
 
-                            req.onsuccess = function(e){
+                            req.onsuccess = function (e) {
                                 var result;
 
                                 if (prototype) result = e.result;
@@ -515,7 +514,7 @@
                                 log("Get Promise completed", req);
                                 dfd.resolve(result, req.transaction);
                             };
-                            req.onerror = function(e){
+                            req.onerror = function (e) {
                                 log("Get Promise error", e, req);
                                 dfd.reject(e, req);
                             };
@@ -523,14 +522,14 @@
                     }).promise();
                 },
 
-                getKey: function(indexPromise, key){
-                    return $.Deferred(function(dfd){
-                        $.when(indexPromise).then(function(index){
+                getKey: function (indexPromise, key) {
+                    return $.Deferred(function (dfd) {
+                        $.when(indexPromise).then(function (index) {
                             log("GetKey Promise Started", index);
 
                             var req = index.getKey(key);
 
-                            req.onsuccess = function(e){
+                            req.onsuccess = function (e) {
                                 var result;
 
                                 if (prototype) result = e.result;
@@ -539,7 +538,7 @@
                                 log("GetKey Promise completed", req);
                                 dfd.resolve(result, req.transaction);
                             };
-                            req.onerror = function(e){
+                            req.onerror = function (e) {
                                 log("GetKey Promise error", e, req);
                                 dfd.reject(e, req);
                             };
@@ -547,18 +546,18 @@
                     }).promise();
                 },
 
-                insert: function(objectStorePromise, data, key){
-                    return $.Deferred(function(dfd){
-                        $.when(objectStorePromise).then(function(store){
+                insert: function (objectStorePromise, data, key) {
+                    return $.Deferred(function (dfd) {
+                        $.when(objectStorePromise).then(function (store) {
                             log("Insert Promise Started", store);
 
                             try {
                                 var req;
 
-                                if(key /*&& !store.keyPath*/){
+                                if (key /*&& !store.keyPath*/) {
                                     req = store.add(data, key);
                                 }
-                                else{
+                                else {
                                     /*if(key) log("Key can't be provided when a keyPath is defined on the object store", store, key, data);*/
                                     req = store.add(data);
                                 }
@@ -583,18 +582,18 @@
                     }).promise();
                 },
 
-                update: function(objectStorePromise, data, key){
-                    return $.Deferred(function(dfd){
-                        $.when(objectStorePromise).then(function(store){
+                update: function (objectStorePromise, data, key) {
+                    return $.Deferred(function (dfd) {
+                        $.when(objectStorePromise).then(function (store) {
                             log("Update Promise Started", store);
 
                             try {
                                 var req;
 
-                                if(key){
+                                if (key) {
                                     req = store.put(data, key);
                                 }
-                                else{
+                                else {
                                     req = store.put(data);
                                 }
                                 req.onsuccess = function (e) {
@@ -619,9 +618,9 @@
                     }).promise();
                 },
 
-                remove: function(objectStorePromise, key){
-                    return $.Deferred(function(dfd){
-                        $.when(objectStorePromise).then(function(store){
+                remove: function (objectStorePromise, key) {
+                    return $.Deferred(function (dfd) {
+                        $.when(objectStorePromise).then(function (store) {
                             log("Remove Promise Started", store);
 
                             try {
@@ -648,9 +647,9 @@
                     }).promise();
                 },
 
-                clear: function(objectStorePromise){
-                    return $.Deferred(function(dfd){
-                        $.when(objectStorePromise).then(function(store){
+                clear: function (objectStorePromise) {
+                    return $.Deferred(function (dfd) {
+                        $.when(objectStorePromise).then(function (store) {
                             log("Clear Promise Started", store);
 
                             try {
@@ -677,7 +676,7 @@
                     }).promise();
                 }
 
-            };// end of all promise definations
+            }; // end of all promise definations
 
             function closeDatabaseConnection(db) {
                 log("Close database Connection: " + db);
@@ -806,9 +805,8 @@
                 }
             }
 
-            function InitializeDatabse(txn, oldVersion, newVersion){
-                if(databaseConfiguration && databaseConfiguration.objectStoreConfiguration)
-                {
+            function InitializeDatabse(txn, oldVersion, newVersion) {
+                if (databaseConfiguration && databaseConfiguration.objectStoreConfiguration) {
                     for (var version = oldVersion + 1; version == newVersion; version++) {
                         var data = GetDataByVersion(version, databaseConfiguration.objectStoreConfiguration);
                         InitializeVersion(txn, data)
@@ -824,26 +822,25 @@
                     try {
                         var storeConfig = data[i];
 
-                        if(storeConfig.remove){
+                        if (storeConfig.remove) {
                             promise.deleteObjectStore(promise.self(txn), storeConfig.name);
                         }
                         else {
                             var storePromise = promise.createObjectStore(promise.self(txn), storeConfig.name, { keyPath: storeConfig.keyPath, autoIncrement: storeConfig.autoIncrement });
 
-                            $.when(storePromise).then(function(store){
+                            $.when(storePromise).then(function (store) {
                                 for (var j = 0; j < storeConfig.Indexes.length; j++) {
-                                   var indexConfig = storeConfig.Indexes[j];
+                                    var indexConfig = storeConfig.Indexes[j];
 
-                                   if(indexConfig.remove){
+                                    if (indexConfig.remove) {
                                         promise.deleteIndex(indexConfig.PropertyName, promise.self(store));
-                                   }
-                                   else {
+                                    }
+                                    else {
                                         promise.createIndex(indexConfig.PropertyName, promise.self(store), { unique: indexConfig.IsUnique, multirow: indexConfig.Multirow });
-                                   }
+                                    }
                                 }
 
-                                if(storeConfig.DefaultData)
-                                {
+                                if (storeConfig.DefaultData) {
                                     for (var k = 0; k < storeConfig.DefaultData.length; k++) {
                                         promise.insert(promise.self(store), storeConfig.DefaultData[k])
                                     }
@@ -852,8 +849,8 @@
                         }
 
                     }
-                    catch (e) { 
-                        error("createIndex exception: " + e.message);  
+                    catch (e) {
+                        error("createIndex exception: " + e.message);
                         abortTransaction(txn);
                     }
                 }
@@ -869,9 +866,9 @@
                 return result;
             }
 
-            function GetDatabaseVersion(db){
+            function GetDatabaseVersion(db) {
                 var dbVersion = parseInt(db.version);
-                if(isNaN(dbVersion)){
+                if (isNaN(dbVersion)) {
                     return 0
                 }
                 else {
@@ -879,22 +876,22 @@
                 }
             }
 
-            function whereInternal(objectStorePromise, propertyName){
+            function whereInternal(objectStorePromise, propertyName) {
                 return {
-                    Equals: function(value){
-                        var cursorPromis = promise.cursor(promise.index(propertyName,objectStorePromise), IDBKeyRange.only(value));
+                    Equals: function (value) {
+                        var cursorPromis = promise.cursor(promise.index(propertyName, objectStorePromise), IDBKeyRange.only(value));
                         return SelectInternal(cursorPromis)
                     },
-                    GreaterThen: function(value, valueIncluded){
-                        var cursorPromis =  promise.cursor(promise.index(propertyName, objectStorePromise), IDBKeyRange.lowerBound(value, typeof(valueIncluded) === 'undefined' ? false : valueIncluded));
+                    GreaterThen: function (value, valueIncluded) {
+                        var cursorPromis = promise.cursor(promise.index(propertyName, objectStorePromise), IDBKeyRange.lowerBound(value, typeof (valueIncluded) === 'undefined' ? false : valueIncluded));
                         return SelectInternal(cursorPromis)
                     },
-                    SmallerThen: function(value, valueIncluded){
-                        var cursorPromis =  promise.cursor(promise.index(propertyName, objectStorePromise), IDBKeyRange.upperBound(value, typeof(valueIncluded) === 'undefined' ? false : valueIncluded));
+                    SmallerThen: function (value, valueIncluded) {
+                        var cursorPromis = promise.cursor(promise.index(propertyName, objectStorePromise), IDBKeyRange.upperBound(value, typeof (valueIncluded) === 'undefined' ? false : valueIncluded));
                         return SelectInternal(cursorPromis)
                     },
-                    Between: function(minValue, maxValue, minValueIncluded, maxValueIncluded){
-                        var cursorPromis =  promise.cursor(promise.index(propertyName, objectStorePromise), IDBKeyRange.bound(minValue, maxValue, typeof(minValueIncluded) === 'undefined' ? false : minValueIncluded), typeof(maxValueIncluded) === 'undefined' ? false : maxValueIncluded);
+                    Between: function (minValue, maxValue, minValueIncluded, maxValueIncluded) {
+                        var cursorPromis = promise.cursor(promise.index(propertyName, objectStorePromise), IDBKeyRange.bound(minValue, maxValue, typeof (minValueIncluded) === 'undefined' ? false : minValueIncluded), typeof (maxValueIncluded) === 'undefined' ? false : maxValueIncluded);
                         return SelectInternal(cursorPromis)
                     }
                 }
@@ -902,21 +899,19 @@
 
             function SelectInternal(cursorPromis) {
                 return {
-                    Select: function(propertyNames){
+                    Select: function (propertyNames) {
                         var properties = undefined
-                        if(propertyNames)
-                        {
-                            if(!$.isArray(propertyNames)){
+                        if (propertyNames) {
+                            if (!$.isArray(propertyNames)) {
                                 properties = propertyNames
                             }
                         }
                         return {
-                            All: function(callback){
-                                $.when(cursorPromis).then(function(data){
+                            All: function (callback) {
+                                $.when(cursorPromis).then(function (data) {
                                     var returnData = [];
 
-                                    if(propertyNames)
-                                    {
+                                    if (propertyNames) {
                                         for (var i = 0; i < data.length; i++) {
                                             var obj = new Object();
                                             for (var j = 0; j < propertyNames.length; j++) {
@@ -929,27 +924,26 @@
                                         returnData = data;
                                     }
 
-                                    if(typeof(callback) === 'function'){
+                                    if (typeof (callback) === 'function') {
                                         callback(returnData);
                                     }
                                 });
                             },
-                            forEach: function(callback){
-                                $.when(cursorPromis).then(function(data){
+                            forEach: function (callback) {
+                                $.when(cursorPromis).then(function (data) {
                                     for (var i = 0; i < data.length; i++) {
                                         var obj;
-                                        if(propertyNames)
-                                        {
+                                        if (propertyNames) {
                                             obj = new Object();
                                             for (var j = 0; j < propertyNames.length; j++) {
                                                 obj[propertyNames[j]] = data[i][propertyNames[j]];
                                             }
                                         }
-                                        else{
+                                        else {
                                             obj = data[i];
                                         }
 
-                                        if(typeof(callback) === 'function'){
+                                        if (typeof (callback) === 'function') {
                                             callback(obj);
                                         }
                                     }
@@ -960,65 +954,65 @@
                 }
             }
 
-            return{
-                Insert: function(data, key){
+            return {
+                Insert: function (data, key) {
                     return {
-                        Into: function(objectStoreName){
+                        Into: function (objectStoreName) {
                             return promise.insert(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key)
                         }
                     }
                 },
 
-                Update: function(objectStoreName, data, key){
-                    return promise.update(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key); 
+                Update: function (objectStoreName, data, key) {
+                    return promise.update(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key);
                 },
 
-                Delete: function(objectStoreName, key){
-                    return promise.remove(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), key); 
+                Delete: function (objectStoreName, key) {
+                    return promise.remove(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), key);
                 },
 
-                From: function(objectStoreName){
+                From: function (objectStoreName) {
                     return {
-                        Where: function(propertyName, clause){
-                            if(propertyName){
-                                if(clause){
-                                   if (clause.equals) {
+                        Where: function (propertyName, clause) {
+                            if (propertyName) {
+                                if (clause) {
+                                    if (clause.equals) {
                                         return whereInternal(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), propertyName).Equals(clause.equals);
-                                   }
-                                   else if (clause.range) {
+                                    }
+                                    else if (clause.range) {
                                         return whereInternal(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), propertyName).Between(clause.range[0], clause.range[1], clause.range[2], clause.range[3]);
-                                   }
+                                    }
                                 }
-                                else{
+                                else {
                                     return whereInternal(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), propertyName);
                                 }
                             }
-                            else{
+                            else {
                                 var cursorPromise = promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName));
                                 return SelectInternal(cursorPromise);
                             }
                         },
-                        Get: function(key){
-                            return promise.get(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName),key);
+                        Get: function (key) {
+                            return promise.get(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), key);
                         }
                     }
                 },
 
-                ReadAll: function(objectStoreName, success, error){
+                ReadAll: function (objectStoreName, success, error) {
                     var cursorPromise = promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName));
-                    $.when(cursorPromise).then(function(returnData, txn){
+                    $.when(cursorPromise).then(function (returnData, txn) {
                         closeDatabaseConnection(txn.db);
-                        if(typeof(success) === 'function'){
+                        if (typeof (success) === 'function') {
                             success(returnData);
                         }
                     }, error);
                 },
 
-                GetData: function(objectStoreName, key, success, error){
+                GetData: function (objectStoreName, key, success, error) {
                     var getPromise = promise.get(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), key);
-                    $.when(getPromise).then(function(returnData, txn){
+                    $.when(getPromise).then(function (returnData, txn) {
                         closeDatabaseConnection(txn.db);
-                        if(typeof(success) === 'function'){
+                        if (typeof (success) === 'function') {
                             success(returnData);
                         }
                     }, error);
@@ -1026,45 +1020,45 @@
 
                 SearchData: function (objectStoreName, propertyName, searchValue, success, error) {
                     var cursorPromise = promise.cursor(promise.index(propertyName, promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName)), IDBKeyRange.only(searchValue));
-                    $.when(cursorPromise).then(function(returnData, txn){
+                    $.when(cursorPromise).then(function (returnData, txn) {
                         closeDatabaseConnection(txn.db);
-                        if(typeof(success) === 'function'){
+                        if (typeof (success) === 'function') {
                             success(returnData);
                         }
                     }, error);
                 },
 
-                InsertData: function(objectStoreName, data, success, error){
+                InsertData: function (objectStoreName, data, success, error) {
                     var insertPromise = promise.insert(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data);
-                    $.when(insertPromise).then(function(returnData, txn){
+                    $.when(insertPromise).then(function (returnData, txn) {
                         closeDatabaseConnection(txn.db);
-                        if(typeof(success) === 'function'){
-                            success(returnData);
-                        }
-                    }, error);
-                },
-  
-                UpdateData: function(objectStoreName, data, success, error){
-                    var updatePromise = promise.update(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data);
-                    $.when(updatePromise).then(function(returnData, txn){
-                        closeDatabaseConnection(txn.db);
-                        if(typeof(success) === 'function'){
+                        if (typeof (success) === 'function') {
                             success(returnData);
                         }
                     }, error);
                 },
 
-                DeleteData: function(objectStoreName, key, success, error){
-                    var deletePromise = promise.remove(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), key);
-                    $.when(deletePromise).then(function(returnData, txn){
+                UpdateData: function (objectStoreName, data, success, error) {
+                    var updatePromise = promise.update(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data);
+                    $.when(updatePromise).then(function (returnData, txn) {
                         closeDatabaseConnection(txn.db);
-                        if(typeof(success) === 'function'){
+                        if (typeof (success) === 'function') {
+                            success(returnData);
+                        }
+                    }, error);
+                },
+
+                DeleteData: function (objectStoreName, key, success, error) {
+                    var deletePromise = promise.remove(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), key);
+                    $.when(deletePromise).then(function (returnData, txn) {
+                        closeDatabaseConnection(txn.db);
+                        if (typeof (success) === 'function') {
                             success();
                         }
                     }, error);
                 },
 
-                Initialize: function(onsuccess, onerror){
+                Initialize: function (onsuccess, onerror) {
                     $.when(promise.db()).then(onsuccess, onerror)
                 }
             }
