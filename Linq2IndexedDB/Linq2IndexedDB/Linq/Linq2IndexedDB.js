@@ -723,8 +723,6 @@
                     // Initialising the window.IndexedDB Object for FireFox
                     if (window.mozIndexedDB) {
                         window.indexedDB = window.mozIndexedDB;
-                        window.IDBKeyRange = window.IDBKeyRange;
-                        window.IDBTransaction = window.IDBTransaction;
 
                         log("FireFox Initialized", window.indexedDB);
                         return false;
@@ -732,9 +730,17 @@
 
                     // Initialising the window.IndexedDB Object for Chrome
                     else if (window.webkitIndexedDB) {
-                        window.indexedDB = window.webkitIndexedDB;
-                        window.IDBKeyRange = window.webkitIDBKeyRange;
-                        window.IDBTransaction = window.webkitIDBTransaction;
+                        if (!window.indexedDB) window.indexedDB = window.webkitIndexedDB;
+                        if (!window.IDBCursor) window.IDBCursor = webkitIDBCursor
+                        if (!window.IDBDatabase) window.IDBDatabase = webkitIDBDatabase
+                        if (!window.IDBDatabaseError) window.IDBDatabaseError = webkitIDBDatabaseError
+                        if (!window.IDBDatabaseException) window.IDBDatabaseException = webkitIDBDatabaseException
+                        if (!window.IDBFactory) window.IDBFactory = webkitIDBFactory
+                        if (!window.IDBIndex) window.IDBIndex = webkitIDBIndex
+                        if (!window.IDBKeyRange) window.IDBKeyRange = webkitIDBKeyRange
+                        if (!window.IDBObjectStore) window.IDBObjectStore = webkitIDBObjectStore
+                        if (!window.IDBRequest) window.IDBRequest = webkitIDBRequest
+                        if (!window.IDBTransaction) window.IDBTransaction = webkitIDBTransaction
 
                         log("Chrome Initialized", window.indexedDB);
                         return false;
