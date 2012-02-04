@@ -265,7 +265,7 @@
                                 if (!txn.db.objectStoreNames.contains(objectStoreName)) {
                                     var store = txn.db.createObjectStore(objectStoreName, {
                                         "autoIncrement": objectStoreOptions ? objectStoreOptions.autoIncrement : true,
-                                        "keyPath": objectStoreOptions ? objectStoreOptions.keyPath : "id"
+                                        "keyPath": objectStoreOptions ? objectStoreOptions.keyPath : undefined
                                     }, objectStoreOptions ? objectStoreOptions.autoIncrement : true);
 
                                     log("ObjectStore Created", store);
