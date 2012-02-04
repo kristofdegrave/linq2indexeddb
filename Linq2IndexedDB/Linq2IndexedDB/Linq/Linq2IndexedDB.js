@@ -7,33 +7,11 @@
 
             var logging = true;
 
-            log = function (msg, param1, param2, param3) {            
-                var message;            
-                if (typeof (window.console) === "undefined" || !logging) {                
-                    return;            
-                }            
-                message = "[" + new Date().toTimeString() + "] linq2indexedDB: " + msg;            
-                if (window.console.debug) {
-                    if(param1){                
-                        if(param2){
-                            if(param3){
-                                window.console.debug(message, param1, param2, param3);
-                            }
-                            else{
-                                window.console.debug(message, param1, param2);
-                            }
-                        }
-                        else{
-                            window.console.debug(message, param1); 
-                        }  
-                    }      
-                    else{
-                        window.console.debug(message);   
-                    }   
-                } 
-                else if (window.console.log) {                
-                    window.console.log(message);            
-                }        
+            log = function () {            
+                if (typeof(window.console) === "undefined" || !logging) {
+					 	return false;
+				}
+				return window.console.log.apply(console, arguments);	 
             };
 
             var prototype = Initialize_IndexedDB();
@@ -451,7 +429,7 @@
                                     if (result.value) {
                                         returnData.push(result.value);
                                     }
-                                    result.continue();
+                                    result["continue"]();
                                 }
 
                                 if(!result){
@@ -503,7 +481,7 @@
                                     if (result.value) {
                                         returnData.push(result.value);
                                     }
-                                    result.continue();
+                                    result["continue"]();
                                 }
 
                                 if(!result){
@@ -647,7 +625,7 @@
                             log("Remove Promise Started", store);
 
                             try {
-                                var req = store.delete(key);
+                                var req = store["delete"](key);
                                 req.onsuccess = function (e) {
                                     var result;
 
