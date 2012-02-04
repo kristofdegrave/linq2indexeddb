@@ -55,6 +55,9 @@
     <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Tests\LinqTest.htm" />
+    <Content Include="Tests\qunit.css" />
+    <Content Include="Tests\qunit.js" />
     <Content Include="Linq\Linq2IndexedDB.js" />
     <Content Include="Samples\Insert.htm" />
     <Content Include="Samples\Linq2indexedDB Sample.htm" />

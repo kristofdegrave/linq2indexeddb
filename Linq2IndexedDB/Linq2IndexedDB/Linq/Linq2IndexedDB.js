@@ -756,8 +756,14 @@
 
                     // Initialising the window.IndexedDB Object for IE 8 & 9
                     else if (navigator.appName == 'Microsoft Internet Explorer') {
-                        window.indexedDB = new ActiveXObject("SQLCE.Factory.4.0");
-                        window.indexedDBSync = new ActiveXObject("SQLCE.FactorySync.4.0");
+                        try {
+                            window.indexedDB = new ActiveXObject("SQLCE.Factory.4.0");
+                            window.indexedDBSync = new ActiveXObject("SQLCE.FactorySync.4.0");
+                        }
+                        catch (ex) {
+                            log("Initializing IE prototype exception", ex);
+                            return false
+                        }
 
                         if (window.JSON) {
                             window.indexedDB.json = window.JSON;
@@ -835,7 +841,7 @@
                 }
 
                 if (!window.indexedDB) {
-                    alert("Your browser doesn't support IndexedDB.");
+                    log("Your browser doesn't support IndexedDB.");
                     return false;
                 }
             }
@@ -999,20 +1005,19 @@
                                 }
                             }
                             else {
-                                var cursorPromise = promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName));
-                                return SelectInternal(cursorPromise);
+                                return SelectInternal(promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName)));
                             }
                         },
                         get: function (key) {
                             return promise.get(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), key);
                         },
-                        insert: function (data, key){
+                        insert: function (data, key) {
                             return promise.insert(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key)
                         },
-                        update: function (data, key){
+                        update: function (data, key) {
                             return promise.update(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key);
                         },
-                        remove: function (key){
+                        remove: function (key) {
                             return promise.remove(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), key);
                         },
                         clear: function () {
