@@ -263,19 +263,27 @@
                             try {
 
                                 if (!txn.db.objectStoreNames.contains(objectStoreName)) {
-                                    var store = txn.db.createObjectStore(objectStoreName, {
-                                        "autoIncrement": objectStoreOptions ? objectStoreOptions.autoIncrement : true,
-                                        "keyPath": objectStoreOptions ? objectStoreOptions.keyPath : undefined
-                                    }, objectStoreOptions ? objectStoreOptions.autoIncrement : true);
+                                    var keyPath = "";
+                                    var autoIncrement = true;
 
-                                    log("ObjectStore Created", store);
-                                    log("createObjectStore Promise completed", store);
+                                    if (objectStoreOptions) {
+                                        if (objectStoreOptions.keyPath) keyPath = objectStoreOptions.keyPath;
+                                        autoIncrement = objectStoreOptions.autoIncrement;
+                                    }
+
+                                    var store = txn.db.createObjectStore(objectStoreName, {
+                                        "autoIncrement": autoIncrement,
+                                        "keyPath": keyPath
+                                    }, autoIncrement);
+
+                                    log("ObjectStore Created", store, objectStoreName);
+                                    log("createObjectStore Promise completed", store, objectStoreName);
                                     dfd.resolve(store, txn);
                                 }
                                 else {
                                     $.when(promise.objectStore(promise.self(txn), objectStoreName)).then(function (store) {
-                                        log("ObjectStore Found", store);
-                                        log("createObjectStore Promise completed", store);
+                                        log("ObjectStore Found", store, objectStoreName);
+                                        log("createObjectStore Promise completed", store, objectStoreName);
                                         dfd.resolve(store, txn);
                                     }, dfd.reject);
                                 }
@@ -537,11 +545,11 @@
                             try {
                                 var req;
 
-                                if (key && !store.keyPath) {
+                                if (key /*&& !store.keyPath*/) {
                                     req = store.add(data, key);
                                 }
                                 else {
-                                    if (key) log("Key can't be provided when a keyPath is defined on the object store", store, key, data);
+                                    /*if (key) log("Key can't be provided when a keyPath is defined on the object store", store, key, data);*/
                                     req = store.add(data);
                                 }
 
@@ -552,7 +560,7 @@
                                     if (req.result) result = req.result;
 
                                     log("Insert Promise completed", data, req, result);
-                                    dfd.resolve(data);
+                                    dfd.resolve(data, result);
                                     //dfd.resolve(result, req.transaction);
                                 };
                                 req.onerror = function (e) {
@@ -575,11 +583,11 @@
                             try {
                                 var req;
 
-                                if (key && !store.keyPath) {
+                                if (key /*&& !store.keyPath*/) {
                                     req = store.put(data, key);
                                 }
                                 else {
-                                    if (key) log("Key can't be provided when a keyPath is defined on the object store", store, key, data);
+                                    /*if (key) log("Key can't be provided when a keyPath is defined on the object store", store, key, data);*/
                                     req = store.put(data);
                                 }
                                 req.onsuccess = function (e) {
@@ -589,7 +597,7 @@
                                     if (req.result) result = req.result;
 
                                     log("Update Promise completed", data, req, result);
-                                    dfd.resolve(data);
+                                    dfd.resolve(data, result);
                                     //dfd.resolve(result, req.transaction);
                                 };
                                 req.onerror = function (e) {
@@ -687,6 +695,7 @@
                                     for (var i = 0; i < txn.db.objectStoreNames.length; i++) {
                                         promise.deleteObjectStore(promise.self(txn), txn.db.objectStoreNames[i]);
                                     }
+                                    closeDatabaseConnection(txn.db);
                                 })).then(dfd.resolve, dfd.reject);
                             }
                         }
@@ -882,7 +891,7 @@
 
                     }
                     catch (e) {
-                        error("createIndex exception: " + e.message);
+                        log("createIndex exception: " , e);
                         abortTransaction(txn);
                     }
                 }
@@ -1011,11 +1020,9 @@
                         }
                     }
                 },
-
                 initialize: function (onsuccess, onerror) {
                     $.when(promise.db()).then(onsuccess, onerror)
                 },
-
                 deleteDatabase: function (onsuccess, onerror) {
                     $.when(promise.deleteDb()).then(onsuccess, onerror)
                 }
