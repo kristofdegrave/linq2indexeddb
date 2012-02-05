@@ -23,7 +23,10 @@
                     });
                 },
                 db: function () {
-                    var version = databaseConfiguration ? databaseConfiguration.version : undefined
+                    var version;
+                    if (databaseConfiguration){
+                        version = databaseConfiguration.version;
+                    }
                     return promise.dbInternal(version, InitializeDatabse)
                 },
                 dbInternal: function (databaseVersion, initVersion) {
@@ -62,7 +65,7 @@
 
                                 var dbver = GetDatabaseVersion(result);
 
-                                if (databaseVersion && dbver < databaseVersion) {
+                                if (dbver > databaseVersion || databaseVersion == 0) {
                                     log("DB Promise upgradeneeded", result);
                                     try {
                                         var versionChangePromise = promise.changeDatabaseStructure(promise.self(result), databaseVersion, function () {
@@ -263,18 +266,17 @@
                             try {
 
                                 if (!txn.db.objectStoreNames.contains(objectStoreName)) {
-                                    var keyPath = "";
-                                    var autoIncrement = true;
+                                    var options = new Object();
 
                                     if (objectStoreOptions) {
-                                        if (objectStoreOptions.keyPath) keyPath = objectStoreOptions.keyPath;
-                                        autoIncrement = objectStoreOptions.autoIncrement;
+                                        if (objectStoreOptions.keyPath) options.keyPath = objectStoreOptions.keyPath;
+                                        options.autoIncrement = objectStoreOptions.autoIncrement;
+                                    }
+                                    else {
+                                        options.autoIncrement = true;
                                     }
 
-                                    var store = txn.db.createObjectStore(objectStoreName, {
-                                        "autoIncrement": autoIncrement,
-                                        "keyPath": keyPath
-                                    }, autoIncrement);
+                                    var store = txn.db.createObjectStore(objectStoreName, options, options.autoIncrement);
 
                                     log("ObjectStore Created", store, objectStoreName);
                                     log("createObjectStore Promise completed", store, objectStoreName);
@@ -299,9 +301,9 @@
                 deleteObjectStore: function (changeDatabaseStructurePromise, objectStoreName) {
                     return $.Deferred(function (dfd) {
                         $.when(changeDatabaseStructurePromise).then(function (txn) {
-                            log("deleteObjectStore Promise started", changeDatabaseStructurePromise, objectStoreName, objectStoreOptions);
+                            log("deleteObjectStore Promise started", changeDatabaseStructurePromise, objectStoreName);
                             try {
-                                if (!txn.db.objectStoreNames.contains(objectStoreName)) {
+                                if (txn.db.objectStoreNames.contains(objectStoreName)) {
                                     store = txn.db.deleteObjectStore(objectStoreName)
                                     log("ObjectStore Deleted", objectStoreName);
                                 }
@@ -691,7 +693,7 @@
                                 //dfd.reject(dbName);
                                 // Workaround for older versions of chrome and FireFox
                                 // Doesn't delete the database, but clears him
-                                $.when(promise.dbInternal(0, function (txn) {
+                                $.when(promise.dbInternal(-1, function (txn) {
                                     for (var i = 0; i < txn.db.objectStoreNames.length; i++) {
                                         promise.deleteObjectStore(promise.self(txn), txn.db.objectStoreNames[i]);
                                     }
@@ -891,7 +893,7 @@
 
                     }
                     catch (e) {
-                        log("createIndex exception: " , e);
+                        log("createIndex exception: ", e);
                         abortTransaction(txn);
                     }
                 }
@@ -910,7 +912,7 @@
             function GetDatabaseVersion(db) {
                 var dbVersion = parseInt(db.version);
                 if (isNaN(dbVersion)) {
-                    return 0
+                    return -1
                 }
                 else {
                     return parseInt(db.version);

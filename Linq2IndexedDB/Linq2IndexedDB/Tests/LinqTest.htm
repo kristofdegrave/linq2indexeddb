@@ -29,7 +29,7 @@
                     expect(1);
                     stop();
                     $.linq2indexeddb().deleteDatabase(function () {
-                        $.linq2indexeddb().from("test1").insert(1, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                        $.linq2indexeddb().from("test").insert(1, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                     });
                 });
 
@@ -37,7 +37,7 @@
                     expect(1);
                     stop();
                     $.linq2indexeddb().deleteDatabase(function () {
-                        $.linq2indexeddb().from("test2").insert({ name: "test" }, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                        $.linq2indexeddb().from("test").insert({ name: "test" }, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                     });
                 });
 
