@@ -546,6 +546,8 @@
                                 }
 
                                 req.onsuccess = function (e) {
+                                    var result;
+
                                     if (prototype) result = e.result;
                                     if (req.result) result = req.result;
 
