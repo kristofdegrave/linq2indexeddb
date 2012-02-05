@@ -1,17 +1,101 @@
 ﻿<!DOCTYPE html>  
 <html>  
-    <head>  
+    <head> 
+        <title>Tests</title> 
         <link href="qunit.css" rel="stylesheet" type="text/css" /> 
         <script src="../Scripts/jquery-1.7.1.js" type="text/javascript"></script>  
         <script src="qunit.js" type="text/javascript"></script> 
         <script src="../Linq/Linq2IndexedDB.js" type="text/javascript"></script>
         <script type="text/javascript">
             $(document).ready(function () {
-                module("Basic Unit Test");
-                test("insert primitive value - non existing object store", function () {
+                module("Insert Tests");
+                test("insert primitive value (1), no key - non existing object store", function () {
                     expect(1);
                     stop();
-                    $.linq2indexeddb().from("test").insert(1, undefined, function (data) { ok(true, "insert"); start(); });
+                    $.linq2indexeddb().deleteDatabase(function () {
+                        $.linq2indexeddb().from("test").insert(1, undefined, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    });
+                });
+
+                test("insert JSON value ({name: 'test'}), no key - non existing object store", function () {
+                    expect(1);
+                    stop();
+                    $.linq2indexeddb().deleteDatabase(function () {
+                        $.linq2indexeddb().from("test").insert({ name: "test" }, undefined, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    });
+                });
+
+                test("insert primitive value (1), key (1) - non existing object store", function () {
+                    expect(1);
+                    stop();
+                    $.linq2indexeddb().deleteDatabase(function () {
+                        $.linq2indexeddb().from("test").insert(1, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    });
+                });
+
+                test("insert JSON value ({name: 'test'}), key (1) - non existing object store", function () {
+                    expect(1);
+                    stop();
+                    $.linq2indexeddb().deleteDatabase(function () {
+                        $.linq2indexeddb().from("test").insert({ name: "test" }, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    });
+                });
+
+                test("insert primitive value (1), no key - existing object store (KeyPathId: 'id', autoincrement: true)", function () {
+                    expect(1);
+
+                    var ObjectStores = [
+                         { name: "test", keyPath: "id", autoIncrement: true, Version: 1, DefaultData: [], Indexes: [] }
+                    ];
+
+                    var dbConfiguration = new Object();
+                    dbConfiguration.Name = "InsertTests";
+                    dbConfiguration.version = 1;
+                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+
+                    stop();
+
+                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.linq2indexeddb(dbConfiguration).from("test").insert(1, undefined, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    });
+                });
+
+                test("insert JSON value ({name: 'test'}), no key - existing object store (KeyPathId: 'id', autoincrement: true)", function () {
+                    expect(1);
+
+                    var ObjectStores = [
+                         { name: "test", keyPath: "id", autoIncrement: true, Version: 1, DefaultData: [], Indexes: [] }
+                    ];
+
+                    var dbConfiguration = new Object();
+                    dbConfiguration.Name = "InsertTests";
+                    dbConfiguration.version = 1;
+                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+
+                    stop();
+
+                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.linq2indexeddb(dbConfiguration).from("test").insert({ name: "test" }, undefined, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    });
+                });
+
+                test("insert JSON value ({name: 'test', id: 1}), no key - existing object store (KeyPathId: 'id', autoincrement: true)", function () {
+                    expect(1);
+
+                    var ObjectStores = [
+                         { name: "test", keyPath: "id", autoIncrement: true, Version: 1, DefaultData: [], Indexes: [] }
+                    ];
+
+                    var dbConfiguration = new Object();
+                    dbConfiguration.Name = "InsertTests";
+                    dbConfiguration.version = 1;
+                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+
+                    stop();
+
+                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.linq2indexeddb(dbConfiguration).from("test").insert({ name: "test", id: 1}, undefined, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    });
                 });
             }); 
         </script>  

@@ -677,8 +677,15 @@
                                 }
                             }
                             else {
-                                log("Delete Database function not found", dbName);
-                                dfd.reject(dbName);
+                                //log("Delete Database function not found", dbName);
+                                //dfd.reject(dbName);
+                                // Workaround for older versions of chrome and FireFox
+                                // Doesn't delete the database, but clears him
+                                $.when(promise.dbInternal(0, function (txn) {
+                                    for (var i = 0; i < txn.db.objectStoreNames.length; i++) {
+                                        promise.deleteObjectStore(promise.self(txn), txn.db.objectStoreNames[i]);
+                                    }
+                                })).then(dfd.resolve, dfd.reject);
                             }
                         }
                         catch (e) {
