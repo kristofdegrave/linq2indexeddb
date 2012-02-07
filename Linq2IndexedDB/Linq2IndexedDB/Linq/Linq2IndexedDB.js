@@ -65,7 +65,7 @@
 
                                 var dbver = GetDatabaseVersion(result);
 
-                                if (dbver > databaseVersion || databaseVersion == 0) {
+                                if (dbver < databaseVersion || (databaseVersion == -1)) {
                                     log("DB Promise upgradeneeded", result);
                                     try {
                                         var versionChangePromise = promise.changeDatabaseStructure(promise.self(result), databaseVersion, function () {
@@ -911,11 +911,11 @@
 
             function GetDatabaseVersion(db) {
                 var dbVersion = parseInt(db.version);
-                if (isNaN(dbVersion)) {
-                    return -1
+                if (isNaN(dbVersion) || dbVersion < 0) {
+                    return 0
                 }
                 else {
-                    return parseInt(db.version);
+                    return dbVersion
                 }
             }
 
