@@ -24,7 +24,7 @@
                 },
                 db: function () {
                     var version;
-                    if (databaseConfiguration){
+                    if (databaseConfiguration) {
                         version = databaseConfiguration.version;
                     }
                     return promise.dbInternal(version, InitializeDatabse)
@@ -706,6 +706,16 @@
                             dfd.reject(e, dbName);
                         }
                     });
+                },
+                sort: function (dataPromise, propertyName, descending) {
+                    return $.Deferred(function (dfd) {
+                        $.when(dataPromise).then(function (data) {
+                            var worker = new Worker("../Scripts/Sort.js");
+                            worker.onmessage = function (event) { dfd.resolve(event.data) };
+                            worker.onerror = dfd.reject;
+                            worker.postMessage({ data: data, propertyName: propertyName, descending: descending });
+                        }, dfd.reject);
+                    });
                 }
             }; // end of all promise definations
 
@@ -940,6 +950,23 @@
                 }
             }
 
+            function OrderInternal(cursorPromis) {
+                return {
+                    orderBy: function (propertyName) {
+                        $.when(cursorPromis).then(function (data) {
+                            return SelectInternal(promise.sort(data, propertyName, false));
+                        }
+                        , function () { /*error handler*/ });
+                    },
+                    orderByDesc: function (propertyName) {
+                        $.when(cursorPromis).then(function (data) {
+                            return SelectInternal(promise.sort(data, propertyName, true));
+                        }
+                        , function () { /*error handler*/ });
+                    }
+                }
+            }
+
             function SelectData(data, propertyNames) {
                 if (propertyNames) {
                     if (!$.isArray(propertyNames)) {
@@ -961,25 +988,36 @@
                         return {
                             all: function (callback) {
                                 var returnData = [];
-                                $.when(cursorPromis).then(function () {
+                                var notificationCalled = false;
+                                $.when(cursorPromis).then(function (data) {
                                     if (typeof (callback) === 'function') {
+                                        if (!notificationCalled) returnData = data;
                                         callback(returnData);
                                     }
                                 }
                                 , function () { /*error handler*/ }
                                 , function (data, req) {
-                                    returnData.push(SelectData(data, propertyNames))
+                                    returnData.push(SelectData(data, propertyNames));
+                                    notificationCalled = true;
                                 });
                             },
                             forEach: function (callback) {
-                                $.when(cursorPromis).then(function () {
+                                var notificationCalled = false;
+                                $.when(cursorPromis).then(function (data) {
                                     /* complete */
+                                    if (!notificationCalled) {
+                                        for (var i = 0; i < data.length; i++) {
+                                            callback(SelectData(data[i], propertyNames));
+                                        }
+                                    }
+
                                 }
                                 , function () { /* Error handler */ }
                                 , function (data, req) {
                                     if (typeof (callback) === 'function') {
                                         callback(SelectData(data, propertyNames));
                                     }
+                                    notificationCalled = true;
                                 });
                             }
                         }
@@ -1007,6 +1045,12 @@
                             else {
                                 return SelectInternal(promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName)));
                             }
+                        },
+                        orderBy: function (propertyName) {
+                            return SelectInternal(promise.sort(promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName)), propertyName, false));
+                        },
+                        select: function (propertyNames) {
+                            return SelectInternal(promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName))).select(propertyNames);
                         },
                         insert: function (data, key, onsuccess, onerror) {
                             $.when(promise.insert(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key)).then(onsuccess, onerror);

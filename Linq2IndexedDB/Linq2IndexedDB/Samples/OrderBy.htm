@@ -1,0 +1,47 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <style type="text/css">
+        #txtLog {
+            height: 200px;
+            width: 1000px;
+        }
+    </style>
+    <script src="../Scripts/jquery-1.7.1.js" type="text/javascript"></script>
+    <script src="../Linq/Linq2IndexedDB.js" type="text/javascript"></script>
+    <script src="../Scripts/Sort.js" type="text/javascript"></script>
+    <script>
+        $(function () {
+            var defaultData = [
+                    { name: "test3" },
+                    { name: "test1" },
+                    { name: "test4" },
+                    { name: "test2" }
+            ];
+
+            var ObjectStores = [
+                    { name: "test", keyPath: "id", autoIncrement: true, Version: 1, DefaultData: defaultData, Indexes: [] }
+            ];
+
+            var dbConfiguration = new Object();
+            dbConfiguration.Name = "OrderByTests";
+            dbConfiguration.version = 1;
+            dbConfiguration.objectStoreConfiguration = ObjectStores;
+
+            $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
+                $.linq2indexeddb(dbConfiguration).initialize(function () {
+                    $.linq2indexeddb(dbConfiguration).from("test").orderBy("name").select().forEach(function (data) {
+                        var tekst = $("#txtLog").val();
+                        tekst += "Name: " + data["name"] + "\n\r";
+                        $("#txtLog").val(tekst);
+                    });
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <textarea id="txtLog"></textarea>
+</body>
+</html>
