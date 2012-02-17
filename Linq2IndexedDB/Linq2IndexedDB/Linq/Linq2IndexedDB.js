@@ -3,7 +3,7 @@
 
 (function ($) {
     $.extend({
-        linq2indexeddb: function (databaseConfiguration) {
+        indexeddb: function (databaseConfiguration) {
 
             var logging = true;
 

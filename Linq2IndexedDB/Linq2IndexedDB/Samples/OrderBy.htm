@@ -29,9 +29,9 @@
             dbConfiguration.version = 1;
             dbConfiguration.objectStoreConfiguration = ObjectStores;
 
-            $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                $.linq2indexeddb(dbConfiguration).initialize(function () {
-                    $.linq2indexeddb(dbConfiguration).from("test").orderBy("name").select().forEach(function (data) {
+            $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                $.indexeddb(dbConfiguration).initialize(function () {
+                    $.indexeddb(dbConfiguration).from("test").orderBy("name").select().forEach(function (data) {
                         var tekst = $("#txtLog").val();
                         tekst += "Name: " + data["name"] + "\n\r";
                         $("#txtLog").val(tekst);

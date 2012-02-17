@@ -12,29 +12,29 @@
                 test("insert primitive value (1), no key - non existing object store", function () {
                     expect(1);
                     stop();
-                    $.linq2indexeddb().deleteDatabase(function () {
-                        $.linq2indexeddb().from("test").insert(1, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.indexeddb().deleteDatabase(function () {
+                        $.indexeddb().from("test").insert(1, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                     });
                 });
                 test("insert JSON value ({name: 'test'}), no key - non existing object store", function () {
                     expect(1);
                     stop();
-                    $.linq2indexeddb().deleteDatabase(function () {
-                        $.linq2indexeddb().from("test").insert({ name: "test" }, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.indexeddb().deleteDatabase(function () {
+                        $.indexeddb().from("test").insert({ name: "test" }, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                     });
                 });
                 test("insert primitive value (1), key (1) - non existing object store", function () {
                     expect(1);
                     stop();
-                    $.linq2indexeddb().deleteDatabase(function () {
-                        $.linq2indexeddb().from("test").insert(1, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.indexeddb().deleteDatabase(function () {
+                        $.indexeddb().from("test").insert(1, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                     });
                 });
                 test("insert JSON value ({name: 'test'}), key (1) - non existing object store", function () {
                     expect(1);
                     stop();
-                    $.linq2indexeddb().deleteDatabase(function () {
-                        $.linq2indexeddb().from("test").insert({ name: "test" }, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.indexeddb().deleteDatabase(function () {
+                        $.indexeddb().from("test").insert({ name: "test" }, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                     });
                 });
                 test("insert primitive value (1), no key - existing object store (KeyPathId: 'id', autoincrement: true)", function () {
@@ -51,9 +51,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert(1, null, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert(1, null, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -71,9 +71,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert({ name:"test" }, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert({ name:"test" }, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -91,9 +91,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert({ name: "test", id: 1 }, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert({ name: "test", id: 1 }, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -111,9 +111,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert(1, 1, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert(1, 1, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -131,9 +131,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert({ name: "test" }, 1, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert({ name: "test" }, 1, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -151,9 +151,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert({ name: "test", id: 1 }, 1, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert({ name: "test", id: 1 }, 1, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -171,9 +171,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert(1, null, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert(1, null, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -191,9 +191,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert({ name: "test" }, null, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert({ name: "test" }, null, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -211,9 +211,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert({ name: "test", id: 1 }, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert({ name: "test", id: 1 }, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -231,9 +231,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert(1, 1, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert(1, 1, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -251,9 +251,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert({ name: "test" }, 1, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert({ name: "test" }, 1, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -271,9 +271,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert({ name: "test", id: 1 }, 1, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert({ name: "test", id: 1 }, 1, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -291,9 +291,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert(1, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert(1, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -311,9 +311,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert({ name: "test" }, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert({ name: "test" }, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -331,9 +331,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert({ name: "test", id: 1 }, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert({ name: "test", id: 1 }, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -351,9 +351,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert(1, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert(1, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -371,9 +371,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert({ name: "test" }, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert({ name: "test" }, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -391,9 +391,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert({ name: "test", id: 1 }, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert({ name: "test", id: 1 }, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -411,9 +411,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert(1, null, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert(1, null, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -431,9 +431,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert({ name: "test" }, null, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert({ name: "test" }, null, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -451,9 +451,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert({ name: "test", id: 1 }, null, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert({ name: "test", id: 1 }, null, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -471,9 +471,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert(1, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert(1, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -491,9 +491,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert({ name: "test" }, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert({ name: "test" }, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -511,9 +511,9 @@
 
                     stop();
 
-                    $.linq2indexeddb(dbConfiguration).deleteDatabase(function () {
-                        $.linq2indexeddb(dbConfiguration).initialize(function () {
-                            $.linq2indexeddb(dbConfiguration).from("test").insert({ name: "test", id: 1 }, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.indexeddb(dbConfiguration).deleteDatabase(function () {
+                        $.indexeddb(dbConfiguration).initialize(function () {
+                            $.indexeddb(dbConfiguration).from("test").insert({ name: "test", id: 1 }, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
