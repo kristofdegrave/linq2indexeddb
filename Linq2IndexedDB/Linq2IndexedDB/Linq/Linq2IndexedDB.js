@@ -1081,6 +1081,65 @@
                     $.when(promise.deleteDb()).then(onsuccess, onerror)
                 }
             }
+
+            // QueryBuilder tryout
+            function query() {
+                this.whereClause = [];
+                this.selectClause = [];
+                this.orderByClause = [];
+                this.fromClause = "";
+            }
+
+            function linq2() {
+                var query = new query();
+                return {
+                    from: function (objectStoreName) {
+                        return {
+                            where: function (propertyName, clause) { 
+                                if(clause) {
+                                    where2(query, propertyName, clause);
+                                }
+                                else {
+                                    
+                                }
+                            },
+                            orderBy: function (propertyName, descending) {
+                                orderBy2(query, propertyName, descending);
+                            },
+                            select: function (propertyNames) {
+                                select2(query, propertyNames);
+                            }
+                        }
+                    }
+                }
+            }
+
+            function test(a){ alert (a);}
+
+            function select2(query, propertyNames){
+                for (var propertyName in propertyNames) {
+                    var x = propertyName.split('.')
+                    if (x.length == 1) {
+                        query.selectClause.push({ objectStore: query.from, propertyName: x[0] });
+                    }
+                    else (x.length == 2) {
+                        query.selectClause.push({ objectStore: x[0], propertyName: x[1] });
+                    }
+                }
+            }
+
+            function orderBy2(query, propertyName, desceding){
+                if (descending) {
+                    query.orderByClause.push({ propertyName: propertyName, descending: descending });
+                }
+                else {
+                    query.orderByClause.push({ propertyName: propertyName, descending: false });
+                }
+            }
+
+            function where2(query, propertyName, clause){
+                query.whereClause.push({ propertyName: propertyName, clause: clause })
+            }
         }
     });
 })(jQuery);
