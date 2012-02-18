@@ -22,32 +22,32 @@
             db.initialize(Initialized);
 
             function Initialized() {
-                db.from("IdAuto").clear(function (){
-                    db.from("IdAuto").insert({ Name: "test1" }, null, function () { log("test1 successfull"); }, function () { log("test1 failed"); });
-                    db.from("IdAuto").insert({ Id: 2, Name: "test2" }, null, function () { log("test2 successfull"); }, function () { log("test2 failed"); });
-                    db.from("IdAuto").insert({ Name: "test3" }, 3, function () { log("test3 successfull"); }, function () { log("test3 failed"); });
-                    db.from("IdAuto").insert({ Id: 4, Name: "test4" }, 4, function (a, b) { log("test4 successfull"); }, function () { log("test4 failed"); });
+                db.linq().from("IdAuto").clear(function (){
+                    db.linq().from("IdAuto").insert({ Name: "test1" }, null, function () { log("test1 successfull"); }, function () { log("test1 failed"); });
+                    db.linq().from("IdAuto").insert({ Id: 2, Name: "test2" }, null, function () { log("test2 successfull"); }, function () { log("test2 failed"); });
+                    db.linq().from("IdAuto").insert({ Name: "test3" }, 3, function () { log("test3 successfull"); }, function () { log("test3 failed"); });
+                    db.linq().from("IdAuto").insert({ Id: 4, Name: "test4" }, 4, function (a, b) { log("test4 successfull"); }, function () { log("test4 failed"); });
                 });
 
-                db.from("Auto").clear(function (){
-                    db.from("Auto").insert({ Name: "test11" }, null, function () { log("test11 successfull") }, function () { log("test11 failed") });
-                    db.from("Auto").insert({ Id: 12, Name: "test12" }, null, function () { log("test12 successfull") }, function () { log("test12 failed") });
-                    db.from("Auto").insert({ Name: "test3" }, 13, function () { log("test13 successfull") }, function () { log("test13 failed") });
-                    db.from("Auto").insert({ Id: 14, Name: "test24" }, 14, function () { log("test14 successfull") }, function () { log("test14 failed") });
+                db.linq().from("Auto").clear(function () {
+                    db.linq().from("Auto").insert({ Name: "test11" }, null, function () { log("test11 successfull") }, function () { log("test11 failed") });
+                    db.linq().from("Auto").insert({ Id: 12, Name: "test12" }, null, function () { log("test12 successfull") }, function () { log("test12 failed") });
+                    db.linq().from("Auto").insert({ Name: "test3" }, 13, function () { log("test13 successfull") }, function () { log("test13 failed") });
+                    db.linq().from("Auto").insert({ Id: 14, Name: "test24" }, 14, function () { log("test14 successfull") }, function () { log("test14 failed") });
                 });
 
-                db.from("Id").clear(function (){
-                    db.from("Id").insert({ Name: "test21" }, null, function () { log("test21 successfull") }, function () { log("test21 failed") });
-                    db.from("Id").insert({ Id: 22, Name: "test22" }, null, function () { log("test22 successfull") }, function () { log("test22 failed") });
-                    db.from("Id").insert({ Name: "test23" }, 3, function () { log("test23 successfull") }, function () { log("test23 failed") });
-                    db.from("Id").insert({ Id: 24, Name: "test24" }, 24, function () { log("test24 successfull") }, function () { log("test24 failed") });
+                db.linq().from("Id").clear(function () {
+                    db.linq().from("Id").insert({ Name: "test21" }, null, function () { log("test21 successfull") }, function () { log("test21 failed") });
+                    db.linq().from("Id").insert({ Id: 22, Name: "test22" }, null, function () { log("test22 successfull") }, function () { log("test22 failed") });
+                    db.linq().from("Id").insert({ Name: "test23" }, 3, function () { log("test23 successfull") }, function () { log("test23 failed") });
+                    db.linq().from("Id").insert({ Id: 24, Name: "test24" }, 24, function () { log("test24 successfull") }, function () { log("test24 failed") });
                 });
 
-                db.from("None").clear(function (){
-                    db.from("None").insert({ Name: "test31" }, null, function () { log("test31 successfull") }, function () { log("test31 failed") });
-                    db.from("None").insert({ Id: 32, Name: "test32" }, null, function () { log("test32 successfull") }, function () { log("test32 failed") });
-                    db.from("None").insert({ Name: "test33" }, 33, function () { log("test33 successfull") }, function () { log("test33 failed") });
-                    db.from("None").insert({ Id: 34, Name: "test34" }, 34, function () { log("test34 successfull") }, function () { log("test34 failed") });
+                db.linq().from("None").clear(function () {
+                    db.linq().from("None").insert({ Name: "test31" }, null, function () { log("test31 successfull") }, function () { log("test31 failed") });
+                    db.linq().from("None").insert({ Id: 32, Name: "test32" }, null, function () { log("test32 successfull") }, function () { log("test32 failed") });
+                    db.linq().from("None").insert({ Name: "test33" }, 33, function () { log("test33 successfull") }, function () { log("test33 failed") });
+                    db.linq().from("None").insert({ Id: 34, Name: "test34" }, 34, function () { log("test34 successfull") }, function () { log("test34 failed") });
                 });
             }
 

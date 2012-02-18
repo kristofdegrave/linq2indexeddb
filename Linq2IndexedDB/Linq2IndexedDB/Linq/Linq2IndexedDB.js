@@ -1025,46 +1025,54 @@
                 }
             }
 
-            return {
-                from: function (objectStoreName) {
-                    return {
-                        where: function (propertyName, clause) {
-                            if (propertyName) {
-                                if (clause) {
-                                    if (clause.equals) {
-                                        return whereInternal(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), propertyName).Equals(clause.equals);
+            function linq() {
+                return {
+                    from: function (objectStoreName) {
+                        return {
+                            where: function (propertyName, clause) {
+                                if (propertyName) {
+                                    if (clause) {
+                                        if (clause.equals) {
+                                            return whereInternal(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), propertyName).Equals(clause.equals);
+                                        }
+                                        else if (clause.range) {
+                                            return whereInternal(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), propertyName).Between(clause.range[0], clause.range[1], clause.range[2], clause.range[3]);
+                                        }
                                     }
-                                    else if (clause.range) {
-                                        return whereInternal(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), propertyName).Between(clause.range[0], clause.range[1], clause.range[2], clause.range[3]);
+                                    else {
+                                        return whereInternal(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), propertyName);
                                     }
                                 }
                                 else {
-                                    return whereInternal(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), propertyName);
+                                    return SelectInternal(promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName)));
                                 }
+                            },
+                            orderBy: function (propertyName) {
+                                return SelectInternal(promise.sort(promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName)), propertyName, false));
+                            },
+                            select: function (propertyNames) {
+                                return SelectInternal(promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName))).select(propertyNames);
+                            },
+                            insert: function (data, key, onsuccess, onerror) {
+                                $.when(promise.insert(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key)).then(onsuccess, onerror);
+                            },
+                            update: function (data, key, onsuccess, onerror) {
+                                $.when(promise.update(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key)).then(onsuccess, onerror);
+                            },
+                            remove: function (key, onsuccess, onerror) {
+                                $.when(promise.remove(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), key)).then(onsuccess, onerror);
+                            },
+                            clear: function (onsuccess, onerror) {
+                                $.when(promise.clear(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName))).then(onsuccess, onerror);
                             }
-                            else {
-                                return SelectInternal(promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName)));
-                            }
-                        },
-                        orderBy: function (propertyName) {
-                            return SelectInternal(promise.sort(promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName)), propertyName, false));
-                        },
-                        select: function (propertyNames) {
-                            return SelectInternal(promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName))).select(propertyNames);
-                        },
-                        insert: function (data, key, onsuccess, onerror) {
-                            $.when(promise.insert(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key)).then(onsuccess, onerror);
-                        },
-                        update: function (data, key, onsuccess, onerror) {
-                            $.when(promise.update(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key)).then(onsuccess, onerror);
-                        },
-                        remove: function (key, onsuccess, onerror) {
-                            $.when(promise.remove(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), key)).then(onsuccess, onerror);
-                        },
-                        clear: function (onsuccess, onerror) {
-                            $.when(promise.clear(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName))).then(onsuccess, onerror);
                         }
                     }
+                }
+            }
+
+            return {
+                linq: function () {
+                    return linq();
                 },
                 initialize: function (onsuccess, onerror) {
                     $.when(promise.db()).then(onsuccess, onerror)
