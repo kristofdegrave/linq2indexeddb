@@ -25,9 +25,9 @@
             GOOGLE: 4,
             MICROSOFTPROTOTYPE: 5
         },
-        logging = true,
+        enableLogging = true,
         log = function () {
-            if (typeof (window.console) === "undefined" || !logging) {
+            if (typeof (window.console) === "undefined" || !enableLogging) {
                 return false;
             }
             return window.console.log.apply(console, arguments);
@@ -51,6 +51,7 @@
 
     indexedDB.fn = indexedDB.prototype = {
         init: function (name, configuration, logging) {
+            enableLogging = logging;
             promise = core(name, configuration, logging);
         },
         linq: function () {
