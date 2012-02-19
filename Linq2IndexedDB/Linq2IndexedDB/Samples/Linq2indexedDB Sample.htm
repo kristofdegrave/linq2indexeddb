@@ -14,7 +14,7 @@
         $(function () {
             var dbConfiguration = new Object();
             dbConfiguration.Name = "test";
-            var db = $.indexeddb(dbConfiguration)
+            var db = $.indexedDB(dbConfiguration)
             $.when(db.linq().from("person").clear()).then(function () {
                 db.linq().from("person").insert({ Name: "test1", Firstname: "test1", Age: 1 });
                 db.linq().from("person").insert({ Name: "test2", Firstname: "test2", Age: 2 });

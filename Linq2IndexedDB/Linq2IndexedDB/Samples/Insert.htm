@@ -17,12 +17,12 @@
             dbConfiguration.Name = "insertTest";
             dbConfiguration.version = 1;
             dbConfiguration.objectStoreConfiguration = ObjectStores;
-            var db = $.indexeddb(dbConfiguration)
+            var db = $.indexedDB("insertTest", dbConfiguration);
             db.deleteDatabase();
             db.initialize(Initialized);
 
             function Initialized() {
-                db.linq().from("IdAuto").clear(function (){
+                db.linq().from("IdAuto").clear(function () {
                     db.linq().from("IdAuto").insert({ Name: "test1" }, null, function () { log("test1 successfull"); }, function () { log("test1 failed"); });
                     db.linq().from("IdAuto").insert({ Id: 2, Name: "test2" }, null, function () { log("test2 successfull"); }, function () { log("test2 failed"); });
                     db.linq().from("IdAuto").insert({ Name: "test3" }, 3, function () { log("test3 successfull"); }, function () { log("test3 failed"); });
