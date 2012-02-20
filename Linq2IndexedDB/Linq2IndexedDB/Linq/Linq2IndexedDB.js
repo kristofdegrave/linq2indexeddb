@@ -1038,18 +1038,22 @@
     }
 
     function SelectInternal(cursorPromis) {
-        return $.Deferred(function (dfd) {
-            var returnData = [];
-            $.when(cursorPromis).then(function () {
-                dfd.resolve(returnData);
+        return {
+            select: function (propertyNames) {
+                return $.Deferred(function (dfd) {
+                        var returnData = [];
+                        $.when(cursorPromis).then(function () {
+                            dfd.resolve(returnData);
+                        }
+                    , dfd.reject
+                    , function (data) {
+                        var obj = SelectData(data, propertyNames);
+                        returnData.push(obj);
+                        dfd.notify(obj);
+                    });
+                });
             }
-            , dfd.reject
-            , function (data) {
-                var obj = SelectData(data, propertyNames);
-                returnData.push(obj);
-                dfd.notify(obj);
-            });
-        });
+        }
     }
 
     //    function SelectInternal(cursorPromis) {
