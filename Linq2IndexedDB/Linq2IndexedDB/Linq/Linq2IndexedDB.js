@@ -7,15 +7,15 @@
 
     if (typeof ($) !== "function") {
         // no jQuery!        
-        throw "indexedDB: jQuery not found. Please ensure jQuery is referenced before the indexedDB.js file.";
+        throw "linq2indexedDB: jQuery not found. Please ensure jQuery is referenced before the linq2indexedDB.js file.";
     }
 
     if (!window.JSON) {
         // no JSON!        
-        throw "indexedDB: No JSON parser found. Please ensure json2.js is referenced before the indexedDB.js file if you need to support clients without native JSON parsing support, e.g. IE<8.";
+        throw "linq2indexedDB: No JSON parser found. Please ensure json2.js is referenced before the linq2indexedDB.js file if you need to support clients without native JSON parsing support, e.g. IE<8.";
     }
 
-    var indexedDB,
+    var linq2indexedDB,
         events = {},
         implementations = {
             NONE: 0,
@@ -35,7 +35,7 @@
         implementation = InitializeIndexedDB(),
         promise;
 
-    indexedDB = function (name, configuration, logging) {
+    linq2indexedDB = function (name, configuration, logging) {
         /// <summary>Creates a new or opens an existing database for the given name</summary>        
         /// <param name="name" type="String">The name of the database</param>        
         /// <param name="configuration" type="Object">        
@@ -45,11 +45,11 @@
         ///     [Optional] A flag indicating whether connection logging is enabled to the browser        
         ///     console/log. Defaults to false.        
         /// </param>        
-        /// <returns type="indexedDB" />
-        return new indexedDB.fn.init(name, configuration, logging);
+        /// <returns type="linq2indexedDB" />
+        return new linq2indexedDB.fn.init(name, configuration, logging);
     }
 
-    indexedDB.fn = indexedDB.prototype = {
+    linq2indexedDB.fn = linq2indexedDB.prototype = {
         init: function (name, configuration, logging) {
             enableLogging = logging;
             promise = core(name, configuration, logging);
@@ -65,7 +65,7 @@
         }
     };
 
-    indexedDB.fn.init.prototype = indexedDB.fn;
+    linq2indexedDB.fn.init.prototype = linq2indexedDB.fn;
 
     function core(name, configuration, logging) {
         var dbName = "Default";
@@ -1038,47 +1038,62 @@
     }
 
     function SelectInternal(cursorPromis) {
-        return {
-            select: function (propertyNames) {
-                return {
-                    all: function (callback) {
-                        var returnData = [];
-                        var notificationCalled = false;
-                        $.when(cursorPromis).then(function (data) {
-                            if (typeof (callback) === 'function') {
-                                if (!notificationCalled) returnData = data;
-                                callback(returnData);
-                            }
-                        }
-                                , function () { /*error handler*/ }
-                                , function (data, req) {
-                                    returnData.push(SelectData(data, propertyNames));
-                                    notificationCalled = true;
-                                });
-                    },
-                    forEach: function (callback) {
-                        var notificationCalled = false;
-                        $.when(cursorPromis).then(function (data) {
-                            /* complete */
-                            if (!notificationCalled) {
-                                for (var i = 0; i < data.length; i++) {
-                                    callback(SelectData(data[i], propertyNames));
-                                }
-                            }
-
-                        }
-                                , function () { /* Error handler */ }
-                                , function (data, req) {
-                                    if (typeof (callback) === 'function') {
-                                        callback(SelectData(data, propertyNames));
-                                    }
-                                    notificationCalled = true;
-                                });
-                    }
-                }
+        return $.Deferred(function (dfd) {
+            var returnData = [];
+            $.when(cursorPromis).then(function () {
+                dfd.resolve(returnData);
             }
-        }
+            , dfd.reject
+            , function (data) {
+                var obj = SelectData(data, propertyNames);
+                returnData.push(obj);
+                dfd.notify(obj);
+            });
+        });
     }
+
+    //    function SelectInternal(cursorPromis) {
+    //        return {
+    //            select: function (propertyNames) {
+    //                return {
+    //                    all: function (callback) {
+    //                        var returnData = [];
+    //                        var notificationCalled = false;
+    //                        $.when(cursorPromis).then(function (data) {
+    //                            if (typeof (callback) === 'function') {
+    //                                if (!notificationCalled) returnData = data;
+    //                                callback(returnData);
+    //                            }
+    //                        }
+    //                                , function () { /*error handler*/ }
+    //                                , function (data, req) {
+    //                                    returnData.push(SelectData(data, propertyNames));
+    //                                    notificationCalled = true;
+    //                                });
+    //                    },
+    //                    forEach: function (callback) {
+    //                        var notificationCalled = false;
+    //                        $.when(cursorPromis).then(function (data) {
+    //                            /* complete */
+    //                            if (!notificationCalled) {
+    //                                for (var i = 0; i < data.length; i++) {
+    //                                    callback(SelectData(data[i], propertyNames));
+    //                                }
+    //                            }
+
+    //                        }
+    //                                , function () { /* Error handler */ }
+    //                                , function (data, req) {
+    //                                    if (typeof (callback) === 'function') {
+    //                                        callback(SelectData(data, propertyNames));
+    //                                    }
+    //                                    notificationCalled = true;
+    //                                });
+    //                    }
+    //                }
+    //            }
+    //        }
+    //    }
 
     function linq() {
         return {
@@ -1125,10 +1140,10 @@
         }
     }
 
-    $.indexedDB = indexedDB;
+    $.linq2indexedDB = linq2indexedDB;
 
     //    $.extend({
-    //        indexedDB: function (databaseConfiguration) {
+    //        linq2indexedDB: function (databaseConfiguration) {
 
     //            // QueryBuilder tryout
     //            function query() {

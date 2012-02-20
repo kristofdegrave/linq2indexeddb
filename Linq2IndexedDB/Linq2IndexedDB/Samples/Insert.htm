@@ -17,7 +17,7 @@
             dbConfiguration.Name = "insertTest";
             dbConfiguration.version = 1;
             dbConfiguration.objectStoreConfiguration = ObjectStores;
-            var db = $.indexedDB("insertTest", dbConfiguration);
+            var db = $.linq2indexedDB("insertTest", dbConfiguration);
             db.deleteDatabase();
             db.initialize(Initialized);
 

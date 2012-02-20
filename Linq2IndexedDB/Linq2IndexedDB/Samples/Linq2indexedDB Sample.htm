@@ -14,20 +14,20 @@
         $(function () {
             var dbConfiguration = new Object();
             dbConfiguration.Name = "test";
-            var db = $.indexedDB(dbConfiguration)
+            var db = $.linq2indexedDB(dbConfiguration)
             $.when(db.linq().from("person").clear()).then(function () {
                 db.linq().from("person").insert({ Name: "test1", Firstname: "test1", Age: 1 });
                 db.linq().from("person").insert({ Name: "test2", Firstname: "test2", Age: 2 });
                 db.linq().from("person").insert({ Name: "test3", Firstname: "test3", Age: 3 });
                 db.linq().from("person").insert({ Name: "test4", Firstname: "test4", Age: 4 });
 
-                db.linq().from("person").where("Name").equals("test1").select(["Name", "Firstname"]).forEach(function (data) {
+                 $.when(db.linq().from("person").where("Name").equals("test1").select(["Name", "Firstname"])).then(null, null, function (data) {
                     var tekst = $("#txtLog").val();
                     tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + "\n\r";
                     $("#txtLog").val(tekst);
                 });
 
-                db.linq().from("person").where("Age").smallerThen(3).select(["Name", "Firstname"]).forEach(function (data) {
+                $.when(db.linq().from("person").where("Age").smallerThen(3).select(["Name", "Firstname"])).then(null, null, function (data) {
                     var tekst = $("#txtLog").val();
                     tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + "\n\r";
                     $("#txtLog").val(tekst);
