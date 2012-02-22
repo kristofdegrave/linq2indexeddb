@@ -52,22 +52,34 @@
     linq2indexedDB.fn = linq2indexedDB.prototype = {
         init: function (name, configuration, logging) {
             enableLogging = logging;
-            promise = core(name, configuration, logging);
+            promise = core(name, configuration);
         },
         linq: function () {
             return linq();
         },
-        initialize: function (onsuccess, onerror) {
-            $.when(promise.db()).then(onsuccess, onerror)
+        initialize: function () {
+            return $.Deferred(function (dfd) {
+                var returnData = [];
+                $.when(promise.db()).then(function () {
+                    dfd.resolve();
+                }
+                , dfd.reject);
+            });
         },
-        deleteDatabase: function (onsuccess, onerror) {
-            $.when(promise.deleteDb()).then(onsuccess, onerror)
+        deleteDatabase: function () {
+            return $.Deferred(function (dfd) {
+                var returnData = [];
+                $.when(promise.deleteDb()).then(function () {
+                    dfd.resolve();
+                }
+                , dfd.reject);
+            });
         }
     };
 
     linq2indexedDB.fn.init.prototype = linq2indexedDB.fn;
 
-    function core(name, configuration, logging) {
+    function core(name, configuration) {
         var dbName = "Default";
         var dbVersion;
 
@@ -467,7 +479,8 @@
                                 result.move();
 
                                 if (result.value) {
-                                    dfd.notify(result.value, req);
+                                    //dfd.notify(result.value, req);
+                                    dfd.notify(result.value);
                                     returnData.push(result.value);
                                     req.onsuccess = handleCursorRequest;
                                 }
@@ -475,7 +488,8 @@
 
                             if (req.result) {
                                 if (result.value) {
-                                    dfd.notify(result.value, req);
+                                    //dfd.notify(result.value, req);
+                                    dfd.notify(result.value);
                                     returnData.push(result.value);
                                 }
                                 result["continue"]();
@@ -764,7 +778,13 @@
                 return $.Deferred(function (dfd) {
                     $.when(dataPromise).then(function (data) {
                         var worker = new Worker("../Scripts/Sort.js");
-                        worker.onmessage = function (event) { dfd.resolve(event.data) };
+                        worker.onmessage = function (event) {
+                            
+                            for (var i = 0; i < event.data.length; i++) {
+                                dfd.notify(event.data[i])
+                            }
+                            dfd.resolve(event.data)
+                        };
                         worker.onerror = dfd.reject;
                         worker.postMessage({ data: data, propertyName: propertyName, descending: descending });
                     }, dfd.reject);
@@ -1041,13 +1061,19 @@
         return {
             select: function (propertyNames) {
                 return $.Deferred(function (dfd) {
-                        var returnData = [];
-                        $.when(cursorPromis).then(function () {
-                            dfd.resolve(returnData);
-                        }
+                    var returnData = [];
+                    $.when(cursorPromis).then(function () {
+                        dfd.resolve(returnData);
+                    }
                     , dfd.reject
                     , function (data) {
-                        var obj = SelectData(data, propertyNames);
+                        var obj;
+                        if (propertyNames) {
+                            obj = SelectData(data, propertyNames);
+                        }
+                        else {
+                            obj = data;
+                        }
                         returnData.push(obj);
                         dfd.notify(obj);
                     });
@@ -1055,49 +1081,6 @@
             }
         }
     }
-
-    //    function SelectInternal(cursorPromis) {
-    //        return {
-    //            select: function (propertyNames) {
-    //                return {
-    //                    all: function (callback) {
-    //                        var returnData = [];
-    //                        var notificationCalled = false;
-    //                        $.when(cursorPromis).then(function (data) {
-    //                            if (typeof (callback) === 'function') {
-    //                                if (!notificationCalled) returnData = data;
-    //                                callback(returnData);
-    //                            }
-    //                        }
-    //                                , function () { /*error handler*/ }
-    //                                , function (data, req) {
-    //                                    returnData.push(SelectData(data, propertyNames));
-    //                                    notificationCalled = true;
-    //                                });
-    //                    },
-    //                    forEach: function (callback) {
-    //                        var notificationCalled = false;
-    //                        $.when(cursorPromis).then(function (data) {
-    //                            /* complete */
-    //                            if (!notificationCalled) {
-    //                                for (var i = 0; i < data.length; i++) {
-    //                                    callback(SelectData(data[i], propertyNames));
-    //                                }
-    //                            }
-
-    //                        }
-    //                                , function () { /* Error handler */ }
-    //                                , function (data, req) {
-    //                                    if (typeof (callback) === 'function') {
-    //                                        callback(SelectData(data, propertyNames));
-    //                                    }
-    //                                    notificationCalled = true;
-    //                                });
-    //                    }
-    //                }
-    //            }
-    //        }
-    //    }
 
     function linq() {
         return {
@@ -1127,17 +1110,45 @@
                     select: function (propertyNames) {
                         return SelectInternal(promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName))).select(propertyNames);
                     },
-                    insert: function (data, key, onsuccess, onerror) {
-                        $.when(promise.insert(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key)).then(onsuccess, onerror);
+                    insert: function (data, key) {
+                        var insertPromis = promise.insert(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key)
+                        return $.Deferred(function (dfd) {
+                            var returnData = [];
+                            $.when(insertPromis).then(function (storedData, storedkey) {
+                                dfd.resolve(storedData, storedkey);
+                            }
+                            , dfd.reject);
+                        });
                     },
-                    update: function (data, key, onsuccess, onerror) {
-                        $.when(promise.update(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key)).then(onsuccess, onerror);
+                    update: function (data, key) {
+                        var updatePromis = promise.update(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key)
+                        return $.Deferred(function (dfd) {
+                            var returnData = [];
+                            $.when(updatePromis).then(function (storedData, storedkey) {
+                                dfd.resolve(storedData, storedkey);
+                            }
+                            , dfd.reject);
+                        });
                     },
-                    remove: function (key, onsuccess, onerror) {
-                        $.when(promise.remove(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), key)).then(onsuccess, onerror);
+                    remove: function (key) {
+                        var removePromis = promise.remove(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), key)
+                        return $.Deferred(function (dfd) {
+                            var returnData = [];
+                            $.when(removePromis).then(function () {
+                                dfd.resolve(key);
+                            }
+                            , dfd.reject);
+                        });
                     },
                     clear: function (onsuccess, onerror) {
-                        $.when(promise.clear(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName))).then(onsuccess, onerror);
+                        var clearPromis = promise.clear(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName))
+                        return $.Deferred(function (dfd) {
+                            var returnData = [];
+                            $.when(clearPromis).then(function () {
+                                dfd.resolve();
+                            }
+                            , dfd.reject);
+                        });
                     }
                 }
             }

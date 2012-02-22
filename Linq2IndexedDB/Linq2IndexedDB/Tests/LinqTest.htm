@@ -12,33 +12,33 @@
                 test("insert primitive value (1), no key - non existing object store", function () {
                     expect(1);
                     stop();
-                    var db = $.linq2indexedDB("Insert Tests")
-                    db.deleteDatabase(function () {
-                        db.linq().from("test").insert(1, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    var db = $.linq2indexedDB("Insert Tests");
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.linq().from("test").insert(1)).then(function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                     });
                 });
                 test("insert JSON value ({name: 'test'}), no key - non existing object store", function () {
                     expect(1);
                     stop();
-                    var db = $.linq2indexedDB("Insert Tests")
-                    db.deleteDatabase(function () {
-                        db.linq().from("test").insert({ name: "test" }, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    var db = $.linq2indexedDB("Insert Tests");
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.linq().from("test").insert({ name: "test" })).then(function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                     });
                 });
                 test("insert primitive value (1), key (1) - non existing object store", function () {
                     expect(1);
                     stop();
                     var db = $.linq2indexedDB("Insert Tests")
-                    db.deleteDatabase(function () {
-                        db.linq().from("test").insert(1, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.linq().from("test").insert(1, 1)).then(function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                     });
                 });
                 test("insert JSON value ({name: 'test'}), key (1) - non existing object store", function () {
                     expect(1);
                     stop();
                     var db = $.linq2indexedDB("Insert Tests")
-                    db.deleteDatabase(function () {
-                        db.linq().from("test").insert({ name: "test" }, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.linq().from("test").insert({ name: "test" }, 1)).then(function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                     });
                 });
                 test("insert primitive value (1), no key - existing object store (KeyPathId: 'id', autoincrement: true)", function () {
@@ -54,9 +54,9 @@
                     dbConfiguration.objectStoreConfiguration = ObjectStores;
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert(1, null, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert(1)).then(function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -75,9 +75,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert({ name: "test" }, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert({ name: "test" })).then(function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -96,9 +96,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert({ name: "test", id: 1 }, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert({ name: "test", id: 1 })).then(function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -117,9 +117,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert(1, 1, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert(1, 1)).then(function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -138,9 +138,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                       db.initialize(function () {
-                            db.linq().from("test").insert({ name: "test" }, 1, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert({ name: "test" }, 1)).then(function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -159,9 +159,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert({ name: "test", id: 1 }, 1, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert({ name: "test", id: 1 }, 1)).then(function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -180,9 +180,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert(1, null, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert(1)).then(function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -201,9 +201,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert({ name: "test" }, null, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert({ name: "test" })).then(function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -222,9 +222,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert({ name: "test", id: 1 }, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert({ name: "test", id: 1 })).then(function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -243,9 +243,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert(1, 1, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert(1, 1)).then(function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -264,9 +264,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert({ name: "test" }, 1, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert({ name: "test" }, 1)).then(function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -285,9 +285,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert({ name: "test", id: 1 }, 1, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert({ name: "test", id: 1 }, 1)).then(function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -306,9 +306,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert(1, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert(1)).then(function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -327,9 +327,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert({ name: "test" }, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert({ name: "test" })).then(function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -348,9 +348,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert({ name: "test", id: 1 }, null, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert({ name: "test", id: 1 })).then(function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -369,9 +369,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert(1, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert(1, 1)).then(function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -390,9 +390,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert({ name: "test" }, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert({ name: "test" }, 1)).then(function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -411,9 +411,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert({ name: "test", id: 1 }, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert({ name: "test", id: 1 }, 1)).then(function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -432,9 +432,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert(1, null, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert(1)).then(function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -453,9 +453,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert({ name: "test" }, null, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert({ name: "test" })).then(function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -474,9 +474,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert({ name: "test", id: 1 }, null, function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert({ name: "test", id: 1 })).then(function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
                         });
                     });
                 });
@@ -495,9 +495,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert(1, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert(1, 1)).then(function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -516,9 +516,9 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert({ name: "test" }, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert({ name: "test" }, 1)).then(function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });
@@ -536,10 +536,10 @@
 
                     stop();
 
-                    var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
-                    db.deleteDatabase(function () {
-                        db.initialize(function () {
-                            db.linq().from("test").insert({ name: "test", id: 1 }, 1, function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
+                    $.when(db.deleteDatabase()).then(function () {
+                        $.when(db.initialize()).then(function () {
+                            $.when(db.linq().from("test").insert({ name: "test", id: 1 }, 1)).then(function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                         });
                     });
                 });

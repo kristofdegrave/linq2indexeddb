@@ -10,7 +10,8 @@ onmessage = function (event) {
     //    data = [data];
     //}
 
-    postMessage(data.sort(JSONComparer(propertyName, desc).sort));
+    var returnData = data.sort(JSONComparer(propertyName, desc).sort)
+    postMessage(returnData);
     return;
 };
 
