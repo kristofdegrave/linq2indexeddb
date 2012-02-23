@@ -10,9 +10,23 @@
         throw "linq2indexedDB: jQuery not found. Please ensure jQuery is referenced before the linq2indexedDB.js file.";
     }
 
+    if (numericjQueryVersion() < 170) {
+        // no jQuery!        
+        throw "linq2indexedDB: jQuery Deferred functionality not found. Please ensure jQuery 1.7 is referenced before the linq2indexedDB.js file.";
+    }
+
     if (!window.JSON) {
         // no JSON!        
         throw "linq2indexedDB: No JSON parser found. Please ensure json2.js is referenced before the linq2indexedDB.js file if you need to support clients without native JSON parsing support, e.g. IE<8.";
+    }
+
+    function numericjQueryVersion() {
+        var version = $.fn.jquery.split('.');
+        var strippedVersion = "";
+        for (var i = 0; i < version.length; i++) {
+            strippedVersion += version[i];
+        }
+        return parseInt(strippedVersion);
     }
 
     var linq2indexedDB,
@@ -779,7 +793,7 @@
                     $.when(dataPromise).then(function (data) {
                         var worker = new Worker("../Scripts/Sort.js");
                         worker.onmessage = function (event) {
-                            
+
                             for (var i = 0; i < event.data.length; i++) {
                                 dfd.notify(event.data[i])
                             }
