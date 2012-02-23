@@ -1096,6 +1096,99 @@
         }
     }
 
+//    function query() {
+//        this.from;
+//        this.select = [];
+//        this.where = [];
+//        this.orderBy = [];
+//    }
+
+//    function linq2() {
+//        var queryBuilder = query();
+
+//        return {
+//            from: function (objectStoreName) {
+//                return from(queryBuilder, objectStoreName)
+//            }
+//        }
+//    }
+
+//    function from(queryBuilder, objectStoreName) {
+//        queryBuilder.from = objectStoreName
+//        return {
+//            where: function (propertyName, clause) {
+//                return where(queryBuilder, propertyName, clause);
+//            },
+//            orderBy: function (propertyName) {
+//                return orderBy(queryBuilder, propertyName, false);
+//            },
+//            orderByDesc: function (propertyName) {
+//                return orderBy(queryBuilder, propertyName, true);
+//            },
+//            select: function (propertyNames) {
+//                return select(queryBuilder, propertyNames);
+//            },
+//            insert: function (data, key) {
+//                return insert(queryBuilder, data, key);
+//            },
+//            update: function (data, key) {
+//                return update(queryBuilder, data, key);
+//            },
+//            remove: function (key) {
+//                return remove(queryBuilder, key);
+//            },
+//            clear: function () {
+//                return clearInterval(queryBuilder);
+//            }
+//        }
+//    }
+
+//    function where(queryBuilder, propertyName, clause) {
+//        if (clause) {
+//            if (clause.equals) {
+//                return where(queryBuilder, propertyName).equals(clause.equals)
+//            }
+//            else if (clause.range) {
+//                return where(queryBuilder, propertyName).Between(clause.range[0], clause.range[1], clause.range[2], clause.range[3]);
+//            }
+//        }
+//        else {
+//            var returnFunctions = {
+//                        and: function (propertyName, clause) {
+//                            return where(queryBuilder, propertyName, clause)
+//                        },
+//                        orderBy: function (propertyName) {
+//                            return orderBy(queryBuilder, propertyName, false);
+//                        },
+//                        orderByDesc: function (propertyName) {
+//                            return orderBy(queryBuilder, propertyName, true);
+//                        },
+//                        select: function (propertyNames) {
+//                            return select(queryBuilder, propertyNames);
+//                        },
+//                    }
+
+//            return {
+//                equals: function (value) {
+//                    queryBuilder.where.push({ type: "equals", value: value });
+//                    return returnFunctions;
+//                },
+//                greaterThen: function (value, valueIncluded) {
+//                    queryBuilder.where.push({ type: "greaterThen", value: value, valueIncluded: valueIncluded });
+//                    return returnFunctions;
+//                },
+//                smallerThen: function (value, valueIncluded) {
+//                    queryBuilder.where.push({ type: "smallerThen", value: value, valueIncluded: valueIncluded });
+//                    return returnFunctions;
+//                },
+//                between: function (minValue, maxValue, minValueIncluded, maxValueIncluded) {
+//                    queryBuilder.where.push({ type: "between", minValue: minValue, maxValue: maxValue, minValueIncluded: minValueIncluded, maxValueIncluded: maxValueIncluded });
+//                    return returnFunctions;
+//                }
+//            }
+//        }
+//    }
+
     function linq() {
         return {
             from: function (objectStoreName) {
@@ -1154,7 +1247,7 @@
                             , dfd.reject);
                         });
                     },
-                    clear: function (onsuccess, onerror) {
+                    clear: function () {
                         var clearPromis = promise.clear(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName))
                         return $.Deferred(function (dfd) {
                             var returnData = [];
@@ -1171,68 +1264,4 @@
 
     $.linq2indexedDB = linq2indexedDB;
 
-    //    $.extend({
-    //        linq2indexedDB: function (databaseConfiguration) {
-
-    //            // QueryBuilder tryout
-    //            function query() {
-    //                this.whereClause = [];
-    //                this.selectClause = [];
-    //                this.orderByClause = [];
-    //                this.fromClause = "";
-    //            }
-
-    //            function linq2() {
-    //                var query = new query();
-    //                return {
-    //                    from: function (objectStoreName) {
-    //                        return {
-    //                            where: function (propertyName, clause) {
-    //                                if (clause) {
-    //                                    where2(query, propertyName, clause);
-    //                                }
-    //                                else {
-
-    //                                }
-    //                            },
-    //                            orderBy: function (propertyName, descending) {
-    //                                orderBy2(query, propertyName, descending);
-    //                            },
-    //                            select: function (propertyNames) {
-    //                                select2(query, propertyNames);
-    //                            }
-    //                        }
-    //                    }
-    //                }
-    //            }
-
-    //            function test(a) { alert(a); }
-
-    //            function select2(query, propertyNames) {
-    //                for (var propertyName in propertyNames) {
-    //                    var x = propertyName.split('.')
-    //                    if (x.length == 1) {
-    //                        query.selectClause.push({ objectStore: query.from, propertyName: x[0] });
-    //                    }
-    //                    else if (x.length == 2) {
-    //                        query.selectClause.push({ objectStore: x[0], propertyName: x[1] });
-    //                    }
-    //                }
-    //            }
-
-    //            function orderBy2(query, propertyName, desceding) {
-    //                if (descending) {
-    //                    query.orderByClause.push({ propertyName: propertyName, descending: descending });
-    //                }
-    //                else {
-    //                    query.orderByClause.push({ propertyName: propertyName, descending: false });
-    //                }
-    //            }
-
-    //            function where2(query, propertyName, clause) {
-    //                query.whereClause.push({ propertyName: propertyName, clause: clause })
-    //            }
-
-    //        }
-    //    });
 })(window.jQuery, window);
