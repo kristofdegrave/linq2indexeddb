@@ -1,8 +1,5 @@
 ﻿/// <reference path="../Scripts/jquery-1.7.1.js" />
 /// <reference path="../Scripts/jquery-1.7.1-vsdoc.js" />
-/// <reference path="../Linq/Linq2IndexedDB.js" />
-
-importScripts('../Linq/Linq2IndexedDB.js');
 
 onmessage = function (event) {
     var data = event.data.data;
@@ -13,7 +10,20 @@ onmessage = function (event) {
     //    data = [data];
     //}
 
-    var returnData = data.sort($.linq2indexedDB.fn.JSONComparer(propertyName, desc).sort)
+    var returnData = data.sort(JSONComparer(propertyName, desc).sort)
     postMessage(returnData);
     return;
 };
+
+function JSONComparer(propertyName, descending) {
+    return {
+        sort: function (valueX, valueY) {
+            if (descending) {
+                return ((valueX[propertyName] == valueY[propertyName]) ? 0 : ((valueX[propertyName] > valueY[propertyName]) ? -1 : 1));
+            }
+            else {
+                return ((valueX[propertyName] == valueY[propertyName]) ? 0 : ((valueX[propertyName] > valueY[propertyName]) ? 1 : -1));
+            }
+        }
+    }
+}

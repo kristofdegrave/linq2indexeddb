@@ -2,6 +2,7 @@
 /// <reference path="../Scripts/jquery-1.7.1-vsdoc.js" />
 /// <reference path="Sort.js"
 
+
 (function ($, window) {
     /// <param name="$" type="jQuery" />    
     "use strict";
@@ -31,24 +32,24 @@
     }
 
     var linq2indexedDB,
-        events = {},
-        implementations = {
-            NONE: 0,
-            NATIVE: 1,
-            MICROSOFT: 2,
-            MOZILLA: 3,
-            GOOGLE: 4,
-            MICROSOFTPROTOTYPE: 5
-        },
-        enableLogging = true,
-        log = function () {
-            if (typeof (window.console) === "undefined" || !enableLogging) {
-                return false;
-            }
-            return window.console.log.apply(console, arguments);
-        },
-        implementation = initializeIndexedDB(),
-        promise;
+    events = {},
+    implementations = {
+        NONE: 0,
+        NATIVE: 1,
+        MICROSOFT: 2,
+        MOZILLA: 3,
+        GOOGLE: 4,
+        MICROSOFTPROTOTYPE: 5
+    },
+    enableLogging = true,
+    log = function () {
+        if (typeof (window.console) === "undefined" || !enableLogging) {
+            return false;
+        }
+        return window.console.log.apply(console, arguments);
+    },
+    implementation = initializeIndexedDB(),
+    promise;
 
     linq2indexedDB = function (name, configuration, logging) {
         /// <summary>Creates a new or opens an existing database for the given name</summary>        
@@ -78,7 +79,7 @@
                 $.when(promise.db()).then(function () {
                     dfd.resolve();
                 }
-                , dfd.reject);
+            , dfd.reject);
             });
         },
         deleteDatabase: function () {
@@ -87,20 +88,8 @@
                 $.when(promise.deleteDb()).then(function () {
                     dfd.resolve();
                 }
-                , dfd.reject);
+            , dfd.reject);
             });
-        },
-        JSONComparer: function (propertyName, descending) {
-            return {
-                sort: function (valueX, valueY) {
-                    if (descending) {
-                        return ((valueX[propertyName] == valueY[propertyName]) ? 0 : ((valueX[propertyName] > valueY[propertyName]) ? -1 : 1));
-                    }
-                    else {
-                        return ((valueX[propertyName] == valueY[propertyName]) ? 0 : ((valueX[propertyName] > valueY[propertyName]) ? 1 : -1));
-                    }
-                }
-            }
         }
     };
 
@@ -804,10 +793,6 @@
                     $.when(dataPromise).then(function (data) {
                         var worker = new Worker("../Linq/Sort.js");
                         worker.onmessage = function (event) {
-
-                            for (var i = 0; i < event.data.length; i++) {
-                                dfd.notify(event.data[i])
-                            }
                             dfd.resolve(event.data)
                         };
                         worker.onerror = dfd.reject;
@@ -1170,7 +1155,7 @@
                 $.when(insertPromis).then(function (storedData, storedkey) {
                     dfd.resolve(storedData, storedkey);
                 }
-                , dfd.reject);
+            , dfd.reject);
             });
         }
 
@@ -1180,7 +1165,7 @@
                 $.when(updatePromis).then(function (storedData, storedkey) {
                     dfd.resolve(storedData, storedkey);
                 }
-                , dfd.reject);
+            , dfd.reject);
             });
         }
 
@@ -1190,7 +1175,7 @@
                 $.when(removePromis).then(function () {
                     dfd.resolve(key);
                 }
-                , dfd.reject);
+            , dfd.reject);
             });
         }
 
@@ -1200,7 +1185,7 @@
                 $.when(clearPromis).then(function () {
                     dfd.resolve();
                 }
-                , dfd.reject);
+            , dfd.reject);
             });
         }
 
@@ -1213,7 +1198,7 @@
 
                 if (queryBuilder.where.length > 0) {
                     // Sorting the where clauses so the most restrictive ones are on top.
-                    whereClauses = queryBuilder.where.sort(linq2indexedDB.fn.JSONComparer("type", false).sort);
+                    whereClauses = queryBuilder.where.sort(JSONComparer("type", false).sort);
                     // Only one condition can be passed to IndexedDB API
                     cursorPromis = determineCursorPromis(objPromise, whereClauses[0]);
                 }
@@ -1237,7 +1222,7 @@
 
                     function asyncForSort(data, i) {
                         if (i < queryBuilder.orderBy.length) {
-                            $.when(promise.sort(data, queryBuilder.sort[i].propertyName, queryBuilder.sort[i].descending)).then(function (d) {
+                            $.when(promise.sort(data, queryBuilder.orderBy[i].propertyName, queryBuilder.orderBy[i].descending)).then(function (d) {
                                 asyncForSort(d, ++i);
                             }, dfd.reject);
                         }
@@ -1250,8 +1235,8 @@
                                     dfd.notify(obj);
                                 }
                             }
+                            dfd.resolve(returnData);
                         }
-                        dfd.resolve(returnData);
                     }
 
                     // Start at 1 because we allready executed the first clause
@@ -1299,7 +1284,7 @@
         }
 
         function SelectData(data, propertyNames) {
-            if (propertyNames) {
+            if (propertyNames && propertyNames.length > 0) {
                 if (!$.isArray(propertyNames)) {
                     propertyNames = [propertyNames];
                 }
@@ -1320,6 +1305,20 @@
         }
     }
 
+    function JSONComparer(propertyName, descending) {
+        return {
+            sort: function (valueX, valueY) {
+                if (descending) {
+                    return ((valueX[propertyName] == valueY[propertyName]) ? 0 : ((valueX[propertyName] > valueY[propertyName]) ? -1 : 1));
+                }
+                else {
+                    return ((valueX[propertyName] == valueY[propertyName]) ? 0 : ((valueX[propertyName] > valueY[propertyName]) ? 1 : -1));
+                }
+            }
+        }
+    }
+
     $.linq2indexedDB = linq2indexedDB;
 
 })(window.jQuery, window);
+
