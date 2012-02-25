@@ -1,5 +1,6 @@
-/// <reference path="jquery-1.7.1-vsdoc.js" />
-/// <reference path="jquery-1.7.1.js" />
+/// <reference path="../Scripts/jquery-1.7.1.js" />
+/// <reference path="../Scripts/jquery-1.7.1-vsdoc.js" />
+/// <reference path="Sort.js"
 
 (function ($, window) {
     /// <param name="$" type="jQuery" />    
@@ -46,7 +47,7 @@
             }
             return window.console.log.apply(console, arguments);
         },
-        implementation = InitializeIndexedDB(),
+        implementation = initializeIndexedDB(),
         promise;
 
     linq2indexedDB = function (name, configuration, logging) {
@@ -88,6 +89,18 @@
                 }
                 , dfd.reject);
             });
+        },
+        JSONComparer: function (propertyName, descending) {
+            return {
+                sort: function (valueX, valueY) {
+                    if (descending) {
+                        return ((valueX[propertyName] == valueY[propertyName]) ? 0 : ((valueX[propertyName] > valueY[propertyName]) ? -1 : 1));
+                    }
+                    else {
+                        return ((valueX[propertyName] == valueY[propertyName]) ? 0 : ((valueX[propertyName] > valueY[propertyName]) ? 1 : -1));
+                    }
+                }
+            }
         }
     };
 
@@ -493,8 +506,7 @@
                                 result.move();
 
                                 if (result.value) {
-                                    //dfd.notify(result.value, req);
-                                    dfd.notify(result.value);
+                                    dfd.notify(result.value, req);
                                     returnData.push(result.value);
                                     req.onsuccess = handleCursorRequest;
                                 }
@@ -502,8 +514,7 @@
 
                             if (req.result) {
                                 if (result.value) {
-                                    //dfd.notify(result.value, req);
-                                    dfd.notify(result.value);
+                                    dfd.notify(result.value, req);
                                     returnData.push(result.value);
                                 }
                                 result["continue"]();
@@ -791,7 +802,7 @@
             sort: function (dataPromise, propertyName, descending) {
                 return $.Deferred(function (dfd) {
                     $.when(dataPromise).then(function (data) {
-                        var worker = new Worker("../Scripts/Sort.js");
+                        var worker = new Worker("../Linq/Sort.js");
                         worker.onmessage = function (event) {
 
                             for (var i = 0; i < event.data.length; i++) {
@@ -803,11 +814,21 @@
                         worker.postMessage({ data: data, propertyName: propertyName, descending: descending });
                     }, dfd.reject);
                 });
+            },
+            where: function (data, clause) {
+                return $.Deferred(function (dfd) {
+                    var worker = new Worker("../Linq/Where.js");
+                    worker.onmessage = function (event) {
+                        dfd.resolve(event.data)
+                    };
+                    worker.onerror = dfd.reject;
+                    worker.postMessage({ data: data, clause: clause });
+                });
             }
         }
     };
 
-    function InitializeIndexedDB() {
+    function initializeIndexedDB() {
         if (window.indexedDB) {
             log("Native implementation", window.indexedDB);
             return implementations.NATIVE;
@@ -1018,246 +1039,283 @@
         }
     }
 
-    function whereInternal(objectStorePromise, propertyName) {
-        return {
-            equals: function (value) {
-                var cursorPromis = promise.cursor(promise.index(propertyName, objectStorePromise), IDBKeyRange.only(value));
-                return SelectInternal(cursorPromis)
-            },
-            greaterThen: function (value, valueIncluded) {
-                var cursorPromis = promise.cursor(promise.index(propertyName, objectStorePromise), IDBKeyRange.lowerBound(value, typeof (valueIncluded) === 'undefined' ? false : valueIncluded));
-                return SelectInternal(cursorPromis)
-            },
-            smallerThen: function (value, valueIncluded) {
-                var cursorPromis = promise.cursor(promise.index(propertyName, objectStorePromise), IDBKeyRange.upperBound(value, typeof (valueIncluded) === 'undefined' ? false : valueIncluded));
-                return SelectInternal(cursorPromis)
-            },
-            between: function (minValue, maxValue, minValueIncluded, maxValueIncluded) {
-                var cursorPromis = promise.cursor(promise.index(propertyName, objectStorePromise), IDBKeyRange.bound(minValue, maxValue, typeof (minValueIncluded) === 'undefined' ? false : minValueIncluded), typeof (maxValueIncluded) === 'undefined' ? false : maxValueIncluded);
-                return SelectInternal(cursorPromis)
-            }
-        }
-    }
+    function linq() {
+        var queryBuilder = {
+            from: "",
+            where: [],
+            select: [],
+            orderBy: []
+        };
 
-    function OrderInternal(cursorPromis) {
-        return {
-            orderBy: function (propertyName) {
-                $.when(cursorPromis).then(function (data) {
-                    return SelectInternal(promise.sort(data, propertyName, false));
+        var whereType = {
+            equals: 0,
+            between: 1,
+            greaterThen: 2,
+            smallerThen: 3
+        };
+
+        function from(queryBuilder, objectStoreName) {
+            queryBuilder.from = objectStoreName
+            return {
+                where: function (propertyName, clause) {
+                    return where(queryBuilder, propertyName, clause);
+                },
+                orderBy: function (propertyName) {
+                    return orderBy(queryBuilder, propertyName, false);
+                },
+                orderByDesc: function (propertyName) {
+                    return orderBy(queryBuilder, propertyName, true);
+                },
+                select: function (propertyNames) {
+                    return select(queryBuilder, propertyNames);
+                },
+                insert: function (data, key) {
+                    return insert(queryBuilder, data, key);
+                },
+                update: function (data, key) {
+                    return update(queryBuilder, data, key);
+                },
+                remove: function (key) {
+                    return remove(queryBuilder, key);
+                },
+                clear: function () {
+                    return clear(queryBuilder);
                 }
-                        , function () { /*error handler*/ });
-            },
-            orderByDesc: function (propertyName) {
-                $.when(cursorPromis).then(function (data) {
-                    return SelectInternal(promise.sort(data, propertyName, true));
+            }
+        }
+
+        function where(queryBuilder, propertyName, clause) {
+            if (clause) {
+                if (clause.equals) {
+                    return where(queryBuilder, propertyName).equals(clause.equals);
                 }
-                        , function () { /*error handler*/ });
+                else if (clause.range) {
+                    return where(queryBuilder, propertyName).Between(clause.range[0], clause.range[1], clause.range[2], clause.range[3]);
+                }
+                else {
+                    return where(queryBuilder, propertyName);
+                }
+            }
+            else {
+                return {
+                    equals: function (value) {
+                        return whereClause(queryBuilder, { type: whereType.equals, propertyName: propertyName, value: value });
+                    },
+                    greaterThen: function (value, valueIncluded) {
+                        var isValueIncluded = typeof (valueIncluded) === undefined ? false : valueIncluded;
+                        return whereClause(queryBuilder, { type: whereType.greaterThen, propertyName: propertyName, value: value, valueIncluded: isValueIncluded });
+                    },
+                    smallerThen: function (value, valueIncluded) {
+                        var isValueIncluded = typeof (valueIncluded) === undefined ? false : valueIncluded;
+                        return whereClause(queryBuilder, { type: whereType.smallerThen, propertyName: propertyName, value: value, valueIncluded: isValueIncluded });
+                    },
+                    between: function (minValue, maxValue, minValueIncluded, maxValueIncluded) {
+                        var isMinValueIncluded = typeof (minValueIncluded) === undefined ? false : minValueIncluded;
+                        var isMasValueIncluded = typeof (maxValueIncluded) === undefined ? false : maxValueIncluded;
+                        return whereClause(queryBuilder, { type: whereType.between, propertyName: propertyName, minValue: minValue, maxValue: maxValue, minValueIncluded: isMinValueIncluded, maxValueIncluded: isMasValueIncluded });
+                    }
+                }
             }
         }
-    }
 
-    function SelectData(data, propertyNames) {
-        if (propertyNames) {
-            if (!$.isArray(propertyNames)) {
-                propertyNames = [propertyNames];
+        function whereClause(queryBuilder, clause) {
+            queryBuilder.where.push(clause)
+            return {
+                and: function (propertyName, clause) {
+                    return where(queryBuilder, propertyName, clause)
+                },
+                orderBy: function (propertyName) {
+                    return orderBy(queryBuilder, propertyName, false);
+                },
+                orderByDesc: function (propertyName) {
+                    return orderBy(queryBuilder, propertyName, true);
+                },
+                select: function (propertyNames) {
+                    return select(queryBuilder, propertyNames);
+                }
             }
-
-            var obj = new Object();
-            for (var i = 0; i < propertyNames.length; i++) {
-                obj[propertyNames[i]] = data[propertyNames[i]];
-            }
-            return obj;
         }
-        return data;
-    }
 
-    function SelectInternal(cursorPromis) {
-        return {
-            select: function (propertyNames) {
-                return $.Deferred(function (dfd) {
-                    var returnData = [];
-                    $.when(cursorPromis).then(function () {
+        function orderBy(queryBuilder, propertyName, descending) {
+            queryBuilder.orderBy.push({ propertyName: propertyName, descending: descending });
+            return {
+                orderBy: function (propertyName) {
+                    return orderBy(queryBuilder, propertyName, false);
+                },
+                orderByDesc: function (propertyName) {
+                    return orderBy(queryBuilder, propertyName, true);
+                },
+                select: function (propertyNames) {
+                    return select(queryBuilder, propertyNames);
+                }
+            }
+        }
+
+        function select(queryBuilder, propertyNames) {
+            if (propertyNames) {
+                if (!$.isArray(propertyNames)) {
+                    propertyNames = [propertyNames]
+                }
+
+                for (var i = 0; i < propertyNames.length; i++) {
+                    queryBuilder.select.push(propertyNames[i]);
+                }
+            }
+            return executeQuery(queryBuilder);
+        }
+
+        function insert(queryBuilder, data, key) {
+            var insertPromis = promise.insert(promise.objectStore(promise.writeTransaction(promise.db(), queryBuilder.from), queryBuilder.from), data, key)
+            return $.Deferred(function (dfd) {
+                $.when(insertPromis).then(function (storedData, storedkey) {
+                    dfd.resolve(storedData, storedkey);
+                }
+                , dfd.reject);
+            });
+        }
+
+        function update(queryBuilder, data, key) {
+            var updatePromis = promise.update(promise.objectStore(promise.writeTransaction(promise.db(), queryBuilder.from), queryBuilder.from), data, key)
+            return $.Deferred(function (dfd) {
+                $.when(updatePromis).then(function (storedData, storedkey) {
+                    dfd.resolve(storedData, storedkey);
+                }
+                , dfd.reject);
+            });
+        }
+
+        function remove(queryBuilder, key) {
+            var removePromis = promise.remove(promise.objectStore(promise.writeTransaction(promise.db(), queryBuilder.from), queryBuilder.from), key)
+            return $.Deferred(function (dfd) {
+                $.when(removePromis).then(function () {
+                    dfd.resolve(key);
+                }
+                , dfd.reject);
+            });
+        }
+
+        function clear(queryBuilder) {
+            var clearPromis = promise.clear(promise.objectStore(promise.writeTransaction(promise.db(), queryBuilder.from), queryBuilder.from))
+            return $.Deferred(function (dfd) {
+                $.when(clearPromis).then(function () {
+                    dfd.resolve();
+                }
+                , dfd.reject);
+            });
+        }
+
+        function executeQuery(queryBuilder) {
+            return $.Deferred(function (dfd) {
+                var objPromise = promise.objectStore(promise.readTransaction(promise.db(), queryBuilder.from), queryBuilder.from);
+                var cursorPromis;
+                var whereClauses = [];
+                var returnData = [];
+
+                if (queryBuilder.where.length > 0) {
+                    // Sorting the where clauses so the most restrictive ones are on top.
+                    whereClauses = queryBuilder.where.sort(linq2indexedDB.fn.JSONComparer("type", false).sort);
+                    // Only one condition can be passed to IndexedDB API
+                    cursorPromis = determineCursorPromis(objPromise, whereClauses[0]);
+                }
+                else {
+                    cursorPromis = determineCursorPromis(objPromise);
+                }
+
+                $.when(cursorPromis).then(onComplete, dfd.reject, onProgress);
+
+                function onComplete(data) {
+                    function asyncForWhere(data, i) {
+                        if (i < whereClauses.length) {
+                            $.when(promise.where(data, whereClauses[i])).then(function (d) {
+                                asyncForWhere(d, ++i);
+                            }, dfd.reject);
+                        }
+                        else {
+                            asyncForSort(data, 0);
+                        }
+                    }
+
+                    function asyncForSort(data, i) {
+                        if (i < queryBuilder.orderBy.length) {
+                            $.when(promise.sort(data, queryBuilder.sort[i].propertyName, queryBuilder.sort[i].descending)).then(function (d) {
+                                asyncForSort(d, ++i);
+                            }, dfd.reject);
+                        }
+                        else {
+                            // No need to notify again if it allready happend in the onProgress method.
+                            if (returnData.length == 0) {
+                                for (var j = 0; j < data.length; j++) {
+                                    var obj = SelectData(data[j], queryBuilder.select)
+                                    returnData.push(obj);
+                                    dfd.notify(obj);
+                                }
+                            }
+                        }
                         dfd.resolve(returnData);
                     }
-                    , dfd.reject
-                    , function (data) {
-                        var obj;
-                        if (propertyNames) {
-                            obj = SelectData(data, propertyNames);
-                        }
-                        else {
-                            obj = data;
-                        }
+
+                    // Start at 1 because we allready executed the first clause
+                    asyncForWhere(data, 1);
+                }
+
+                function onProgress(data) {
+                    // When there are no more where clauses to fulfill and the collection doesn't need to be sorted, the data can be returned.
+                    // In the other case let the complete handle it.
+                    if (whereClauses.length <= 1 && queryBuilder.orderBy.length == 0) {
+                        var obj = SelectData(data, queryBuilder.select)
                         returnData.push(obj);
                         dfd.notify(obj);
-                    });
-                });
-            }
-        }
-    }
-
-//    function query() {
-//        this.from;
-//        this.select = [];
-//        this.where = [];
-//        this.orderBy = [];
-//    }
-
-//    function linq2() {
-//        var queryBuilder = query();
-
-//        return {
-//            from: function (objectStoreName) {
-//                return from(queryBuilder, objectStoreName)
-//            }
-//        }
-//    }
-
-//    function from(queryBuilder, objectStoreName) {
-//        queryBuilder.from = objectStoreName
-//        return {
-//            where: function (propertyName, clause) {
-//                return where(queryBuilder, propertyName, clause);
-//            },
-//            orderBy: function (propertyName) {
-//                return orderBy(queryBuilder, propertyName, false);
-//            },
-//            orderByDesc: function (propertyName) {
-//                return orderBy(queryBuilder, propertyName, true);
-//            },
-//            select: function (propertyNames) {
-//                return select(queryBuilder, propertyNames);
-//            },
-//            insert: function (data, key) {
-//                return insert(queryBuilder, data, key);
-//            },
-//            update: function (data, key) {
-//                return update(queryBuilder, data, key);
-//            },
-//            remove: function (key) {
-//                return remove(queryBuilder, key);
-//            },
-//            clear: function () {
-//                return clearInterval(queryBuilder);
-//            }
-//        }
-//    }
-
-//    function where(queryBuilder, propertyName, clause) {
-//        if (clause) {
-//            if (clause.equals) {
-//                return where(queryBuilder, propertyName).equals(clause.equals)
-//            }
-//            else if (clause.range) {
-//                return where(queryBuilder, propertyName).Between(clause.range[0], clause.range[1], clause.range[2], clause.range[3]);
-//            }
-//        }
-//        else {
-//            var returnFunctions = {
-//                        and: function (propertyName, clause) {
-//                            return where(queryBuilder, propertyName, clause)
-//                        },
-//                        orderBy: function (propertyName) {
-//                            return orderBy(queryBuilder, propertyName, false);
-//                        },
-//                        orderByDesc: function (propertyName) {
-//                            return orderBy(queryBuilder, propertyName, true);
-//                        },
-//                        select: function (propertyNames) {
-//                            return select(queryBuilder, propertyNames);
-//                        },
-//                    }
-
-//            return {
-//                equals: function (value) {
-//                    queryBuilder.where.push({ type: "equals", value: value });
-//                    return returnFunctions;
-//                },
-//                greaterThen: function (value, valueIncluded) {
-//                    queryBuilder.where.push({ type: "greaterThen", value: value, valueIncluded: valueIncluded });
-//                    return returnFunctions;
-//                },
-//                smallerThen: function (value, valueIncluded) {
-//                    queryBuilder.where.push({ type: "smallerThen", value: value, valueIncluded: valueIncluded });
-//                    return returnFunctions;
-//                },
-//                between: function (minValue, maxValue, minValueIncluded, maxValueIncluded) {
-//                    queryBuilder.where.push({ type: "between", minValue: minValue, maxValue: maxValue, minValueIncluded: minValueIncluded, maxValueIncluded: maxValueIncluded });
-//                    return returnFunctions;
-//                }
-//            }
-//        }
-//    }
-
-    function linq() {
-        return {
-            from: function (objectStoreName) {
-                return {
-                    where: function (propertyName, clause) {
-                        if (propertyName) {
-                            if (clause) {
-                                if (clause.equals) {
-                                    return whereInternal(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), propertyName).Equals(clause.equals);
-                                }
-                                else if (clause.range) {
-                                    return whereInternal(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), propertyName).Between(clause.range[0], clause.range[1], clause.range[2], clause.range[3]);
-                                }
-                            }
-                            else {
-                                return whereInternal(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName), propertyName);
-                            }
-                        }
-                        else {
-                            return SelectInternal(promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName)));
-                        }
-                    },
-                    orderBy: function (propertyName) {
-                        return SelectInternal(promise.sort(promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName)), propertyName, false));
-                    },
-                    select: function (propertyNames) {
-                        return SelectInternal(promise.cursor(promise.objectStore(promise.readTransaction(promise.db(), objectStoreName), objectStoreName))).select(propertyNames);
-                    },
-                    insert: function (data, key) {
-                        var insertPromis = promise.insert(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key)
-                        return $.Deferred(function (dfd) {
-                            var returnData = [];
-                            $.when(insertPromis).then(function (storedData, storedkey) {
-                                dfd.resolve(storedData, storedkey);
-                            }
-                            , dfd.reject);
-                        });
-                    },
-                    update: function (data, key) {
-                        var updatePromis = promise.update(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), data, key)
-                        return $.Deferred(function (dfd) {
-                            var returnData = [];
-                            $.when(updatePromis).then(function (storedData, storedkey) {
-                                dfd.resolve(storedData, storedkey);
-                            }
-                            , dfd.reject);
-                        });
-                    },
-                    remove: function (key) {
-                        var removePromis = promise.remove(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName), key)
-                        return $.Deferred(function (dfd) {
-                            var returnData = [];
-                            $.when(removePromis).then(function () {
-                                dfd.resolve(key);
-                            }
-                            , dfd.reject);
-                        });
-                    },
-                    clear: function () {
-                        var clearPromis = promise.clear(promise.objectStore(promise.writeTransaction(promise.db(), objectStoreName), objectStoreName))
-                        return $.Deferred(function (dfd) {
-                            var returnData = [];
-                            $.when(clearPromis).then(function () {
-                                dfd.resolve();
-                            }
-                            , dfd.reject);
-                        });
                     }
                 }
+            });
+        }
+
+        function determineCursorPromis(objPromise, clause) {
+            var cursorPromise;
+            if (clause) {
+                switch (clause.type) {
+                    case whereType.equals:
+                        cursorPromise = promise.cursor(promise.index(clause.propertyName, objPromise), IDBKeyRange.only(clause.value));
+                        break;
+                    case whereType.between:
+                        cursorPromise = promise.cursor(promise.index(clause.propertyName, objPromise), IDBKeyRange.bound(clause.minValue, clause.maxValue, clause.minValueIncluded, clause.maxValueIncluded));
+                        break;
+                    case whereType.greaterThen:
+                        cursorPromise = promise.cursor(promise.index(clause.propertyName, objPromise), IDBKeyRange.lowerBound(clause.value, clause.valueIncluded));
+                        break;
+                    case whereType.smallerThen:
+                        cursorPromise = promise.cursor(promise.index(clause.propertyName, objPromise), IDBKeyRange.upperBound(clause.value, clause.valueIncluded));
+                        break;
+                    default:
+                        cursorPromise = promise.cursor(objPromise);
+                        break;
+                }
+            }
+            else {
+                cursorPromise = promise.cursor(objPromise);
+            }
+
+            return cursorPromise;
+        }
+
+        function SelectData(data, propertyNames) {
+            if (propertyNames) {
+                if (!$.isArray(propertyNames)) {
+                    propertyNames = [propertyNames];
+                }
+
+                var obj = new Object();
+                for (var i = 0; i < propertyNames.length; i++) {
+                    obj[propertyNames[i]] = data[propertyNames[i]];
+                }
+                return obj;
+            }
+            return data;
+        }
+
+        return {
+            from: function (objectStoreName) {
+                return from(queryBuilder, objectStoreName);
             }
         }
     }

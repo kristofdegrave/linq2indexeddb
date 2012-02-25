@@ -64,7 +64,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Samples\OrderBy.htm" />
-    <Content Include="Scripts\Sort.js" />
+    <Content Include="Linq\Sort.js" />
+    <Content Include="Linq\Where.js" />
     <Content Include="Tests\LinqTest.htm" />
     <Content Include="Tests\qunit.css" />
     <Content Include="Tests\qunit.js" />

@@ -21,13 +21,21 @@
                 db.linq().from("person").insert({ Name: "test3", Firstname: "test3", Age: 3 });
                 db.linq().from("person").insert({ Name: "test4", Firstname: "test4", Age: 4 });
 
-                 $.when(db.linq().from("person").where("Name").equals("test1").select(["Name", "Firstname"])).then(null, null, function (data) {
+                $.when(db.linq().from("person").where("Name").equals("test1").select(["Name", "Firstname"])).then(function () { }, function () { }, function (data) {
                     var tekst = $("#txtLog").val();
                     tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + "\n\r";
                     $("#txtLog").val(tekst);
                 });
 
-                $.when(db.linq().from("person").where("Age").smallerThen(3).select(["Name", "Firstname"])).then(null, null, function (data) {
+                $.when(db.linq().from("person").where("Age").smallerThen(3).select(["Name", "Firstname", "Age"])).then(function () { }, function () { }, function (data) {
+                    var tekst = $("#txtLog").val();
+                    tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + " Age: " + data["Age"] + "\n\r";
+                    $("#txtLog").val(tekst);
+                });
+
+                $.when(db.linq().from("person").where("Age").smallerThen(3).and("Name").equals("test1").select(["Name", "Firstname"])).then(function () { }, function (error) {
+                    var x = error;
+                }, function (data) {
                     var tekst = $("#txtLog").val();
                     tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + "\n\r";
                     $("#txtLog").val(tekst);
