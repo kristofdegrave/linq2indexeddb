@@ -2,7 +2,6 @@
 /// <reference path="../Scripts/jquery-1.7.1-vsdoc.js" />
 /// <reference path="Sort.js"
 
-
 (function ($, window) {
     /// <param name="$" type="jQuery" />    
     "use strict";
@@ -41,14 +40,57 @@
         GOOGLE: 4,
         MICROSOFTPROTOTYPE: 5
     },
-    enableLogging = true,
+    enableLogging = false,
     log = function () {
-        if (typeof (window.console) === "undefined" || !enableLogging) {
+        if (typeof (window.console) === undefined || !enableLogging) {
             return false;
         }
         return window.console.log.apply(console, arguments);
     },
-    utilities = {
+    implementation = initializeIndexedDB();
+
+    linq2indexedDB = function (name, configuration, logging) {
+        /// <summary>Creates a new or opens an existing database for the given name</summary>        
+        /// <param name="name" type="String">The name of the database</param>        
+        /// <param name="configuration" type="Object">        
+        ///     [Optional] provide comment      
+        /// </param>        
+        /// <param name="logging" type="Boolean">        
+        ///     [Optional] A flag indicating whether connection logging is enabled to the browser        
+        ///     console/log. Defaults to false.        
+        /// </param>        
+        /// <returns type="linq2indexedDB" />
+
+        return {
+            core: core(name, configuration),
+            utilities: linq2indexedDB.utilities,
+            linq: function () {
+                return linq(this.core);
+            },
+            initialize: function () {
+                var promise = this.core;
+                return $.Deferred(function (dfd) {
+                    var returnData = [];
+                    $.when(promise.db()).then(function () {
+                        dfd.resolve();
+                    }
+            , dfd.reject);
+                });
+            },
+            deleteDatabase: function () {
+                var promise = this.core;
+                return $.Deferred(function (dfd) {
+                    var returnData = [];
+                    $.when(promise.deleteDb()).then(function () {
+                        dfd.resolve();
+                    }
+            , dfd.reject);
+                });
+            }
+        };
+    }
+
+    linq2indexedDB.utilities = {
         sort: function (dataPromise, propertyName, descending) {
             return $.Deferred(function (dfd) {
                 $.when(dataPromise).then(function (data) {
@@ -71,55 +113,9 @@
                 worker.postMessage({ data: data, clause: clause });
             });
         }
-    },
-    implementation = initializeIndexedDB();
-
-    linq2indexedDB = function (name, configuration, logging) {
-        /// <summary>Creates a new or opens an existing database for the given name</summary>        
-        /// <param name="name" type="String">The name of the database</param>        
-        /// <param name="configuration" type="Object">        
-        ///     [Optional] provide comment      
-        /// </param>        
-        /// <param name="logging" type="Boolean">        
-        ///     [Optional] A flag indicating whether connection logging is enabled to the browser        
-        ///     console/log. Defaults to false.        
-        /// </param>        
-        /// <returns type="linq2indexedDB" />
-        return new linq2indexedDB.fn.init(name, configuration, logging);
-    }
-
-    linq2indexedDB.fn = linq2indexedDB.prototype = {
-        core: null,
-        utilities: utilities,
-        init: function (name, configuration, logging) {
-            this.core = core(name, configuration);
-        },
-        linq: function () {
-            return linq(this.core);
-        },
-        initialize: function () {
-            var promise = this.core;
-            return $.Deferred(function (dfd) {
-                var returnData = [];
-                $.when(promise.db()).then(function () {
-                    dfd.resolve();
-                }
-            , dfd.reject);
-            });
-        },
-        deleteDatabase: function () {
-            var promise = this.core;
-            return $.Deferred(function (dfd) {
-                var returnData = [];
-                $.when(promise.deleteDb()).then(function () {
-                    dfd.resolve();
-                }
-            , dfd.reject);
-            });
-        }
     };
 
-    linq2indexedDB.fn.init.prototype = linq2indexedDB.fn;
+    linq2indexedDB.prototype.utilities = linq2indexedDB.utilities;
 
     function initializeIndexedDB() {
         if (window.indexedDB) {
