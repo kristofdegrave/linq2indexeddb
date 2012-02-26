@@ -48,8 +48,31 @@
         }
         return window.console.log.apply(console, arguments);
     },
-    implementation = initializeIndexedDB(),
-    promise;
+    utilities = {
+        sort: function (dataPromise, propertyName, descending) {
+            return $.Deferred(function (dfd) {
+                $.when(dataPromise).then(function (data) {
+                    var worker = new Worker("../Linq/Sort.js");
+                    worker.onmessage = function (event) {
+                        dfd.resolve(event.data)
+                    };
+                    worker.onerror = dfd.reject;
+                    worker.postMessage({ data: data, propertyName: propertyName, descending: descending });
+                }, dfd.reject);
+            });
+        },
+        where: function (data, clause) {
+            return $.Deferred(function (dfd) {
+                var worker = new Worker("../Linq/Where.js");
+                worker.onmessage = function (event) {
+                    dfd.resolve(event.data)
+                };
+                worker.onerror = dfd.reject;
+                worker.postMessage({ data: data, clause: clause });
+            });
+        }
+    },
+    implementation = initializeIndexedDB();
 
     linq2indexedDB = function (name, configuration, logging) {
         /// <summary>Creates a new or opens an existing database for the given name</summary>        
@@ -66,14 +89,16 @@
     }
 
     linq2indexedDB.fn = linq2indexedDB.prototype = {
+        core: null,
+        utilities: utilities,
         init: function (name, configuration, logging) {
-            enableLogging = logging;
-            promise = core(name, configuration);
+            this.core = core(name, configuration);
         },
         linq: function () {
-            return linq();
+            return linq(this.core);
         },
         initialize: function () {
+            var promise = this.core;
             return $.Deferred(function (dfd) {
                 var returnData = [];
                 $.when(promise.db()).then(function () {
@@ -83,6 +108,7 @@
             });
         },
         deleteDatabase: function () {
+            var promise = this.core;
             return $.Deferred(function (dfd) {
                 var returnData = [];
                 $.when(promise.deleteDb()).then(function () {
@@ -94,6 +120,135 @@
     };
 
     linq2indexedDB.fn.init.prototype = linq2indexedDB.fn;
+
+    function initializeIndexedDB() {
+        if (window.indexedDB) {
+            log("Native implementation", window.indexedDB);
+            return implementations.NATIVE;
+        }
+        else {
+            // Initialising the window.indexedDB Object for FireFox
+            if (window.mozIndexedDB) {
+                window.indexedDB = window.mozIndexedDB;
+
+                log("FireFox Initialized", window.indexedDB);
+                return implementations.MOZILLA;
+            }
+
+            // Initialising the window.indexedDB Object for Chrome
+            else if (window.webkitIndexedDB) {
+                if (!window.indexedDB) window.indexedDB = window.webkitIndexedDB;
+                if (!window.IDBCursor) window.IDBCursor = webkitIDBCursor
+                if (!window.IDBDatabase) window.IDBDatabase = webkitIDBDatabase
+                if (!window.IDBDatabaseError) window.IDBDatabaseError = webkitIDBDatabaseError
+                if (!window.IDBDatabaseException) window.IDBDatabaseException = webkitIDBDatabaseException
+                if (!window.IDBFactory) window.IDBFactory = webkitIDBFactory
+                if (!window.IDBIndex) window.IDBIndex = webkitIDBIndex
+                if (!window.IDBKeyRange) window.IDBKeyRange = webkitIDBKeyRange
+                if (!window.IDBObjectStore) window.IDBObjectStore = webkitIDBObjectStore
+                if (!window.IDBRequest) window.IDBRequest = webkitIDBRequest
+                if (!window.IDBTransaction) window.IDBTransaction = webkitIDBTransaction
+
+                log("Chrome Initialized", window.indexedDB);
+                return implementations.GOOGLE;
+            }
+
+            // Initialiseing the window.indexedDB Object for IE 10 preview 3+
+            else if (window.msIndexedDB) {
+                window.indexedDB = window.msIndexedDB;
+
+                log("IE10+ Initialized", window.indexedDB);
+                return implementations.MICROSOFT;
+            }
+
+            // Initialising the window.indexedDB Object for IE 8 & 9
+            else if (navigator.appName == 'Microsoft Internet Explorer') {
+                try {
+                    window.indexedDB = new ActiveXObject("SQLCE.Factory.4.0");
+                    window.indexedDBSync = new ActiveXObject("SQLCE.FactorySync.4.0");
+                }
+                catch (ex) {
+                    log("Initializing IE prototype exception", ex);
+                }
+
+                //                if (window.JSON) {
+                window.indexedDB.json = window.JSON;
+                window.indexedDBSync.json = window.JSON;
+                //                } else {
+                //                    var jsonObject = {
+                //                        parse: function (txt) {
+                //                            if (txt === "[]") return [];
+                //                            if (txt === "{}") return {};
+                //                            throw { message: "Unrecognized JSON to parse: " + txt };
+                //                        }
+                //                    };
+                //                    window.indexedDB.json = jsonObject;
+                //                    window.indexedDBSync.json = jsonObject;
+                //                }
+
+                // Add some interface-level constants and methods.
+                window.IDBDatabaseException = {
+                    UNKNOWN_ERR: 0,
+                    NON_TRANSIENT_ERR: 1,
+                    NOT_FOUND_ERR: 2,
+                    CONSTRAINT_ERR: 3,
+                    DATA_ERR: 4,
+                    NOT_ALLOWED_ERR: 5,
+                    SERIAL_ERR: 11,
+                    RECOVERABLE_ERR: 21,
+                    TRANSIENT_ERR: 31,
+                    TIMEOUT_ERR: 32,
+                    DEADLOCK_ERR: 33
+                };
+
+                window.IDBKeyRange = {
+                    SINGLE: 0,
+                    LEFT_OPEN: 1,
+                    RIGHT_OPEN: 2,
+                    LEFT_BOUND: 4,
+                    RIGHT_BOUND: 8
+                };
+
+                window.IDBRequest = {
+                    INITIAL: 0,
+                    LOADING: 1,
+                    DONE: 2
+                };
+
+                window.IDBTransaction = {
+                    READ_ONLY: 0,
+                    READ_WRITE: 1,
+                    VERSION_CHANGE: 2
+                };
+
+                window.IDBKeyRange.only = function (value) {
+                    return window.indexedDB.range.only(value);
+                };
+
+                window.IDBKeyRange.leftBound = function (bound, open) {
+                    return window.indexedDB.range.lowerBound(bound, open);
+                };
+
+                window.IDBKeyRange.rightBound = function (bound, open) {
+                    return window.indexedDB.range.upperBound(bound, open);
+                };
+
+                window.IDBKeyRange.bound = function (left, right, openLeft, openRight) {
+                    return window.indexedDB.range.bound(left, right, openLeft, openRight);
+                };
+
+                window.IDBKeyRange.lowerBound = function (left, openLeft) {
+                    return window.IDBKeyRange.leftBound(left, openLeft);
+                };
+
+                return implementations.MICROSOFTPROTOTYPE;
+            }
+            else {
+                log("Your browser doesn't support indexedDB.");
+                return implementations.NONE;
+            }
+        }
+    };
 
     function core(name, configuration) {
         var dbName = "Default";
@@ -107,7 +262,7 @@
             dbVersion = configuration.version;
         }
 
-        return {
+        var promise = {
             self: function (value) {
                 return $.Deferred(function (dfd) {
                     dfd.resolve(value);
@@ -787,249 +942,111 @@
                         dfd.reject(e, dbName);
                     }
                 });
-            },
-            sort: function (dataPromise, propertyName, descending) {
-                return $.Deferred(function (dfd) {
-                    $.when(dataPromise).then(function (data) {
-                        var worker = new Worker("../Linq/Sort.js");
-                        worker.onmessage = function (event) {
-                            dfd.resolve(event.data)
-                        };
-                        worker.onerror = dfd.reject;
-                        worker.postMessage({ data: data, propertyName: propertyName, descending: descending });
-                    }, dfd.reject);
-                });
-            },
-            where: function (data, clause) {
-                return $.Deferred(function (dfd) {
-                    var worker = new Worker("../Linq/Where.js");
-                    worker.onmessage = function (event) {
-                        dfd.resolve(event.data)
-                    };
-                    worker.onerror = dfd.reject;
-                    worker.postMessage({ data: data, clause: clause });
-                });
+            }
+        };
+
+        function closeDatabaseConnection(db) {
+            log("Close database Connection: " + db);
+            db.close();
+        }
+
+        function abortTransaction(transaction) {
+            log("Abort transaction: " + transaction);
+            transaction.abort();
+            closeDatabaseConnection(transaction.db);
+        }
+
+        function InitializeDatabse(txn, oldVersion, newVersion, configuration) {
+            if (configuration && configuration.objectStoreConfiguration) {
+                for (var version = oldVersion + 1; version == newVersion; version++) {
+                    var data = GetDataByVersion(version, configuration.objectStoreConfiguration);
+                    InitializeVersion(txn, data)
+                    // Provide a function so the developpers can handle a version change.
+                    // This is the place where conversion scripts are possible.
+                    // onVersionInitialized(txn, oldVersion, newVersion)
+                }
             }
         }
-    };
 
-    function initializeIndexedDB() {
-        if (window.indexedDB) {
-            log("Native implementation", window.indexedDB);
-            return implementations.NATIVE;
-        }
-        else {
-            // Initialising the window.indexedDB Object for FireFox
-            if (window.mozIndexedDB) {
-                window.indexedDB = window.mozIndexedDB;
-
-                log("FireFox Initialized", window.indexedDB);
-                return implementations.MOZILLA;
-            }
-
-            // Initialising the window.indexedDB Object for Chrome
-            else if (window.webkitIndexedDB) {
-                if (!window.indexedDB) window.indexedDB = window.webkitIndexedDB;
-                if (!window.IDBCursor) window.IDBCursor = webkitIDBCursor
-                if (!window.IDBDatabase) window.IDBDatabase = webkitIDBDatabase
-                if (!window.IDBDatabaseError) window.IDBDatabaseError = webkitIDBDatabaseError
-                if (!window.IDBDatabaseException) window.IDBDatabaseException = webkitIDBDatabaseException
-                if (!window.IDBFactory) window.IDBFactory = webkitIDBFactory
-                if (!window.IDBIndex) window.IDBIndex = webkitIDBIndex
-                if (!window.IDBKeyRange) window.IDBKeyRange = webkitIDBKeyRange
-                if (!window.IDBObjectStore) window.IDBObjectStore = webkitIDBObjectStore
-                if (!window.IDBRequest) window.IDBRequest = webkitIDBRequest
-                if (!window.IDBTransaction) window.IDBTransaction = webkitIDBTransaction
-
-                log("Chrome Initialized", window.indexedDB);
-                return implementations.GOOGLE;
-            }
-
-            // Initialiseing the window.indexedDB Object for IE 10 preview 3+
-            else if (window.msIndexedDB) {
-                window.indexedDB = window.msIndexedDB;
-
-                log("IE10+ Initialized", window.indexedDB);
-                return implementations.MICROSOFT;
-            }
-
-            // Initialising the window.indexedDB Object for IE 8 & 9
-            else if (navigator.appName == 'Microsoft Internet Explorer') {
+        function InitializeVersion(txn, data) {
+            for (var i = 0; i < data.length; i++) {
                 try {
-                    window.indexedDB = new ActiveXObject("SQLCE.Factory.4.0");
-                    window.indexedDBSync = new ActiveXObject("SQLCE.FactorySync.4.0");
+                    var storeConfig = data[i];
+
+                    if (storeConfig.remove) {
+                        promise.deleteObjectStore(promise.self(txn), storeConfig.name);
+                    }
+                    else {
+                        var storePromise = promise.createObjectStore(promise.self(txn), storeConfig.name, { keyPath: storeConfig.keyPath, autoIncrement: storeConfig.autoIncrement });
+
+                        $.when(storePromise).then(function (store) {
+                            for (var j = 0; j < storeConfig.Indexes.length; j++) {
+                                var indexConfig = storeConfig.Indexes[j];
+
+                                if (indexConfig.remove) {
+                                    promise.deleteIndex(indexConfig.PropertyName, promise.self(store));
+                                }
+                                else {
+                                    promise.createIndex(indexConfig.PropertyName, promise.self(store), { unique: indexConfig.IsUnique, multirow: indexConfig.Multirow });
+                                }
+                            }
+
+                            if (storeConfig.DefaultData) {
+                                for (var k = 0; k < storeConfig.DefaultData.length; k++) {
+                                    promise.insert(promise.self(store), storeConfig.DefaultData[k])
+                                }
+                            }
+                        })
+                    }
+
                 }
-                catch (ex) {
-                    log("Initializing IE prototype exception", ex);
+                catch (e) {
+                    log("createIndex exception: ", e);
+                    abortTransaction(txn);
                 }
+            }
+        }
 
-                //                if (window.JSON) {
-                window.indexedDB.json = window.JSON;
-                window.indexedDBSync.json = window.JSON;
-                //                } else {
-                //                    var jsonObject = {
-                //                        parse: function (txt) {
-                //                            if (txt === "[]") return [];
-                //                            if (txt === "{}") return {};
-                //                            throw { message: "Unrecognized JSON to parse: " + txt };
-                //                        }
-                //                    };
-                //                    window.indexedDB.json = jsonObject;
-                //                    window.indexedDBSync.json = jsonObject;
-                //                }
+        function GetDataByVersion(version, data) {
+            var result = [];
+            for (var i = 0; i < data.length; i++) {
+                if (parseInt(data[i].Version) == parseInt(version)) {
+                    result[result.length] = data[i];
+                }
+            }
+            return result;
+        }
 
-                // Add some interface-level constants and methods.
-                window.IDBDatabaseException = {
-                    UNKNOWN_ERR: 0,
-                    NON_TRANSIENT_ERR: 1,
-                    NOT_FOUND_ERR: 2,
-                    CONSTRAINT_ERR: 3,
-                    DATA_ERR: 4,
-                    NOT_ALLOWED_ERR: 5,
-                    SERIAL_ERR: 11,
-                    RECOVERABLE_ERR: 21,
-                    TRANSIENT_ERR: 31,
-                    TIMEOUT_ERR: 32,
-                    DEADLOCK_ERR: 33
-                };
-
-                window.IDBKeyRange = {
-                    SINGLE: 0,
-                    LEFT_OPEN: 1,
-                    RIGHT_OPEN: 2,
-                    LEFT_BOUND: 4,
-                    RIGHT_BOUND: 8
-                };
-
-                window.IDBRequest = {
-                    INITIAL: 0,
-                    LOADING: 1,
-                    DONE: 2
-                };
-
-                window.IDBTransaction = {
-                    READ_ONLY: 0,
-                    READ_WRITE: 1,
-                    VERSION_CHANGE: 2
-                };
-
-                window.IDBKeyRange.only = function (value) {
-                    return window.indexedDB.range.only(value);
-                };
-
-                window.IDBKeyRange.leftBound = function (bound, open) {
-                    return window.indexedDB.range.lowerBound(bound, open);
-                };
-
-                window.IDBKeyRange.rightBound = function (bound, open) {
-                    return window.indexedDB.range.upperBound(bound, open);
-                };
-
-                window.IDBKeyRange.bound = function (left, right, openLeft, openRight) {
-                    return window.indexedDB.range.bound(left, right, openLeft, openRight);
-                };
-
-                window.IDBKeyRange.lowerBound = function (left, openLeft) {
-                    return window.IDBKeyRange.leftBound(left, openLeft);
-                };
-
-                return implementations.MICROSOFTPROTOTYPE;
+        function GetDatabaseVersion(db) {
+            var dbVersion = parseInt(db.version);
+            if (isNaN(dbVersion) || dbVersion < 0) {
+                return 0
             }
             else {
-                log("Your browser doesn't support indexedDB.");
-                return implementations.NONE;
+                return dbVersion
             }
         }
+
+        return promise;
     };
 
-    function closeDatabaseConnection(db) {
-        log("Close database Connection: " + db);
-        db.close();
-    }
+    function linq(promise) {
 
-    function abortTransaction(transaction) {
-        log("Abort transaction: " + transaction);
-        transaction.abort();
-        closeDatabaseConnection(transaction.db);
-    }
+        var queryBuilderObj = function (objectStoreName) {
+            this.init(objectStoreName);
+        };
 
-    function InitializeDatabse(txn, oldVersion, newVersion, configuration) {
-        if (configuration && configuration.objectStoreConfiguration) {
-            for (var version = oldVersion + 1; version == newVersion; version++) {
-                var data = GetDataByVersion(version, configuration.objectStoreConfiguration);
-                InitializeVersion(txn, data)
-                // Provide a function so the developpers can handle a version change.
-                // This is the place where conversion scripts are possible.
-                // onVersionInitialized(txn, oldVersion, newVersion)
-            }
-        }
-    }
-
-    function InitializeVersion(txn, data) {
-        for (var i = 0; i < data.length; i++) {
-            try {
-                var storeConfig = data[i];
-
-                if (storeConfig.remove) {
-                    promise.deleteObjectStore(promise.self(txn), storeConfig.name);
-                }
-                else {
-                    var storePromise = promise.createObjectStore(promise.self(txn), storeConfig.name, { keyPath: storeConfig.keyPath, autoIncrement: storeConfig.autoIncrement });
-
-                    $.when(storePromise).then(function (store) {
-                        for (var j = 0; j < storeConfig.Indexes.length; j++) {
-                            var indexConfig = storeConfig.Indexes[j];
-
-                            if (indexConfig.remove) {
-                                promise.deleteIndex(indexConfig.PropertyName, promise.self(store));
-                            }
-                            else {
-                                promise.createIndex(indexConfig.PropertyName, promise.self(store), { unique: indexConfig.IsUnique, multirow: indexConfig.Multirow });
-                            }
-                        }
-
-                        if (storeConfig.DefaultData) {
-                            for (var k = 0; k < storeConfig.DefaultData.length; k++) {
-                                promise.insert(promise.self(store), storeConfig.DefaultData[k])
-                            }
-                        }
-                    })
-                }
-
-            }
-            catch (e) {
-                log("createIndex exception: ", e);
-                abortTransaction(txn);
-            }
-        }
-    }
-
-    function GetDataByVersion(version, data) {
-        var result = [];
-        for (var i = 0; i < data.length; i++) {
-            if (parseInt(data[i].Version) == parseInt(version)) {
-                result[result.length] = data[i];
-            }
-        }
-        return result;
-    }
-
-    function GetDatabaseVersion(db) {
-        var dbVersion = parseInt(db.version);
-        if (isNaN(dbVersion) || dbVersion < 0) {
-            return 0
-        }
-        else {
-            return dbVersion
-        }
-    }
-
-    function linq() {
-        var queryBuilder = {
+        queryBuilderObj.prototype = {
+            init: function (objectStoreName) {
+                this.from = from;
+            },
             from: "",
             where: [],
             select: [],
-            orderBy: []
+            orderBy: [],
+            executeQuery: function () {
+                executeQuery(this);
+            }
         };
 
         var whereType = {
@@ -1211,7 +1228,7 @@
                 function onComplete(data) {
                     function asyncForWhere(data, i) {
                         if (i < whereClauses.length) {
-                            $.when(promise.where(data, whereClauses[i])).then(function (d) {
+                            $.when(linq2indexedDB.prototype.utilities.where(data, whereClauses[i])).then(function (d) {
                                 asyncForWhere(d, ++i);
                             }, dfd.reject);
                         }
@@ -1222,7 +1239,7 @@
 
                     function asyncForSort(data, i) {
                         if (i < queryBuilder.orderBy.length) {
-                            $.when(promise.sort(data, queryBuilder.orderBy[i].propertyName, queryBuilder.orderBy[i].descending)).then(function (d) {
+                            $.when(linq2indexedDB.prototype.utilities.sort(data, queryBuilder.orderBy[i].propertyName, queryBuilder.orderBy[i].descending)).then(function (d) {
                                 asyncForSort(d, ++i);
                             }, dfd.reject);
                         }
@@ -1300,10 +1317,10 @@
 
         return {
             from: function (objectStoreName) {
-                return from(queryBuilder, objectStoreName);
+                return from(new queryBuilderObj(objectStoreName), objectStoreName);
             }
         }
-    }
+    };
 
     function JSONComparer(propertyName, descending) {
         return {
@@ -1316,7 +1333,7 @@
                 }
             }
         }
-    }
+    };
 
     $.linq2indexedDB = linq2indexedDB;
 
