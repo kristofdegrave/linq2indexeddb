@@ -90,7 +90,7 @@
         };
     }
 
-    linq2indexedDB.utilities = {
+    linq2indexedDB.prototype.utilities = linq2indexedDB.utilities = {
         sort: function (dataPromise, propertyName, descending) {
             return $.Deferred(function (dfd) {
                 $.when(dataPromise).then(function (data) {
@@ -114,8 +114,6 @@
             });
         }
     };
-
-    linq2indexedDB.prototype.utilities = linq2indexedDB.utilities;
 
     function initializeIndexedDB() {
         if (window.indexedDB) {
