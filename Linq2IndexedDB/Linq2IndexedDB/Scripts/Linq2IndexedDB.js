@@ -64,16 +64,14 @@
         /// <returns type="linq2indexedDB" />
 
         enableLogging = logging;
+        var promise = core(name, configuration);
 
         return {
-            core: core(name, configuration),
+            core: promise,
             utilities: linq2indexedDB.utilities,
-            linq: function () {
-                return linq(this.core);
-            },
+            linq: linq(promise),
             initialize: function () {
                 log("Initialize Started");
-                var promise = this.core;
                 return $.Deferred(function (dfd) {
                     $.when(promise.db()).then(function (db) {
                         db.close();
@@ -84,7 +82,6 @@
                 });
             },
             deleteDatabase: function () {
-                var promise = this.core;
                 return $.Deferred(function (dfd) {
                     var returnData = [];
                     $.when(promise.deleteDb()).then(function () {

@@ -32,7 +32,7 @@
 
             $.when(db.deleteDatabase()).then(function () {
                 $.when(db.initialize()).then(function () {
-                    $.when(db.linq().from("test").orderBy("name").select()).then(function () { }, function () { }, function (data) {
+                    $.when(db.linq.from("test").orderBy("name").select()).then(function () { }, function () { }, function (data) {
                         var tekst = $("#txtLog").val();
                         tekst += "Name: " + data["name"] + "\n\r";
                         $("#txtLog").val(tekst);
