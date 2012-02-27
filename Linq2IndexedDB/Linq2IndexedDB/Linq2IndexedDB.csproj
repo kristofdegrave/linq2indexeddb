@@ -64,12 +64,12 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Samples\OrderBy.htm" />
-    <Content Include="Linq\Sort.js" />
-    <Content Include="Linq\Where.js" />
+    <Content Include="Scripts\Sort.js" />
+    <Content Include="Scripts\Where.js" />
     <Content Include="Tests\LinqTest.htm" />
     <Content Include="Tests\qunit.css" />
     <Content Include="Tests\qunit.js" />
-    <Content Include="Linq\Linq2IndexedDB.js" />
+    <Content Include="Scripts\Linq2IndexedDB.js" />
     <Content Include="Samples\Insert.htm" />
     <Content Include="Samples\Linq2indexedDB Sample.htm" />
     <Content Include="Scripts\jquery-1.7.1-vsdoc.js" />
@@ -89,7 +89,9 @@
   <ItemGroup>
     <Content Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Linq\" />
+  </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

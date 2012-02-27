@@ -3,7 +3,7 @@
 <head>
     <title></title>
     <script src="../Scripts/jquery-1.7.1.js" type="text/javascript"></script>
-    <script src="../Linq/Linq2IndexedDB.js" type="text/javascript"></script>
+    <script src="../Scripts/Linq2IndexedDB.js" type="text/javascript"></script>
     <script type="text/javascript">
         $(function () {
             var ObjectStores = [
@@ -17,22 +17,22 @@
             dbConfiguration.Name = "insertTest";
             dbConfiguration.version = 1;
             dbConfiguration.objectStoreConfiguration = ObjectStores;
-            var db = $.linq2indexedDB("insertTest", dbConfiguration);
+            var db = $.linq2indexedDB("insertTest", dbConfiguration, true);
             db.deleteDatabase();
-            $.when(db.initialize).then(Initialized);
+            $.when(db.initialize()).then(Initialized);
             function Initialized() {
                 $.when(db.linq().from("IdAuto").clear()).then(function () {
-                    $.when(db.linq().from("IdAuto").insert({ Name: "test1" })).then(function () { log("test1 successfull"); }, function () { log("test1 failed"); });
-                    $.when(db.linq().from("IdAuto").insert({ Id: 2, Name: "test2" })).then(function () { log("test2 successfull"); }, function () { log("test2 failed"); });
-                    $.when(db.linq().from("IdAuto").insert({ Name: "test3" }, 3)).then(function () { log("test3 successfull"); }, function () { log("test3 failed"); });
-                    $.when(db.linq().from("IdAuto").insert({ Id: 4, Name: "test4" }, 4)).then(function (a, b) { log("test4 successfull"); }, function () { log("test4 failed"); });
+                    $.when(db.linq().from("IdAuto").insert({ Name: "test1" })).then(function () { log("test1 successfull") }, function () { log("test1 failed") });
+                    $.when(db.linq().from("IdAuto").insert({ Id: 12, Name: "test2" })).then(function () { log("test2 successfull") }, function () { log("test2 failed") });
+                    $.when(db.linq().from("IdAuto").insert({ Name: "test3" }, 13)).then(function () { log("test3 successfull") }, function () { log("test3 failed") });
+                    $.when(db.linq().from("IdAuto").insert({ Id: 14, Name: "test4" }, 14)).then(function () { log("test4 successfull") }, function () { log("test4 failed") });
                 });
 
                 $.when(db.linq().from("Auto").clear()).then(function () {
                     $.when(db.linq().from("Auto").insert({ Name: "test11" })).then(function () { log("test11 successfull") }, function () { log("test11 failed") });
                     $.when(db.linq().from("Auto").insert({ Id: 12, Name: "test12" })).then(function () { log("test12 successfull") }, function () { log("test12 failed") });
-                    $.when(db.linq().from("Auto").insert({ Name: "test3" }, 13)).then(function () { log("test13 successfull") }, function () { log("test13 failed") });
-                    $.when(db.linq().from("Auto").insert({ Id: 14, Name: "test24" }, 14)).then(function () { log("test14 successfull") }, function () { log("test14 failed") });
+                    $.when(db.linq().from("Auto").insert({ Name: "test13" }, 13)).then(function () { log("test13 successfull") }, function () { log("test13 failed") });
+                    $.when(db.linq().from("Auto").insert({ Id: 14, Name: "test14" }, 14)).then(function () { log("test14 successfull") }, function () { log("test14 failed") });
                 });
 
                 $.when(db.linq().from("Id").clear()).then(function () {

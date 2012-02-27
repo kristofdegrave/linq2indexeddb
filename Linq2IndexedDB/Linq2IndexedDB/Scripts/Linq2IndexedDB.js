@@ -1,6 +1,6 @@
 /// <reference path="../Scripts/jquery-1.7.1.js" />
 /// <reference path="../Scripts/jquery-1.7.1-vsdoc.js" />
-/// <reference path="Sort.js"
+/// <reference path="../Scripts/Sort.js"
 
 (function ($, window) {
     /// <param name="$" type="jQuery" />    
@@ -47,7 +47,9 @@
         }
         return window.console.log.apply(console, arguments);
     },
-    implementation = initializeIndexedDB();
+    implementation = initializeIndexedDB(),
+    sortFileLocation = "../Scripts/Sort.js",
+    whereFileLocation = "../Scripts/Where.js";
 
     linq2indexedDB = function (name, configuration, logging) {
         /// <summary>Creates a new or opens an existing database for the given name</summary>        
@@ -61,6 +63,8 @@
         /// </param>        
         /// <returns type="linq2indexedDB" />
 
+        enableLogging = logging;
+
         return {
             core: core(name, configuration),
             utilities: linq2indexedDB.utilities,
@@ -68,10 +72,12 @@
                 return linq(this.core);
             },
             initialize: function () {
+                log("Initialize Started");
                 var promise = this.core;
                 return $.Deferred(function (dfd) {
-                    var returnData = [];
-                    $.when(promise.db()).then(function () {
+                    $.when(promise.db()).then(function (db) {
+                        db.close();
+                        log("Initialize Succesfull");
                         dfd.resolve();
                     }
             , dfd.reject);
@@ -94,7 +100,7 @@
         sort: function (dataPromise, propertyName, descending) {
             return $.Deferred(function (dfd) {
                 $.when(dataPromise).then(function (data) {
-                    var worker = new Worker("../Linq/Sort.js");
+                    var worker = new Worker(sortFileLocation);
                     worker.onmessage = function (event) {
                         dfd.resolve(event.data)
                     };
@@ -105,7 +111,7 @@
         },
         where: function (data, clause) {
             return $.Deferred(function (dfd) {
-                var worker = new Worker("../Linq/Where.js");
+                var worker = new Worker(whereFileLocation);
                 worker.onmessage = function (event) {
                     dfd.resolve(event.data)
                 };
