@@ -795,6 +795,11 @@
                                 if (e.result) result = e.result; // IE 8/9 prototype 
                                 if (req.result) result = req.result;
 
+                                // Add key to the object if a keypath exists
+                                if (store.keyPath) {
+                                    data[store.keyPath] = result;
+                                }
+
                                 log("Insert Promise completed", data, req, result);
                                 dfd.resolve(data, result);
                                 //dfd.resolve(result, req.transaction);
@@ -1030,17 +1035,13 @@
     function linq(promise) {
 
         var queryBuilderObj = function (objectStoreName) {
-            this.init(objectStoreName);
+            this.from = objectStoreName;
+            this.where = [];
+            this.select = [];
+            this.orderBy = [];
         };
 
         queryBuilderObj.prototype = {
-            init: function (objectStoreName) {
-                this.from = from;
-            },
-            from: "",
-            where: [],
-            select: [],
-            orderBy: [],
             executeQuery: function () {
                 executeQuery(this);
             }
@@ -1079,6 +1080,9 @@
                 },
                 clear: function () {
                     return clear(queryBuilder);
+                },
+                get: function (key) {
+                    return get(queryBuilder, key);
                 }
             }
         }
@@ -1198,6 +1202,16 @@
             return $.Deferred(function (dfd) {
                 $.when(clearPromis).then(function () {
                     dfd.resolve();
+                }
+            , dfd.reject);
+            });
+        }
+
+        function get(queryBuilder, key) {
+            var getPromis = promise.get(promise.objectStore(promise.writeTransaction(promise.db(), queryBuilder.from), queryBuilder.from), key)
+            return $.Deferred(function (dfd) {
+                $.when(getPromis).then(function (data) {
+                    dfd.resolve(data);
                 }
             , dfd.reject);
             });
