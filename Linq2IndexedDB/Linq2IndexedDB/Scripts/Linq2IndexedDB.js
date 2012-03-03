@@ -48,6 +48,8 @@
         return window.console.log.apply(console, arguments);
     },
     implementation = initializeIndexedDB(),
+    connectionCounter = 0,
+    connections = [],
     sortFileLocation = "../Scripts/Sort.js",
     whereFileLocation = "../Scripts/Where.js";
 
@@ -274,9 +276,11 @@
                         var req;
 
                         if (version) {
+                            log("db opening", dbName, version);
                             req = window.indexedDB.open(dbName, version);
                         }
                         else {
+                            log("db opening", dbName);
                             req = window.indexedDB.open(dbName);
                         }
 
@@ -301,13 +305,20 @@
                                 result.close();
                             }
 
+                            // Add a connection id to the connection
+                            result.connectionId = connectionCounter++;
                             var currentVersion = GetDatabaseVersion(result);
+
+                            connections.push(result);
+
+                            log("DB connection opened", result, result.connectionId);
 
                             if (currentVersion < version || (version == -1)) {
                                 log("DB Promise upgradeneeded", result);
                                 try {
                                     var versionChangePromise = promise.changeDatabaseStructure(promise.self(result), version, function () {
                                         log("DB Promise upgradeneeded completed");
+                                        closeDatabaseConnection(result);
                                         $.when(promise.db()).then(function (dbConnection) {
                                             dfd.resolve(dbConnection);
                                         }, dfd.reject);
@@ -323,7 +334,7 @@
                                 }
                             }
                             else {
-                                log("DB Promise resolved", result);
+                                log("DB Promise resolved", result, result.connectionId);
                                 dfd.resolve(result);
                             }
                         }
@@ -348,10 +359,11 @@
 
                             req.transaction.oncomplete = function () {
                                 log("DB Promise upgradeneeded completed", req.transaction);
-                                closeDatabaseConnection(req.transaction.db);
-                                $.when(promise.db()).then(function (dbConnection) {
-                                    dfd.resolve(dbConnection)
-                                }, dfd.reject);
+                                // Not necessary in the onupgrade event of the IDBDatabseFactory
+                                //closeDatabaseConnection(req.transaction.db);
+                                //$.when(promise.db()).then(function (dbConnection) {
+                                //    dfd.resolve(dbConnection)
+                                //}, dfd.reject);
                             }
 
                             if (initVersion && typeof (initVersion) === 'function') {
@@ -362,11 +374,21 @@
                         req.onblocked = function (e) {
                             var result;
 
-                            if (e.result) result = e.result; // IE 8/9 prototype 
-                            if (req.result) result = req.result;
+                            //if (e.result) result = e.result; // IE 8/9 prototype 
+                            //if (req.result) result = req.result;
 
-                            log("DB Promise blocked", result);
-                            dfd.reject(e, req);
+                            log("DB Promise blocked", req);
+
+                            // Close all connections who block the update of the database
+                            // Fix for IE 10 Preview 5
+                            for (var i = connections.length -1; i >= 0; i--) {
+                                var connection = connections[i];
+                                if (connection.version != version) {
+                                    closeDatabaseConnection(connection);
+                                }
+                            }
+
+                            //dfd.reject(e, req);
                         }
                     }
                     catch (e) {
@@ -437,14 +459,13 @@
                             if (nonExistingObjectStores.length > 0 && (!configuration || !configuration.objectStoreConfiguration)) {
                                 var version = GetDatabaseVersion(db) + 1
                                 log("Transaction Promise database upgrade needed: ", db);
-                                db.close();
-                                log("Close database Connection: ", db);
+                                closeDatabaseConnection(db);
                                 $.when(promise.dbInternal(version, function (txn) {
                                     for (var j = 0; j < nonExistingObjectStores.length; j++) {
                                         promise.createObjectStore(promise.self(txn), nonExistingObjectStores[j])
                                     }
-                                })).then(function () {
-                                    $.when(promise.transaction(promise.db(), objectStoreNames, transactionType, onTransactionCompleted)).then(function (txn) {
+                                })).then(function (dbConnection) {
+                                    $.when(promise.transaction(promise.self(dbConnection), objectStoreNames, transactionType, onTransactionCompleted)).then(function (txn) {
                                         dfd.resolve(txn);
                                     }, dfd.reject);
                                 });
@@ -608,6 +629,7 @@
                             }
                             else if (!configuration || !configuration.objectStoreConfiguration) {
                                 var version = GetDatabaseVersion(txn.db) + 1
+                                closeDatabaseConnection(txn.db);
                                 promise.dbInternal(version, function (txn) {
                                     $.when(promise.createIndex(propertyName, promise.createObjectStore(promise.self(txn), objectStore.name))).then(function (index) {
                                         log("Index Promise compelted", index);
@@ -923,7 +945,30 @@
                             }
                             dbreq.onerror = function (e) {
                                 log("Delete Database Promise error", e, dbName);
-                                dfd.reject(e, dbName);
+                                // added for FF, If a db gets deleted that doesn't exist an errorCode 6 ('NOT_ALLOWED_ERR') is given
+                                if (e.currentTarget.errorCode == 6) {
+                                    dfd.resolve(e, dbName);
+                                }
+                                else {
+                                    dfd.reject(e, dbName);
+                                }
+                            }
+                            dbreq.onblocked = function (e) {
+                                var result;
+
+                                //if (e.result) result = e.result; // IE 8/9 prototype
+                                //if (req.result) result = req.result;
+
+                                log("Delete Database Promise blocked", dbreq);
+
+                                // Close all connections who block the update of the database
+                                // Fix for IE 10 Preview 5
+                                for (var i = connections.length - 1; i >= 0; i--) {
+                                    var connection = connections[i];
+                                    closeDatabaseConnection(connection);
+                                }
+
+                                //dfd.reject(e, req);
                             }
                         }
                         else {
@@ -948,8 +993,18 @@
         };
 
         function closeDatabaseConnection(db) {
-            log("Close database Connection: " + db);
+            log("Close database Connection: ", db, db.connectionId);
+            connections.splice(indexOf(connections, db, "connectionId"), 1);
             db.close();
+        }
+
+        function indexOf(array, value, propertyName) {
+            for (var i = 0; i < array.length; i++) {
+                if (array[i][propertyName] == value[propertyName]) {
+                    return i;
+                }
+            }
+            return -1;
         }
 
         function abortTransaction(transaction) {

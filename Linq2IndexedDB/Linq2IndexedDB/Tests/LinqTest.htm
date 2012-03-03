@@ -12,11 +12,11 @@
                 test("insert primitive value (1), no key - non existing object store", function () {
                     expect(1);
                     stop();
-                    var db = $.linq2indexedDB("Insert Tests");
+                    var db = $.linq2indexedDB("Insert Tests", null, true);
                     $.when(db.deleteDatabase()).then(function () {
                         $.when(db.linq.from("test").insert(1)).then(function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                     });
-                });
+                }), 1;
                 test("insert JSON value ({name: 'test'}), no key - non existing object store", function () {
                     expect(1);
                     stop();
