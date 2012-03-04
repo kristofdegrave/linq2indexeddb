@@ -40,8 +40,8 @@ $(function () {
 
     $('#cboTypeConsumption').empty();
 
-    $.when(db.initialize()).then(function () {
-        $.when(db.linq.from(CONSUMPTIONTYPE).select()).then(function (data) { }, handleError, function (data) {
+    db.initialize().then(function () {
+        db.linq.from(CONSUMPTIONTYPE).select().then(function (data) { }, handleError, function (data) {
             InitializeConsumptionType(data);
         });
     }, handleError)
@@ -101,20 +101,20 @@ function loadConsumptionType(id) {
     var consumptionType = GetConsumptionType(id);
     $('#consumptions-data-' + consumptionType.Description).empty();
 
-    $.when(db.linq.from(CONSUMPTION).where("ConsumptionTypeId").equals(id).orderByDesc("Date").select()).then(function () { }, handleError, function(data){
+    db.linq.from(CONSUMPTION).where("ConsumptionTypeId").equals(id).orderByDesc("Date").select().then(function () { }, handleError, function(data){
         showConsumption(data, consumptionType);
     });
 }
 
 function saveConsumption(consumption) {
     if (consumption.Id && consumption.Id != 0) {
-        $.when(db.linq.from(CONSUMPTION).update(consumption)).then(function (data) {
+        db.linq.from(CONSUMPTION).update(consumption).then(function (data) {
             //loadConsumptionType(consumption.ConsumptionTypeId);
             showConsumption(data, GetConsumptionType(data.ConsumptionTypeId));
         }, handleError);
     }
     else {
-        $.when(db.linq.from(CONSUMPTION).insert(consumption)).then(function (data) {
+        db.linq.from(CONSUMPTION).insert(consumption).then(function (data) {
             //loadConsumptionType(consumption.ConsumptionTypeId);
             showConsumption(data, GetConsumptionType(data.ConsumptionTypeId));
         }, handleError);
@@ -122,14 +122,14 @@ function saveConsumption(consumption) {
 }
 
 function deleteConsumption(id) {
-    $.when(db.linq.from(CONSUMPTION).remove(id)).then(function () {
+    db.linq.from(CONSUMPTION).remove(id).then(function () {
         //loadConsumptionType(consumptionTypeId);
         $('#consumptionId-' + id).remove();
     }, handleError);
 }
 
 function getConsumption(id) {
-    $.when(db.linq.from(CONSUMPTION).get(id).then(InitializeUpdate, handleError));
+    db.linq.from(CONSUMPTION).get(id).then(InitializeUpdate, handleError);
 }
 
 function InitializeConsumptionType(consumptionType) {

@@ -30,9 +30,9 @@
 
             var db = $.linq2indexedDB(dbConfiguration.Name, dbConfiguration, true);
 
-            $.when(db.deleteDatabase()).then(function () {
-                $.when(db.initialize()).then(function () {
-                    $.when(db.linq.from("test").orderBy("name").select()).then(function () { }, function () { }, function (data) {
+            db.deleteDatabase().then(function () {
+                db.initialize().then(function () {
+                    db.linq.from("test").orderBy("name").select().then(function () { }, function () { }, function (data) {
                         var tekst = $("#txtLog").val();
                         tekst += "Name: " + data["name"] + "\n\r";
                         $("#txtLog").val(tekst);

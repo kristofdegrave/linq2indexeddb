@@ -19,34 +19,34 @@
             dbConfiguration.objectStoreConfiguration = ObjectStores;
             var db = $.linq2indexedDB("insertTest", dbConfiguration, true);
             db.deleteDatabase();
-            $.when(db.initialize()).then(Initialized);
+            db.initialize().then(Initialized);
             function Initialized() {
-                $.when(db.linq.from("IdAuto").clear()).then(function () {
-                    $.when(db.linq.from("IdAuto").insert({ Name: "test1" })).then(function () { log("test1 successfull") }, function () { log("test1 failed") });
-                    $.when(db.linq.from("IdAuto").insert({ Id: 12, Name: "test2" })).then(function () { log("test2 successfull") }, function () { log("test2 failed") });
-                    $.when(db.linq.from("IdAuto").insert({ Name: "test3" }, 13)).then(function () { log("test3 successfull") }, function () { log("test3 failed") });
-                    $.when(db.linq.from("IdAuto").insert({ Id: 14, Name: "test4" }, 14)).then(function () { log("test4 successfull") }, function () { log("test4 failed") });
+                db.linq.from("IdAuto").clear().then(function () {
+                    db.linq.from("IdAuto").insert({ Name: "test1" }).then(function () { log("test1 successfull") }, function () { log("test1 failed") });
+                    db.linq.from("IdAuto").insert({ Id: 12, Name: "test2" }).then(function () { log("test2 successfull") }, function () { log("test2 failed") });
+                    db.linq.from("IdAuto").insert({ Name: "test3" }, 13).then(function () { log("test3 successfull") }, function () { log("test3 failed") });
+                    db.linq.from("IdAuto").insert({ Id: 14, Name: "test4" }, 14).then(function () { log("test4 successfull") }, function () { log("test4 failed") });
                 });
 
-                $.when(db.linq.from("Auto").clear()).then(function () {
-                    $.when(db.linq.from("Auto").insert({ Name: "test11" })).then(function () { log("test11 successfull") }, function () { log("test11 failed") });
-                    $.when(db.linq.from("Auto").insert({ Id: 12, Name: "test12" })).then(function () { log("test12 successfull") }, function () { log("test12 failed") });
-                    $.when(db.linq.from("Auto").insert({ Name: "test13" }, 13)).then(function () { log("test13 successfull") }, function () { log("test13 failed") });
-                    $.when(db.linq.from("Auto").insert({ Id: 14, Name: "test14" }, 14)).then(function () { log("test14 successfull") }, function () { log("test14 failed") });
+                db.linq.from("Auto").clear().then(function () {
+                    db.linq.from("Auto").insert({ Name: "test11" }).then(function () { log("test11 successfull") }, function () { log("test11 failed") });
+                    db.linq.from("Auto").insert({ Id: 12, Name: "test12" }).then(function () { log("test12 successfull") }, function () { log("test12 failed") });
+                    db.linq.from("Auto").insert({ Name: "test13" }, 13).then(function () { log("test13 successfull") }, function () { log("test13 failed") });
+                    db.linq.from("Auto").insert({ Id: 14, Name: "test14" }, 14).then(function () { log("test14 successfull") }, function () { log("test14 failed") });
                 });
 
-                $.when(db.linq.from("Id").clear()).then(function () {
-                    $.when(db.linq.from("Id").insert({ Name: "test21" })).then(function () { log("test21 successfull") }, function () { log("test21 failed") });
-                    $.when(db.linq.from("Id").insert({ Id: 22, Name: "test22" })).then(function () { log("test22 successfull") }, function () { log("test22 failed") });
-                    $.when(db.linq.from("Id").insert({ Name: "test23" }, 3)).then(function () { log("test23 successfull") }, function () { log("test23 failed") });
-                    $.when(db.linq.from("Id").insert({ Id: 24, Name: "test24" }, 24)).then(function () { log("test24 successfull") }, function () { log("test24 failed") });
+                db.linq.from("Id").clear().then(function () {
+                    db.linq.from("Id").insert({ Name: "test21" }).then(function () { log("test21 successfull") }, function () { log("test21 failed") });
+                    db.linq.from("Id").insert({ Id: 22, Name: "test22" }).then(function () { log("test22 successfull") }, function () { log("test22 failed") });
+                    db.linq.from("Id").insert({ Name: "test23" }, 3).then(function () { log("test23 successfull") }, function () { log("test23 failed") });
+                    db.linq.from("Id").insert({ Id: 24, Name: "test24" }, 24).then(function () { log("test24 successfull") }, function () { log("test24 failed") });
                 });
 
-                $.when(db.linq.from("None").clear()).then(function () {
-                    $.when(db.linq.from("None").insert({ Name: "test31" })).then(function () { log("test31 successfull") }, function () { log("test31 failed") });
-                    $.when(db.linq.from("None").insert({ Id: 32, Name: "test32" })).then(function () { log("test32 successfull") }, function () { log("test32 failed") });
-                    $.when(db.linq.from("None").insert({ Name: "test33" }, 33)).then(function () { log("test33 successfull") }, function () { log("test33 failed") });
-                    $.when(db.linq.from("None").insert({ Id: 34, Name: "test34" }, 34)).then(function () { log("test34 successfull") }, function () { log("test34 failed") });
+                db.linq.from("None").clear().then(function () {
+                    db.linq.from("None").insert({ Name: "test31" }).then(function () { log("test31 successfull") }, function () { log("test31 failed") });
+                    db.linq.from("None").insert({ Id: 32, Name: "test32" }).then(function () { log("test32 successfull") }, function () { log("test32 failed") });
+                    db.linq.from("None").insert({ Name: "test33" }, 33).then(function () { log("test33 successfull") }, function () { log("test33 failed") });
+                    db.linq.from("None").insert({ Id: 34, Name: "test34" }, 34).then(function () { log("test34 successfull") }, function () { log("test34 failed") });
                 });
             }
 

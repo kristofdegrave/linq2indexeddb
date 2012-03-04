@@ -50,6 +50,7 @@
     implementation = initializeIndexedDB(),
     connectionCounter = 0,
     connections = [],
+    defaultDatabaseName = "Default",
     sortFileLocation = "../Scripts/Sort.js",
     whereFileLocation = "../Scripts/Where.js";
 
@@ -350,12 +351,7 @@
                         }
 
                         req.onupgradeneeded = function (e) {
-                            var result;
-
-                            if (e.result) result = e.result; // IE 8/9 prototype 
-                            if (req.result) result = req.result;
-
-                            log("DB Promise upgradeneeded", result);
+                            log("DB Promise upgradeneeded", req.result);
 
                             req.transaction.oncomplete = function () {
                                 log("DB Promise upgradeneeded completed", req.transaction);
@@ -373,9 +369,6 @@
 
                         req.onblocked = function (e) {
                             var result;
-
-                            //if (e.result) result = e.result; // IE 8/9 prototype 
-                            //if (req.result) result = req.result;
 
                             log("DB Promise blocked", req);
 
@@ -410,7 +403,7 @@
                                 if (e.result) txn = e.result; // IE 8/9 prototype 
                                 if (req.result) txn = req.result;
 
-                                txn.oncomplete = function () {
+                                txn.oncomplete = function (event) {
                                     log("Version Change Transaction transaction completed", txn);
                                     closeDatabaseConnection(txn.db);
                                     if (typeof (onTransactionCompleted) === 'function') onTransactionCompleted();
@@ -1402,6 +1395,318 @@
     };
 
     $.linq2indexedDB = linq2indexedDB;
+
+    var linq2indexedDB2 = function (name, configuration, logging) {
+        /// <summary>Creates a new or opens an existing database for the given name</summary>
+        /// <param name="name" type="String">The name of the database</param>
+        /// <param name="configuration" type="Object">
+        ///     [Optional] provide comment
+        /// </param>
+        /// <param name="logging" type="Boolean">
+        ///     [Optional] A flag indicating whether connection logging is enabled to the browser
+        ///     console/log. Defaults to false.
+        /// </param>
+        /// <returns type="linq2indexedDB" />
+
+        var dbConfig = {
+            name: name ? name : defaultDatabaseName,
+            autoGenerateAllowed: false
+        };
+
+        if (configuration) {
+            // From the moment the configuration is provided by the developper, autoGeneration isn't allowed.
+            // If this would be allowed, the developper wouldn't be able to determine what to do for which version.
+            if (configuration.schema) {
+                var version = -1;
+                for (key in configuration.schema) {
+                    version = version > key ? version : key;
+                }
+                if (version > -1) {
+                    dbConfig.autoGenerateAllowed = true;
+                    dbConfig.version = version;
+                    dbConfig.schema = configuration.schema;
+                }
+            }
+            if (configuration.definition) {
+                dbConfig.autoGenerateAllowed = true;
+                dbConfig.definition = configuration.definition;
+            }
+            if (configuration.onupgradeneeded) {
+                dbConfig.autoGenerateAllowed = true;
+                dbConfig.onupgradeneeded = configuration.onupgradeneeded;
+            }
+            if (configuration.oninitializeversion) {
+                dbConfig.autoGenerateAllowed = true;
+                dbConfig.oninitializeversion = configuration.oninitializeversion;
+            }
+        }
+
+        var databaseDefinition = [{
+            version: 1,
+            objectStores: [{ name: "", objectStoreOptions: { autoIncrement: true, keyPath: "Id" } }],
+            indexes: [{ objectStoreName: "", propertyName: "", indexOptions: { unique: false, multirow: false } }],
+            defaultData: [{ objectStoreName: "", data: [] }]
+        }];
+
+        enableLogging = logging;
+        var promise = core2();
+
+        return {
+            core: promise,
+            linq: linq(promise),
+            initialize: function () {
+                log("Initialize Started");
+                return $.Deferred(function (dfd) {
+                    $.when(promise.db()).then(function (db) {
+                        db.close();
+                        log("Initialize Succesfull");
+                        dfd.resolve();
+                    }
+            , dfd.reject);
+                });
+            },
+            deleteDatabase: function () {
+                return $.Deferred(function (dfd) {
+                    var returnData = [];
+                    $.when(promise.deleteDb()).then(function () {
+                        dfd.resolve();
+                    }
+            , dfd.reject);
+                });
+            }
+        };
+    }
+
+    function core2() {
+        function deferredHandler(handler, request) {
+            return $.Deferred(function (dfd) {
+                try {
+                    handler(dfd, req);
+                } catch (e) {
+                    e.name = "exception";
+                    dfd.rejectWith(idbRequest, ["exception", e]);
+                }
+            });
+        }
+
+        function IDBRequestHandler(dfd, request) {
+            request.onsuccess = function (e) {
+                var result;
+
+                if (e.result) result = e.result; // IE 8/9 prototype
+                if (request.result) result = request.result;
+
+                dfd.resolveWith(request, [result, e]);
+            };
+            request.onerror = function (e) {
+                dfd.rejectWith(request, [request.error, e]);
+            };
+        }
+
+        function IDBBlockedRequestHandler(dfd, request) {
+            IDBRequestHandler(dfd, request);
+            request.onblocked = function (e) {
+                var result;
+
+                if (e.result) result = e.result; // IE 8/9 prototype
+                if (request.result) result = request.result;
+
+                dfd.notifyWith(request, [result, e]);
+            };
+        }
+
+        function IDBOpenDBRequestHandler(dfd, request) {
+            IDBBlockedRequestHandler(dfd, request);
+            request.onupgradeneeded = function (e) {
+                var result;
+
+                if (e.result) result = e.result; // IE 8/9 prototype
+                if (request.result) result = request.result;
+
+                dfd.notifyWith(request, [result, e]);
+            };
+        }
+
+        function IDBDatabaseHandler(dfd, database) {
+            database.onabort = function (e) {
+                var result;
+
+                if (e.result) result = e.result; // IE 8/9 prototype
+                if (database.result) result = database.result;
+
+                dfd.notifyWith(request, [result, e]);
+            };
+            database.onerror = function (e) {
+                dfd.rejectWith(database, [database.error, e]);
+            };
+            database.onversionchange = function (e) {
+                var result;
+
+                if (e.result) result = e.result; // IE 8/9 prototype
+                if (database.result) result = database.result;
+
+                dfd.notifyWith(database, [result, e]);
+            };
+        }
+
+        function IDBTransactionHandler(dfd, txn) {
+
+            txn.oncomplete = function (e) {
+                dfd.resolveWith(txn, [e, e]);
+            }
+            txn.onabort = function (e) {
+                var result;
+
+                if (e.result) result = e.result; // IE 8/9 prototype
+                if (database.result) result = database.result;
+
+                dfd.notifyWith(request, [e.error, e]);
+            };
+            txn.onerror = function (e) {
+                dfd.rejectWith(database, [database.error, e]);
+            };
+        }
+
+        var handlers = {
+            IDBRequest: function (request) {
+                return deferredHandler(IDBRequestHandler, request);
+            },
+            IDBBlockedRequest: function (request) {
+                return deferredHandler(IDBBlockedRequestHandler, request);
+            },
+            IDBOpenDBRequest: function (request) {
+                return deferredHandler(IDBOpenDBRequestHandler, request);
+            },
+            IDBDatabase: function (database) {
+                return deferredHandler(IDBDatabaseHandler, database);
+            }
+        }
+
+        var promiseNew = {
+            db: function (name, version) {
+                return $.Deferred(function (dfd) {
+                    var req;
+                    var name = name ? name : defaultDatabaseName;
+
+                    if (version) {
+                        log("db opening", name, version);
+                        req = handlers.IDBOpenDBRequest(window.indexedDB.open(name, version));
+                    }
+                    else {
+                        log("db opening", dbName);
+                        req = handlers.IDBRequest(window.indexedDB.open(name));
+                    }
+
+                    req.then(function (db, e) {
+                        // Handle the events on the database.
+                        handlers.IDBDatabase(db).then(function (result, e) {
+                            // No done present.
+                        },
+                        function (error, e) {
+                            log("DB error", this, error, e);
+                            closeDatabaseConnection(db);
+
+                            // When an error occures the result will already be resolved. This way calling the reject won't case a thing
+                            //dfd.rejectWith(this, [error, e]);
+                        },
+                        function (result, e) {
+                            if (e) {
+                                // Sending a notify won't have any effect because the result is already resolved. There is nothing more to do than close the current connection.
+                                //dfd.notifyWith(this, [result, e]);
+
+                                if (e.type === "abort") {
+                                    log("DB abort", this, result, e);
+                                    closeDatabaseConnection(this);
+                                }
+                                else if (e.type === "versionchange") {
+                                    log("DB versionchange", this, result, e);
+                                    closeDatabaseConnection(this);
+                                }
+                            }
+                        });
+
+                        var currentVersion = GetDatabaseVersion(db);
+                        if (currentVersion < version || (version == -1)) {
+                            log("DB Promise upgradeneeded", this, db, e, db.connectionId);
+                            var versionChangePromise = promise.changeDatabaseStructure(promise.self(db), version);
+
+                            versionChangePromise.then(function (txn, e) {
+                                // Fake the onupgrade event.
+                                var context = req;
+                                context.transaction = txn;
+
+                                var event = e;
+                                e.type = "upgradeneeded";
+                                e.newVersion = version;
+                                e.oldVersion = currentVersion;
+
+                                dfd.notifyWith(req, [db, event])
+                                txn.oncomplete = function () {
+                                    closeDatabaseConnection(txn.db);
+                                    $.when(promise.db(name)).then(dfd.resolveWith, dfd.rejectWith, dfd.notifyWith);
+                                }
+                            }, dfd.rejectWith, dfd.notifyWith);
+                        }
+                        else {
+                            log("DB Promise resolved", this, db, e, db.connectionId);
+                            dfd.resolveWith(this, [db, e]);
+                        }
+                    },
+                    function (error, e) {
+                        log("DB Promise rejected", this, error, e);
+                        dfd.reject(error, e);
+                    },
+                    function (result, e) {
+                        dfd.notifyWith(this, [result, e]);
+                    });
+                    req.onsuccess = function (e) {
+
+                    }
+                }).promise();
+            }
+        };
+
+        function changeDatabaseStructure(dbPromise, version, onTransactionCompleted) {
+            return $.Deferred(function (dfd) {
+                $.when(dbPromise).then(function (db) {
+                    log("Version Change Transaction Promise started", db, version);
+                    handlers.IDBBlockedRequest(setVersion(version)).then(function (txn, e) {
+                        log("Version Change Transaction Promise completed", txn);
+                        dfd.resolveWith(this, [txn, e]);
+                    },
+                    function (error, e) {
+                        log("Version Change Transaction Promise error", error, e);
+                        dfd.rejectWith(this, [error, e]);
+                    },
+                    function (result, e) {
+                        dfd.notifyWith(this, [result, e]);
+                    });
+                }, dfd.reject);
+            }).promise();
+        }
+
+        function closeDatabaseConnection(db) {
+            log("Close database Connection: ", db, db.connectionId);
+            connections.splice(indexOf(connections, db, "connectionId"), 1);
+            db.close();
+        }
+
+        function indexOf(array, value, propertyName) {
+            for (var i = 0; i < array.length; i++) {
+                if (array[i][propertyName] == value[propertyName]) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        function abortTransaction(transaction) {
+            log("Abort transaction: " + transaction);
+            transaction.abort();
+            closeDatabaseConnection(transaction.db);
+        }
+    }
+
 
 })(window.jQuery, window);
 
