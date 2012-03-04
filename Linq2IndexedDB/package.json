@@ -1,0 +1,25 @@
+{
+	"name" : "Linq2IndexedDB",
+	"version" : 1.0,
+	"title" : "LINQ for IndexedDB API",
+	"description" : "An easy to use LINQ over the HTML5 IndexedDB API with smart defaults and support for promises, ",
+	"keywords" : "IndexedDB, storage, database, data, LINQ",
+	"homepage" : "http://linq2indexeddb.codeplex.com/",
+	"demo" : "http://linq2indexeddb.codeplex.com/SourceControl/changeset/view/65511#1119514",
+	"files" : "Linq2IndexedDB/Scripts/Linq2IndexedDB.js"
+	"author" : {
+		"name" : "KDegrave",
+	},
+	"licenses": [{
+       	"type": "MSPL",
+       	"url": "http://linq2indexeddb.codeplex.com/license"
+   	}],
+	"dependencies" : {
+		"jquery" : ">=1.7.x"
+	},
+	"maintainers" : [{
+		"name" : "Parashuram Narasimhan",
+		"email" : "contact@nparashuram.com",
+		"url" : "http://nparashuram.com"
+	}]
+}
