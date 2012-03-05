@@ -98,6 +98,48 @@
             		});
             	});
             	
+            	asyncTest("Simple Reverse sorting", function(){
+            		var db = $.linq2indexedDB("QueryTest", null, true);
+            		db.linq.from("test").orderByDesc("Float").select().then(function(data){
+            			var max = Math.max;
+            			for (var i = 0; i < data.length; i++) {
+            				if (data[i]["Float"] > max) {
+            					ok(false, "Data is not sorted");
+            				}
+            				max = data[i]["Float"];
+            			}
+            			ok(true, "All " + data.length + " values are sorted");
+            			start();
+            		}, function(){
+            			ok(false, "Could not sort data");
+            			start();
+            		});
+            	});
+            	
+            	
+            	asyncTest("Sorting with range, same property", function(){
+            		var db = $.linq2indexedDB("QueryTest", null, true);
+            		db.linq.from("test").where("Int").greaterThen("0").orderByDesc("Float").select().then(function(data){
+            			var max = Math.max;
+            			if (data.length === 0) {
+            				ok(false, "Could not find any records");
+            			}
+            			for (var i = 0; i < data.length; i++) {
+            				if (data[i]["Float"] > max) {
+            					ok(false, "Data is not sorted");
+            				}
+            				if (data[i]["Float"] < 0.2) {
+            					ok(false, "Where clause not satisfied");
+            				}
+            				max = data[i]["Float"];
+            			}
+            			ok(true, "All " + data.length + " values are sorted");
+            			start();
+            		}, function(){
+            			ok(false, "Could not sort data");
+            			start();
+            		});
+            	});
             });
         </script>
     </head>
