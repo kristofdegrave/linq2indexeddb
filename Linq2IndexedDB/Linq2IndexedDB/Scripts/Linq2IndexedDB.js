@@ -379,7 +379,7 @@
 
                             // Close all connections who block the update of the database
                             // Fix for IE 10 Preview 5
-                            for (var i = connections.length -1; i >= 0; i--) {
+                            for (var i = connections.length - 1; i >= 0; i--) {
                                 var connection = connections[i];
                                 if (connection.version != version) {
                                     closeDatabaseConnection(connection);
@@ -1448,9 +1448,9 @@
 
         var databaseDefinition = [{
             version: 1,
-            objectStores: [{ name: "", objectStoreOptions: { autoIncrement: true, keyPath: "Id" } }],
-            indexes: [{ objectStoreName: "", propertyName: "", indexOptions: { unique: false, multirow: false } }],
-            defaultData: [{ objectStoreName: "", data: [] }]
+            objectStores: [{ name: "", objectStoreOptions: { autoIncrement: true, keyPath: "Id"}}],
+            indexes: [{ objectStoreName: "", propertyName: "", indexOptions: { unique: false, multirow: false}}],
+            defaultData: [{ objectStoreName: "", data: []}]
         }];
 
         enableLogging = logging;
@@ -1689,7 +1689,7 @@
                         log("Transaction promise started", db, objectStoreNames, transactionType);
                         try {
                             var nonExistingObjectStores = [];
-                            
+
                             // Check for non-existing object stores
                             for (var i = 0; i < objectStoreNames.length; i++) {
                                 if (!db.objectStoreNames || !db.objectStoreNames.contains(objectStoreNames[i])) {
@@ -1915,10 +1915,10 @@
                                         // txn created
                                         linq2indexedDB.core.index(propertyName, linq2indexedDB.core.objectStore(linq2indexedDB.utilities.self(transaction), objectStoreName)).then(function (trans, index, store) {
                                             dfd.resolveWith(this, [trans, index, store]);
-                                        },function (error, ev) {
+                                        }, function (error, ev) {
                                             // txn error or abort
                                             dfd.rejectWith(this, [error, ev]);
-                                        });                                        
+                                        });
                                     });
                                 },
                                 function (error, event) {
@@ -1963,7 +1963,7 @@
                             dfd.resolveWith(this, [txn, index, store]);
                         }
                         catch (ex) {
-                            log("createIndex Promise Failed", e);
+                            log("createIndex Promise Failed", ex);
                             abortTransaction(txn);
                             dfd.rejectWith(this, [ex.message, ex]);
                         }
@@ -1983,8 +1983,8 @@
                             log("deleteIndex Promise compelted", propertyName);
                             dfd.resolveWith(this, [txn, propertyName, store]);
                         }
-                        catch (e) {
-                            log("deleteIndex Promise Failed", e);
+                        catch (ex) {
+                            log("deleteIndex Promise Failed", ex);
                             abortTransaction(txn);
                             dfd.rejectWith(this, [ex.message, ex]);
                         }
@@ -2014,10 +2014,10 @@
                                 result["continue"]();
                             }
                         },
-                         function (error, e) {
-                             log("Cursor Promise error", e, req);
-                             dfd.rejectWith(this, [error, e]);
-                         });
+                        function (error, e) {
+                            log("Cursor Promise error", e, req);
+                            dfd.rejectWith(this, [error, e]);
+                        });
 
                     }, function (error, e) {
                         // store or index error
@@ -2025,125 +2025,88 @@
                     });
                 }).promise();
             },
-            // TODO Kristof
+            //TODO Kristof
             keyCursor: function (indexPromise, range, direction) {
                 return $.Deferred(function (dfd) {
-                    $.when(indexPromise).then(function (index) {
+                    indexPromise.then(function (txn, index, store) {
                         log("keyCursor Promise Started", index);
+                        var returnData = [];
 
-                        var req;
-
-                        if (implementation == implementations.MICROSOFTPROTOTYPE) {
-                            req = index.openCursor(range || IDBKeyRange.lowerBound(0), direction);
-                        }
-                        else {
-                            req = index.openKeyCursor(range, direction);
-                        }
-                        function handleCursorRequest(e) {
-                            var result;
-
-                            if (e.result) result = e.result; // IE 8/9 prototype
-                            if (req.result) result = req.result;
-
-                            if (implementation == implementations.MICROSOFTPROTOTYPE) {
-                                result.move();
-
-                                if (result.value) {
-                                    dfd.notify(result.value, req);
-                                    returnData.push(result.value);
-                                    req.onsuccess = handleCursorRequest;
-                                }
+                        handlers.IDBRequest(index.openKeyCursor(range || IDBKeyRange.lowerBound(0), direction)).then(function (result, e) {
+                            if (!result) {
+                                log("keyCursor Promise completed", req);
+                                dfd.resolve(this, [returnData, e, txn]);
                             }
-
-                            if (req.result) {
+                            else {
                                 if (result.value) {
-                                    dfd.notify(result.value, req);
+                                    dfd.notifyWith(this, [result.value, e, txn]);
                                     returnData.push(result.value);
                                 }
                                 result["continue"]();
                             }
-
-                            if (!result) {
-                                log("keyCursor Promise completed", req);
-                                dfd.resolve(returnData, req.transaction);
-                            }
-                        };
-
-                        req.onsuccess = handleCursorRequest;
-                        req.onerror = function (e) {
-                            log("keyCursor Promise error", e, req);
-                            dfd.reject(e, req);
-                        };
-                    }, dfd.reject);
+                        },
+                        function (error, e) {
+                            log("keyCursor Promise error", error, e);
+                            dfd.rejectWith(this, [error, e]);
+                        });
+                    }, function (error, e) {
+                        // index error
+                        dfd.rejectWith(this, [error, e]);
+                    });
                 }).promise();
             },
             get: function (sourcePromise, key) {
                 return $.Deferred(function (dfd) {
-                    $.when(sourcePromise).then(function (source) {
+                    sourcePromise.then(function (txn, source) {
                         log("Get Promise Started", source);
 
-                        var req = source.get(key);
-
-                        req.onsuccess = function (e) {
-                            var result;
-
-                            if (e.result) result = e.result; // IE 8/9 prototype
-                            if (req.result) result = req.result;
-
-                            log("Get Promise completed", req);
-                            dfd.resolve(result, req.transaction);
-                        };
-                        req.onerror = function (e) {
-                            log("Get Promise error", e, req);
-                            dfd.reject(e, req);
-                        };
-                    }, dfd.reject);
+                        handlers.IDBRequest(source.get(key)).then(function (result, e) {
+                            log("Get Promise completed", result);
+                            dfd.resolveWith(this, [result, e, txn]);
+                        }, function (error, e) {
+                            log("Get Promise error", e, error);
+                            dfd.rejectWith(this, [error, e]);
+                        });
+                    }, function (error, e) {
+                        // store or index error
+                        dfd.rejectWith(this, [error, e]);
+                    });
                 }).promise();
             },
             getKey: function (indexPromise, key) {
                 return $.Deferred(function (dfd) {
-                    $.when(indexPromise).then(function (index) {
+                    indexPromise.then(function (txn, index, objectStore) {
                         log("GetKey Promise Started", index);
 
-                        var req = index.getKey(key);
-
-                        req.onsuccess = function (e) {
-                            var result;
-
-                            if (e.result) result = e.result; // IE 8/9 prototype
-                            if (req.result) result = req.result;
-
-                            log("GetKey Promise completed", req);
-                            dfd.resolve(result, req.transaction);
-                        };
-                        req.onerror = function (e) {
-                            log("GetKey Promise error", e, req);
-                            dfd.reject(e, req);
-                        };
-                    }, dfd.reject);
+                        handlers.IDBRequest(index.getKey(key)).then(function (result, e) {
+                            log("GetKey Promise completed", result);
+                            dfd.resolveWith(this, [result, e, txn]);
+                        }, function (error, e) {
+                            log("GetKey Promise error", error, e);
+                            dfd.rejectWith(this, [error, e]);
+                        });
+                    }, function (error, e) {
+                        // index error
+                        dfd.rejectWith(this, [error, e]);
+                    });
                 }).promise();
             },
             insert: function (objectStorePromise, data, key) {
                 return $.Deferred(function (dfd) {
-                    $.when(objectStorePromise).then(function (store) {
+                    objectStorePromise.then(function (txn, store) {
                         log("Insert Promise Started", store);
-
                         try {
                             var req;
 
                             if (key /*&& !store.keyPath*/) {
-                                req = store.add(data, key);
+                                req = handlers.IDBRequest(store.add(data, key));
                             }
                             else {
                                 /*if (key) log("Key can't be provided when a keyPath is defined on the object store", store, key, data);*/
-                                req = store.add(data);
+                                req = handlers.IDBRequest(store.add(data));
                             }
 
-                            req.onsuccess = function (e) {
-                                var result;
-
-                                if (e.result) result = e.result; // IE 8/9 prototype
-                                if (req.result) result = req.result;
+                            req.then(function (result, e) {
 
                                 // Add key to the object if a keypath exists
                                 if (store.keyPath) {
@@ -2151,56 +2114,57 @@
                                 }
 
                                 log("Insert Promise completed", data, req, result);
-                                dfd.resolve(data, result);
+                                dfd.resolveWith(this, [data, result, e, txn]);
                                 //dfd.resolve(result, req.transaction);
-                            };
-                            req.onerror = function (e) {
-                                log("Insert Promise error", e, req);
-                                dfd.reject(e, req);
-                            };
+                            }, function (error, e) {
+                                log("Insert Promise error", error, e);
+                                dfd.rejectWith(this, [error, e]);
+                            });
                         }
-                        catch (e) {
-                            log("Insert Promise exception", e, req);
-                            dfd.reject(e, req);
+                        catch (ex) {
+                            log("Insert Promise exception", ex);
+                            abortTransaction(txn);
+                            dfd.rejectWith(this, [ex.message, ex]);
                         }
-                    }, dfd.reject);
+                    }, function (error, e) {
+                        // store error
+                        dfd.rejectWith(this, [error, e]);
+                    });
                 }).promise();
             },
             update: function (objectStorePromise, data, key) {
                 return $.Deferred(function (dfd) {
-                    $.when(objectStorePromise).then(function (store) {
+                    objectStorePromise.then(function (txn, store) {
                         log("Update Promise Started", store);
 
                         try {
                             var req;
 
                             if (key /*&& !store.keyPath*/) {
-                                req = store.put(data, key);
+                                req = handlers.IDBRequest(store.put(data, key));
                             }
                             else {
                                 /*if (key) log("Key can't be provided when a keyPath is defined on the object store", store, key, data);*/
-                                req = store.put(data);
+                                req = handlers.IDBRequest(store.put(data));
                             }
-                            req.onsuccess = function (e) {
-                                var result;
-
-                                if (e.result) result = e.result; // IE 8/9 prototype
-                                if (req.result) result = req.result;
-
+                            req.then(function (result, e) {
                                 log("Update Promise completed", data, req, result);
-                                dfd.resolve(data, result);
+                                dfd.resolve(this, [data, result, e, txn]);
                                 //dfd.resolve(result, req.transaction);
-                            };
-                            req.onerror = function (e) {
-                                log("Update Promise error", e, req);
-                                dfd.reject(e, req);
-                            };
+                            }, function (error, e) {
+                                log("Update Promise error", error, e);
+                                dfd.reject(this, [error, e]);
+                            });
                         }
-                        catch (e) {
-                            log("Update Promise exception", e, req);
-                            dfd.reject(e, req);
+                        catch (ex) {
+                            log("Update Promise exception", ex);
+                            abortTransaction(txn);
+                            dfd.rejectWith(this, [ex.message, ex]);
                         }
-                    }, dfd.reject);
+                    }, function (error, e) {
+                        // store error
+                        dfd.rejectWith(this, [error, e]);
+                    });
                 }).promise();
             },
             remove: function (objectStorePromise, key) {
