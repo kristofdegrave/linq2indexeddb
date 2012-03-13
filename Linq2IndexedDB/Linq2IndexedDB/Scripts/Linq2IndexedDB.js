@@ -1673,7 +1673,7 @@
                         dfd.reject(error, e);
                     },
                     function (result, e) {
-                        // Database upgrade
+                        // Database upgrade + db blocked
                         dfd.notifyWith(this, [result, e]);
                     });
                 }).promise();
@@ -1763,7 +1763,6 @@
                         dfd.rejectWith(this, [err, e])
                     });
                 }).promise();
-                ;
             },
             objectStore: function (transactionPromise, objectStoreName) {
                 return $.Deferred(function (dfd) {
@@ -2025,7 +2024,6 @@
                     });
                 }).promise();
             },
-            //TODO Kristof
             keyCursor: function (indexPromise, range, direction) {
                 return $.Deferred(function (dfd) {
                     indexPromise.then(function (txn, index, store) {
@@ -2169,116 +2167,103 @@
             },
             remove: function (objectStorePromise, key) {
                 return $.Deferred(function (dfd) {
-                    $.when(objectStorePromise).then(function (store) {
+                    objectStorePromise.then(function (txn, store) {
                         log("Remove Promise Started", store);
 
                         try {
-                            var req = store["delete"](key);
-                            req.onsuccess = function (e) {
-                                var result;
-
-                                if (e.result) result = e.result; // IE 8/9 prototype
-                                if (req.result) result = req.result;
-
+                            handlers.IDBRequest(store["delete"](key)).then(function (result, e) {
                                 log("Remove Promise completed", req, result);
-                                dfd.resolve();
-                                //dfd.resolve(result, req.transaction);
-                            };
-                            req.onerror = function (e) {
-                                log("Remove Promise error", e, req);
-                                dfd.reject(e, req);
-                            };
+                                dfd.resolveWith(this, [result, e, txn]);
+                            },
+                            function (error, e) {
+                                log("Remove Promise error", error, e);
+                                dfd.reject(this, [error, e]);
+                            });
                         }
-                        catch (e) {
-                            log("Remove Promise exception", e, req);
-                            dfd.reject(e, req);
+                        catch (ex) {
+                            log("Remove Promise exception", ex);
+                            abortTransaction(txn);
+                            dfd.rejectWith(this, [ex.message, ex]);
                         }
-                    }, dfd.reject);
+                    }, function (error, e) {
+                        // store error
+                        dfd.rejectWith(this, [error, e]);
+                    });
                 }).promise();
             },
             clear: function (objectStorePromise) {
                 return $.Deferred(function (dfd) {
-                    $.when(objectStorePromise).then(function (store) {
+                    objectStorePromise.then(function (store, txn) {
                         log("Clear Promise Started", store);
-
                         try {
-                            var req = store.clear();
-                            req.onsuccess = function (e) {
-                                var result;
-
-                                if (e.result) result = e.result; // IE 8/9 prototype
-                                if (req.result) result = req.result;
-
-                                log("Clear Promise completed", req, result);
-                                dfd.resolve();
-                                //dfd.resolve(result, req.transaction);
-                            };
-                            req.onerror = function (e) {
-                                log("Clear Promise error", e, req);
-                                dfd.reject(e, req);
-                            };
+                            handlers.IDBRequest(store.clear()).then(function (result, e) {
+                                log("Clear Promise completed", result, e);
+                                dfd.resolveWith(this, [result, e, txn]);
+                            },
+                            function (error, e) {
+                                log("Clear Promise error", error, e);
+                                dfd.reject(this, [error, e]);
+                            });
                         }
-                        catch (e) {
-                            log("Clear Promise exception", e, req);
-                            dfd.reject(e, req);
+                        catch (ex) {
+                            log("Clear Promise exception", ex);
+                            abortTransaction(txn);
+                            dfd.rejectWith(this, [ex.message, ex]);
                         }
-                    }, dfd.reject);
+                    }, function (error, e) {
+                        // store error
+                        dfd.rejectWith(this, [error, e]);
+                    });
                 }).promise();
             },
-            deleteDb: function () {
+            deleteDb: function (name) {
                 return $.Deferred(function (dfd) {
                     try {
                         if (typeof (window.indexedDB.deleteDatabase) != "undefined") {
 
-                            var dbreq = window.indexedDB.deleteDatabase(dbName);
-                            dbreq.onsuccess = function (e) {
-                                log("Delete Database Promise completed", e, dbName);
-                                dfd.resolve(e, dbName);
-                            }
-                            dbreq.onerror = function (e) {
-                                log("Delete Database Promise error", e, dbName);
+                            handlers.IDBBlockedRequest(window.indexedDB.deleteDatabase(name)).then(function (result, e) {
+                                log("Delete Database Promise completed", result, e, name);
+                                dfd.resolveWith(this, [result, e, name]);
+                            }, function (error, e) {
                                 // added for FF, If a db gets deleted that doesn't exist an errorCode 6 ('NOT_ALLOWED_ERR') is given
                                 if (e.currentTarget.errorCode == 6) {
-                                    dfd.resolve(e, dbName);
+                                    dfd.resolveWith(this, [error, e, name]);
                                 }
                                 else {
-                                    dfd.reject(e, dbName);
+                                    log("Delete Database Promise error", error, e);
+                                    dfd.rejectWith(this, [error, e]);
                                 }
-                            }
-                            dbreq.onblocked = function (e) {
-                                var result;
-
-                                //if (e.result) result = e.result; // IE 8/9 prototype
-                                //if (req.result) result = req.result;
+                            }, function (result, e) {
 
                                 log("Delete Database Promise blocked", dbreq);
-
-                                // Close all connections who block the update of the database
-                                // Fix for IE 10 Preview 5
-                                for (var i = connections.length - 1; i >= 0; i--) {
-                                    var connection = connections[i];
-                                    closeDatabaseConnection(connection);
-                                }
-
-                                //dfd.reject(e, req);
-                            }
+                                dfd.resolveWith(this, [result, e]);
+                            });
                         }
                         else {
-                            //log("Delete Database function not found", dbName);
-                            //dfd.reject(dbName);
+                            log("Delete Database function not found", name);
                             // Workaround for older versions of chrome and FireFox
                             // Doesn't delete the database, but clears him
-                            $.when(promise.dbInternal(-1, function (txn) {
-                                for (var i = 0; i < txn.db.objectStoreNames.length; i++) {
-                                    promise.deleteObjectStore(promise.self(txn), txn.db.objectStoreNames[i]);
+                            promise.db(name, -1).then(function (result, e) {
+                                dfd.resolveWith(this, [result, e, name]);
+                            },
+                            function (error, e) {
+                                log("Clear Promise error", error, e);
+                                dfd.reject(this, [error, e]);
+                            },
+                            function (dbConnection, event) {
+                                // When an upgradeneeded event is thrown, create the non-existing object stores
+                                if (event.type == "upgradeneeded") {
+                                    for (var i = 0; i < dbConnection.objectStoreNames.length; i++) {
+                                        linq2indexedDB.core.deleteObjectStore(promise.self(dbConnection.txn), dbConnection.objectStoreNames[i]);
+                                    }
+                                    closeDatabaseConnection(dbConnection);
                                 }
-                                closeDatabaseConnection(txn.db);
-                            })).then(dfd.resolve, dfd.reject);
+                            });
                         }
                     }
-                    catch (e) {
-                        log("Delete Database Promise exception", e, dbName);
-                        dfd.reject(e, dbName);
+                    catch (ex) {
+                        log("Delete Database Promise exception", ex);
+                        dfd.rejectWith(this, [ex.message, ex]);
                     }
                 });
             }
