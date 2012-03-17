@@ -9,6 +9,16 @@ var applicationVersion = 1;
 var CONSUMPTIONTYPE = "ConsumptionType";
 var CONSUMPTION = "Consumption";
 
+var databaseDefinition = [{
+    version: 1,
+    objectStores: [{ name: CONSUMPTIONTYPE, objectStoreOptions: { autoIncrement: false, keyPath: "Id" } },
+                   { name: CONSUMPTION, objectStoreOptions: { autoIncrement: true, keyPath: "Id" } }],
+    indexes: [{ objectStoreName: CONSUMPTION, propertyName: "ConsumptionTypeId", indexOptions: { unique: false, multirow: false } }],
+    defaultData: [{ objectStoreName: CONSUMPTIONTYPE, data: { Id: 1, Description: "Electricity", HasDay: true, hasNight: true }, remove: false },
+                  { objectStoreName: CONSUMPTIONTYPE, data: { Id: 2, Description: "Gas", HasDay: true, hasNight: false }, remove: false },
+                  { objectStoreName: CONSUMPTIONTYPE, data: { Id: 3, Description: "Water", HasDay: true, hasNight: false }, remove: false }]
+}];
+
 var ConsumptionType =
 [
     { Id: 1, Description: "Electricity", HasDay: true, hasNight: true },
@@ -29,7 +39,8 @@ var ObjStores =
 
 var dbConfig = new Object();
 dbConfig.version = applicationVersion
-dbConfig.objectStoreConfiguration = ObjStores;
+//dbConfig.objectStoreConfiguration = ObjStores;
+dbConfig.definition = databaseDefinition;
 
 var db = $.linq2indexedDB(indexedDBName, dbConfig, true);
 
@@ -40,11 +51,13 @@ $(function () {
 
     $('#cboTypeConsumption').empty();
 
-    db.initialize().then(function () {
-        db.linq.from(CONSUMPTIONTYPE).select().then(function (data) { }, handleError, function (data) {
-            InitializeConsumptionType(data);
-        });
-    }, handleError)
+    db.deleteDatabase().then(function(){
+        db.initialize().then(function () {
+            db.linq.from(CONSUMPTIONTYPE).select().then(function (data) { }, handleError, function (data) {
+                InitializeConsumptionType(data);
+            });
+        }, handleError);
+    });
 
     if (!Modernizr.inputtypes.date) {
         $('input[type=date]').datepicker();

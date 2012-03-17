@@ -20,7 +20,7 @@
                 test("insert JSON value ({name: 'test'}), no key - non existing object store", function () {
                     expect(1);
                     stop();
-                    var db = $.linq2indexedDB("Insert Tests");
+                    var db = $.linq2indexedDB("Insert Tests", null, true);
                     db.deleteDatabase().then(function () {
                         db.linq.from("test").insert({ name: "test" }).then(function (data) { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                     });
@@ -45,13 +45,14 @@
                     expect(1);
                     stop();
 
-                    var ObjectStores = [
-                         { name: "test", keyPath: "id", autoIncrement: true, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: true, keyPath: "Id" } }]
+                    }];
 
                     var dbConfiguration = new Object();
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
                     db.deleteDatabase().then(function () {
@@ -63,14 +64,14 @@
                 test("insert JSON value ({name: 'test'}), no key - existing object store (KeyPathId: 'id', autoincrement: true)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", keyPath: "id", autoIncrement: true, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: true, keyPath: "Id" } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
@@ -84,14 +85,14 @@
                 test("insert JSON value ({name: 'test', id: 1}), no key - existing object store (KeyPathId: 'id', autoincrement: true)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", keyPath: "id", autoIncrement: true, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: true, keyPath: "Id" } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
@@ -105,14 +106,14 @@
                 test("insert primitive value (1), key (1) - existing object store (KeyPathId: 'id', autoincrement: true)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", keyPath: "id", autoIncrement: true, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: true, keyPath: "Id" } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
@@ -126,18 +127,18 @@
                 test("insert JSON value ({name: 'test'}), key (1) - existing object store (KeyPathId: 'id', autoincrement: true)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", keyPath: "id", autoIncrement: true, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: true, keyPath: "Id" } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
-                    var db = $.linq2indexedDB("Insert Tests", dbConfiguration)
+                    var db = $.linq2indexedDB("Insert Tests", dbConfiguration, true)
                     db.deleteDatabase().then(function () {
                         db.initialize().then(function () {
                             db.linq.from("test").insert({ name: "test" }, 1).then(function (data) { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
@@ -147,14 +148,14 @@
                 test("insert JSON value ({name: 'test', id: 1}), key (1) - existing object store (KeyPathId: 'id', autoincrement: true)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", keyPath: "id", autoIncrement: true, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: true, keyPath: "Id" } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
@@ -168,14 +169,14 @@
                 test("insert primitive value (1), no key - existing object store (KeyPathId: 'id', autoincrement: false)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", keyPath: "id", autoIncrement: false, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: false, keyPath: "Id" } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
@@ -189,14 +190,14 @@
                 test("insert JSON value ({name: 'test'}), no key - existing object store (KeyPathId: 'id', autoincrement: false)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", keyPath: "id", autoIncrement: false, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: false, keyPath: "Id" } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
@@ -210,14 +211,14 @@
                 test("insert JSON value ({name: 'test', id: 1}), no key - existing object store (KeyPathId: 'id', autoincrement: false)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", keyPath: "id", autoIncrement: false, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: false, keyPath: "Id" } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
@@ -231,14 +232,14 @@
                 test("insert primitive value (1), key (1) - existing object store (KeyPathId: 'id', autoincrement: false)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", keyPath: "id", autoIncrement: false, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: false, keyPath: "Id" } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
@@ -252,14 +253,14 @@
                 test("insert JSON value ({name: 'test'}), key (1) - existing object store (KeyPathId: 'id', autoincrement: false)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", keyPath: "id", autoIncrement: false, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: false, keyPath: "Id" } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
@@ -273,14 +274,14 @@
                 test("insert JSON value ({name: 'test', id: 1}), key (1) - existing object store (KeyPathId: 'id', autoincrement: false)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", keyPath: "id", autoIncrement: false, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: false, keyPath: "Id" } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
@@ -294,14 +295,14 @@
                 test("insert primitive value (1), no key - existing object store (KeyPathId: none, autoincrement: true)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", autoIncrement: true, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: true } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
@@ -315,14 +316,14 @@
                 test("insert JSON value ({name: 'test'}), no key - existing object store (KeyPathId: none, autoincrement: true)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", autoIncrement: true, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: true } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
@@ -336,14 +337,14 @@
                 test("insert JSON value ({name: 'test', id: 1}), no key - existing object store (KeyPathId: none, autoincrement: true)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", autoIncrement: true, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: true } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
@@ -357,14 +358,14 @@
                 test("insert primitive value (1), key (1) - existing object store (KeyPathId: none, autoincrement: true)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", autoIncrement: true, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: true } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
@@ -378,14 +379,14 @@
                 test("insert JSON value ({name: 'test'}), key (1) - existing object store (KeyPathId: none, autoincrement: true)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", autoIncrement: true, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: true } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
@@ -399,14 +400,14 @@
                 test("insert JSON value ({name: 'test', id: 1}), key (1) - existing object store (KeyPathId: none, autoincrement: true)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", autoIncrement: true, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: true } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
@@ -420,14 +421,14 @@
                 test("insert primitive value (1), no key - existing object store (KeyPathId: none, autoincrement: false)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", autoIncrement: false, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: false } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
@@ -441,14 +442,14 @@
                 test("insert JSON value ({name: 'test'}), no key - existing object store (KeyPathId: none, autoincrement: false)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", autoIncrement: false, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: false } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
@@ -462,14 +463,14 @@
                 test("insert JSON value ({name: 'test', id: 1}), no key - existing object store (KeyPathId: none, autoincrement: false)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", autoIncrement: false, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: false } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
@@ -483,14 +484,14 @@
                 test("insert primitive value (1), key (1) - existing object store (KeyPathId: none, autoincrement: false)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", autoIncrement: false, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: false } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
@@ -504,14 +505,14 @@
                 test("insert JSON value ({name: 'test'}), key (1) - existing object store (KeyPathId: none, autoincrement: false)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", autoIncrement: false, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: false } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
@@ -525,14 +526,14 @@
                 test("insert JSON value ({name: 'test', id: 1}), key (1) - existing object store (KeyPathId: none, autoincrement: false)", function () {
                     expect(1);
 
-                    var ObjectStores = [
-                         { name: "test", autoIncrement: false, Version: 1, DefaultData: [], Indexes: [] }
-                    ];
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: false } }]
+                    }];
 
                     var dbConfiguration = new Object();
-                    dbConfiguration.Name = "InsertTests";
                     dbConfiguration.version = 1;
-                    dbConfiguration.objectStoreConfiguration = ObjectStores;
+                    dbConfiguration.definition = databaseDefinition;
 
                     stop();
 
