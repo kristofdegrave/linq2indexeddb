@@ -12,21 +12,19 @@
     <script src="../Scripts/Linq2IndexedDB.js" type="text/javascript"></script>
     <script type="text/javascript">
         $(function () {
-            var defaultData = [
-                    { name: "test3" },
-                    { name: "test1" },
-                    { name: "test4" },
-                    { name: "test2" }
-            ];
-
-            var ObjectStores = [
-                    { name: "test", keyPath: "id", autoIncrement: true, Version: 1, DefaultData: defaultData, Indexes: [] }
-            ];
+            var databaseDefinition = [{
+                version: 1,
+                objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: true, keyPath: "Id" } }],
+                defaultData: [{ objectStoreName: "test", data: { name: "test3" }, remove: false },
+                              { objectStoreName: "test", data: { name: "test1" }, remove: false },
+                              { objectStoreName: "test", data: { name: "test4" }, remove: false },
+                              { objectStoreName: "test", data: { name: "test2" }, remove: false }]
+            }];
 
             var dbConfiguration = new Object();
             dbConfiguration.Name = "OrderByTests";
             dbConfiguration.version = 1;
-            dbConfiguration.objectStoreConfiguration = ObjectStores;
+            dbConfiguration.definition = databaseDefinition;
 
             var db = $.linq2indexedDB(dbConfiguration.Name, dbConfiguration, true);
 

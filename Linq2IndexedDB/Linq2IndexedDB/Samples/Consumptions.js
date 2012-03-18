@@ -19,24 +19,6 @@ var databaseDefinition = [{
                   { objectStoreName: CONSUMPTIONTYPE, data: { Id: 3, Description: "Water", HasDay: true, hasNight: false }, remove: false }]
 }];
 
-var ConsumptionType =
-[
-    { Id: 1, Description: "Electricity", HasDay: true, hasNight: true },
-    { Id: 2, Description: "Gas", HasDay: true, hasNight: false },
-    { Id: 3, Description: "Water", HasDay: true, hasNight: false }
-];
-
-ConsumptionIndexes =
-[
-    { PropertyName: "ConsumptionTypeId", IsUnique: false, Multirow: false }
-];
-
-var ObjStores =
-[
-    { name: CONSUMPTIONTYPE, keyPath: "Id", autoIncrement: false, Version: 1, DefaultData: ConsumptionType, Indexes: [] },
-    { name: CONSUMPTION, keyPath: "Id", autoIncrement: true, Version: 1, DefaultData: [], Indexes: ConsumptionIndexes }
-];
-
 var dbConfig = new Object();
 dbConfig.version = applicationVersion
 //dbConfig.objectStoreConfiguration = ObjStores;
