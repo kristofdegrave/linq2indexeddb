@@ -104,20 +104,20 @@
                     log("Initializing IE prototype exception", ex);
                 }
 
-                //                if (window.JSON) {
-                window.indexedDB.json = window.JSON;
-                window.indexedDBSync.json = window.JSON;
-                //                } else {
-                //                    var jsonObject = {
-                //                        parse: function (txt) {
-                //                            if (txt === "[]") return [];
-                //                            if (txt === "{}") return {};
-                //                            throw { message: "Unrecognized JSON to parse: " + txt };
-                //                        }
-                //                    };
-                //                    window.indexedDB.json = jsonObject;
-                //                    window.indexedDBSync.json = jsonObject;
-                //                }
+                if (window.JSON) {
+                    window.indexedDB.json = window.JSON;
+                    window.indexedDBSync.json = window.JSON;
+                } else {
+                    var jsonObject = {
+                        parse: function (txt) {
+                            if (txt === "[]") return [];
+                            if (txt === "{}") return {};
+                            throw { message: "Unrecognized JSON to parse: " + txt };
+                        }
+                    };
+                    window.indexedDB.json = jsonObject;
+                    window.indexedDBSync.json = jsonObject;
+                }
 
                 // Add some interface-level constants and methods.
                 window.IDBDatabaseException = {
@@ -1262,6 +1262,12 @@
                 else if (clause.range) {
                     return where(queryBuilder, propertyName).Between(clause.range[0], clause.range[1], clause.range[2], clause.range[3]);
                 }
+                else if (clause.inArray) {
+                    return where(queryBuilder, propertyName).inArray(clause.inArray);
+                }
+                else if (clause.like) {
+                    return where(queryBuilder, propertyName).inArray(clause.like);
+                }
                 else {
                     return where(queryBuilder, propertyName);
                 }
@@ -1519,7 +1525,7 @@
             function onProgress(data) {
                 // When there are no more where clauses to fulfill and the collection doesn't need to be sorted, the data can be returned.
                 // In the other case let the complete handle it.
-                if (whereClauses.length <= 1 && queryBuilder.orderBy.length == 0) {
+                if (whereClauses.length == 0 && queryBuilder.orderBy.length == 0) {
                     var obj = SelectData(data, queryBuilder.select)
                     returnData.push(obj);
                     dfd.notify(obj);

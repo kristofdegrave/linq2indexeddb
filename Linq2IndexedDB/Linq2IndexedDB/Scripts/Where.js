@@ -81,7 +81,7 @@ onmessage = function (event) {
                     }
                     break;
                 case whereType.like:
-                    if (data[i][clause.propertyName].contains(clause.value)) {
+                    if (data[i][clause.propertyName].indexOf(clause.value) >= 0) {
                         returnData.push(data[i]);
                     }
                     break;

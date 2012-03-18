@@ -19,6 +19,7 @@
                     db.linq.from("person").insert({ Name: "test2", Firstname: "test2", Age: 2 });
                     db.linq.from("person").insert({ Name: "test3", Firstname: "test3", Age: 3 });
                     db.linq.from("person").insert({ Name: "test4", Firstname: "test4", Age: 4 });
+                    db.linq.from("person").insert({ Name: "test11", Firstname: "test11", Age: 11 });
                
 
                     //db.linq.from("person").where("Name").equals("test1").select(["Name", "Firstname"]).then(function () { }, function () { }, function (data) {
@@ -39,7 +40,13 @@
                     //    $("#txtLog").val(tekst);
                     //});
 
-                    db.linq.from("person").where("Name").inArray(["test1", "test2"]).select(["Name", "Firstname"]).then(function () { }, function () { }, function (data) {
+                    //db.linq.from("person").where("Name").inArray(["test1", "test2"]).select(["Name", "Firstname"]).then(function () { }, function () { }, function (data) {
+                    //    var tekst = $("#txtLog").val();
+                    //    tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + "\n\r";
+                    //    $("#txtLog").val(tekst);
+                    //});
+
+                    db.linq.from("person").where("Name").like("test1").select(["Name", "Firstname"]).then(function () { }, function () { }, function (data) {
                         var tekst = $("#txtLog").val();
                         tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + "\n\r";
                         $("#txtLog").val(tekst);
