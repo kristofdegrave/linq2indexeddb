@@ -5,8 +5,10 @@ var whereType = {
     equals: 0,
     between: 1,
     greaterThen: 2,
-    smallerThen: 3
-}
+    smallerThen: 3,
+    inArray: 4,
+    like: 5
+};
 
 onmessage = function (event) {
     var data = event.data.data;
@@ -71,6 +73,16 @@ onmessage = function (event) {
                         if (data[i][clause.propertyName] < clause.value) {
                             returnData.push(data[i]);
                         }
+                    }
+                    break;
+                case whereType.inArray:
+                    if (clause.value.indexOf(data[i][clause.propertyName]) >= 0) {
+                        returnData.push(data[i]);
+                    }
+                    break;
+                case whereType.like:
+                    if (data[i][clause.propertyName].contains(clause.value)) {
+                        returnData.push(data[i]);
                     }
                     break;
                 default:

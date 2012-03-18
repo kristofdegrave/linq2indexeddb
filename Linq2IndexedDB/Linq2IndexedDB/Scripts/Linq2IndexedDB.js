@@ -1216,7 +1216,9 @@
             equals: 0,
             between: 1,
             greaterThen: 2,
-            smallerThen: 3
+            smallerThen: 3,
+            inArray: 4,
+            like: 5
         };
 
         function from(queryBuilder, objectStoreName) {
@@ -1281,6 +1283,12 @@
                         var isMinValueIncluded = typeof (minValueIncluded) === undefined ? false : minValueIncluded;
                         var isMasValueIncluded = typeof (maxValueIncluded) === undefined ? false : maxValueIncluded;
                         return whereClause(queryBuilder, { type: whereType.between, propertyName: propertyName, minValue: minValue, maxValue: maxValue, minValueIncluded: isMinValueIncluded, maxValueIncluded: isMasValueIncluded });
+                    },
+                    inArray: function (array) {
+                        return whereClause(queryBuilder, { type: whereType.inArray, propertyName: propertyName, value: array });
+                    },
+                    like: function (value) {
+                        return whereClause(queryBuilder, { type: whereType.like, propertyName: propertyName, value: value });
                     }
                 }
             }
@@ -1501,7 +1509,11 @@
                 }
 
                 // Start at 1 because we allready executed the first clause
-                asyncForWhere(data, 1);
+                var start = 0;
+                if (whereClauses.length > 0 && (whereClauses[0].type == whereType.equals || whereClauses[0].type == whereType.between || whereClauses[0].type == whereType.smallerThen || whereClauses[0].type == whereType.greaterThen)) {
+                    start = 1;
+                }
+                asyncForWhere(data, start);
             }
 
             function onProgress(data) {
