@@ -134,6 +134,7 @@
     <Content Include="Scripts\Sort.js" />
     <Content Include="Scripts\Where.js" />
     <Content Include="Tests\LinqTest.htm" />
+    <Content Include="Tests\QueryTest.htm" />
     <Content Include="Tests\qunit.css" />
     <Content Include="Tests\qunit.js" />
     <Content Include="Scripts\Linq2IndexedDB.js" />

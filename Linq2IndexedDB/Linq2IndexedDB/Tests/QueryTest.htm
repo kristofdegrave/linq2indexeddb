@@ -67,7 +67,7 @@
             	
             	asyncTest("Where Clause with Boolean condition", function(){
             		var db = $.linq2indexedDB("QueryTest", null, true);
-            		db.linq.from("test").where("Int").equals(true).select().then(function(data){
+            		db.linq.from("test").where("Boolean").equals(true).select().then(function(data){
             			if (data.length === 0) {
             				ok(false, "No items are true, this is incorrect");
             			} else {
