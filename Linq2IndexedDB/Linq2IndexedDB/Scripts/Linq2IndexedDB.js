@@ -435,26 +435,32 @@
                 });
             },
             transaction: function (db, objectStoreNames, transactionType, autoGenerateAllowed) {
-                return promiseWrapper(function (pw){
-                    if(db.then){
-                        db.then(function(args /*db, e*/){
-                            internal.transaction(pw, args[0], objectStoreNames, transactionType, autoGenerateAllowed);
+                return promiseWrapper(function (pw) {
+                    if (db.then) {
+                        db.then(function (args /*db, e*/) {
+                            // Timeout necessary for letting it work on win8. If not, progress event triggers before listeners are coupled
+                            setTimeout(function () {
+                                internal.transaction(pw, args[0], objectStoreNames, transactionType, autoGenerateAllowed);
+                            }, 1);
                         },
-                        function (args /*error, e*/){
+                        function (args /*error, e*/) {
                             pw.error(this, args);
                         },
-                        function (args /**/){
+                        function (args /**/) {
                             pw.progress(this, args)
                         });
                     }
-                    else{
-                        internal.transaction(pw, db, objectStoreNames, transactionType, autoGenerateAllowed);
+                    else {
+                        // Timeout necessary for letting it work on win8. If not, progress event triggers before listeners are coupled
+                        setTimeout(function () {
+                            internal.transaction(pw, db, objectStoreNames, transactionType, autoGenerateAllowed);
+                        }, 1);
                     }
                 });
             },
             objectStore: function (transaction, objectStoreName) {
                 return promiseWrapper(function (pw) {
-                    if(transaction.then){
+                    if (transaction.then) {
                         transaction.then(function (args /*txn, e*/) {
                             // transaction completed
                             // TODO: what todo in this case?
@@ -464,14 +470,14 @@
                             internal.objectStore(pw, args[0], objectStoreName);
                         });
                     }
-                    else{
+                    else {
                         internal.objectStore(pw, transaction, objectStoreName);
                     }
                 })
             },
             createObjectStore: function (transaction, objectStoreName, objectStoreOptions) {
                 return promiseWrapper(function (pw) {
-                    if(transaction.then){
+                    if (transaction.then) {
                         transaction.then(function (args/*txn, e*/) {
                             // txn completed
                             // TODO: what todo in this case?
@@ -484,14 +490,14 @@
                             internal.createObjectStore(pw, args[0], objectStoreName, objectStoreOptions);
                         });
                     }
-                    else{
+                    else {
                         internal.createObjectStore(pw, transaction, objectStoreName, objectStoreOptions);
                     }
                 })
             },
             deleteObjectStore: function (transaction, objectStoreName) {
                 return promiseWrapper(function (pw) {
-                    if(transaction.then){
+                    if (transaction.then) {
                         changeDatabaseStructurePromise.then(function (args /*txn, e*/) {
                             // txn completed
                             // TODO: what todo in this case?
@@ -503,14 +509,14 @@
                             internal.deleteObjectStore(pw, args[0], objectStoreName);
                         });
                     }
-                    else{
-                        internal.deleteObjectStore(pw, transaction, objectStoreName); 
+                    else {
+                        internal.deleteObjectStore(pw, transaction, objectStoreName);
                     }
                 })
             },
             index: function (objectStore, propertyName, autoGenerateAllowed) {
                 return promiseWrapper(function (pw) {
-                    if(objectStore.then){
+                    if (objectStore.then) {
                         objectStore.then(function (args /*txn, objectStore*/) {
                             internal.index(pw, args[1], propertyName, autoGenerateAllowed);
                         }, function (args /*error, e*/) {
@@ -518,14 +524,14 @@
                             pw.error(this, args);
                         });
                     }
-                    else{
+                    else {
                         internal.index(pw, objectStore, propertyName, autoGenerateAllowed);
                     }
                 })
             },
             createIndex: function (objectStore, propertyName, indexOptions) {
                 return promiseWrapper(function (pw) {
-                    if(objectStore.then){
+                    if (objectStore.then) {
                         objectStore.then(function (args/*txn, objectStore*/) {
                             internal.createIndex(pw, args[1], propertyName, indexOptions);
                         }, function (args /*error, e*/) {
@@ -533,14 +539,14 @@
                             pw.error(this, args);
                         });
                     }
-                    else{
+                    else {
                         internal.createIndex(pw, objectStore, propertyName, indexOptions);
                     }
                 })
             },
             deleteIndex: function (objectStore, propertyName) {
                 return promiseWrapper(function (pw) {
-                    if(objectStore.then){
+                    if (objectStore.then) {
                         objectStore.then(function (args/*txn, objectStore*/) {
                             internal.deleteIndex(pw, args[1], propertyName);
                         }, function (args /*error, e*/) {
@@ -548,14 +554,14 @@
                             pw.error(this, args);
                         });
                     }
-                    else{
+                    else {
                         internal.deleteIndex(pw, objectStore, propertyName);
                     }
                 })
             },
             cursor: function (source, range, direction) {
                 return promiseWrapper(function (pw) {
-                    if(source.then){
+                    if (source.then) {
                         source.then(function (args /*txn, source*/) {
                             internal.cursor(pw, args[1], range, direction);
                         }, function (args /*error, e*/) {
@@ -563,14 +569,14 @@
                             pw.error(this, args);
                         });
                     }
-                    else{
+                    else {
                         internal.cursor(pw, source, range, direction);
                     }
                 })
             },
             keyCursor: function (index, range, direction) {
                 return promiseWrapper(function (pw) {
-                    if(index.then){
+                    if (index.then) {
                         index.then(function (args /*txn, index, store*/) {
                             internal.keyCursor(pw, args[1], range, direction);
                         }, function (args /*error, e*/) {
@@ -578,14 +584,14 @@
                             pw.error(this, args);
                         });
                     }
-                    else{
+                    else {
                         internal.keyCursor(pw, index, range, direction);
                     }
                 })
             },
             get: function (source, key) {
                 return promiseWrapper(function (pw) {
-                    if(source.then){
+                    if (source.then) {
                         source.then(function (args /*txn, source*/) {
                             internal.get(pw, args[1], key);
                         }, function (args /*error, e*/) {
@@ -593,14 +599,14 @@
                             pw.error(this, args);
                         });
                     }
-                    else{
+                    else {
                         internal.get(pw, source, key);
                     }
                 })
             },
             getKey: function (index, key) {
                 return promiseWrapper(function (pw) {
-                    if(index.then){
+                    if (index.then) {
                         index.then(function (args /*txn, index, objectStore*/) {
                             internal.getKey(pw, args[1], key);
                         }, function (args /*error, e*/) {
@@ -608,14 +614,14 @@
                             pw.error(this, args);
                         });
                     }
-                    else{
+                    else {
                         internal.getKey(pw, index, key);
                     }
                 })
             },
             insert: function (objectStore, data, key) {
                 return promiseWrapper(function (pw) {
-                    if(objectStore.then){
+                    if (objectStore.then) {
                         objectStore.then(function (args /*txn, store*/) {
                             internal.insert(pw, args[1], data, key);
                         }, function (args /*error, e*/) {
@@ -623,14 +629,14 @@
                             pw.error(this, args);
                         });
                     }
-                    else{
+                    else {
                         internal.insert(pw, objectStore, data, key);
                     }
                 })
             },
             update: function (objectStore, data, key) {
                 return promiseWrapper(function (pw) {
-                    if(objectStore.then){
+                    if (objectStore.then) {
                         objectStore.then(function (args /*txn, store*/) {
                             internal.update(pw, args[1], data, key);
                         }, function (args /*error, e*/) {
@@ -638,14 +644,14 @@
                             pw.error(this, args);
                         });
                     }
-                    else{
+                    else {
                         internal.update(pw, objectStore, data, key);
                     }
                 })
             },
             remove: function (objectStore, key) {
                 return promiseWrapper(function (pw) {
-                    if(objectStore.then){
+                    if (objectStore.then) {
                         objectStore.then(function (args /*txn, store*/) {
                             internal.remove(pw, args[1], key);
                         }, function (args /*error, e*/) {
@@ -653,14 +659,14 @@
                             pw.error(this, args);
                         });
                     }
-                    else{
+                    else {
                         internal.remove(pw, objectStore, key);
                     }
                 })
             },
             clear: function (objectStore) {
                 return promiseWrapper(function (pw) {
-                    if(objectStore.then){
+                    if (objectStore.then) {
                         objectStore.then(function (args /*txn, store*/) {
                             internal.clear(pw, args[1]);
                         }, function (args /*error, e*/) {
@@ -668,7 +674,7 @@
                             pw.error(this, args);
                         });
                     }
-                    else{
+                    else {
                         internal.clear(pw, objectStore);
                     }
                 })
@@ -727,17 +733,17 @@
                                     // When an error occures the result will already be resolved. This way calling the reject won't case a thing
                                 },
                                 function (args1 /*result, event*/) {
-                                var event = args1[1];
-                                if (event) {
-                                    // Sending a notify won't have any effect because the result is already resolved. There is nothing more to do than close the current connection.
-                                    if (event.type === "versionchange") {
-                                        if (event.version != db.version) {
-                                            // If the version is changed and the current version is different from the requested version, the connection needs to get closed.
-                                            promise.closeDatabaseConnection(db);
+                                    var event = args1[1];
+                                    if (event) {
+                                        // Sending a notify won't have any effect because the result is already resolved. There is nothing more to do than close the current connection.
+                                        if (event.type === "versionchange") {
+                                            if (event.version != db.version) {
+                                                // If the version is changed and the current version is different from the requested version, the connection needs to get closed.
+                                                promise.closeDatabaseConnection(db);
+                                            }
                                         }
                                     }
-                                }
-                            });
+                                });
 
                             var currentVersion = internal.getDatabaseVersion(db);
                             if (currentVersion < version || (version == -1)) {
@@ -774,7 +780,7 @@
                                                 // Database upgrade or blocked
                                                 pw.progress(this, args3);
                                             });
-                                        }, 
+                                        },
                                         function (args2 /*err, ev*/) {
                                             //txn error or abort
                                             pw.error(this, args2);
@@ -785,9 +791,9 @@
                                         pw.error(this, args1);
                                     },
                                     function (args1 /*result, event*/) {
-                                    // txn blocked
-                                    pw.progress(this, args1);
-                                });
+                                        // txn blocked
+                                        pw.progress(this, args1);
+                                    });
                             }
                             else {
                                 // Database Connection resolved.
@@ -801,9 +807,9 @@
                             pw.error(this, args);
                         },
                         function (args /*result, e*/) {
-                        // Database upgrade + db blocked
-                        pw.progress(this, args);
-                    }
+                            // Database upgrade + db blocked
+                            pw.progress(this, args);
+                        }
                     );
                 }
                 catch (ex) {
@@ -839,18 +845,35 @@
                         // Open a new connection with the new version
                         promise.db(dbName, version).then(function (args /*dbConnection, event*/) {
                             // When the upgrade is completed, the transaction can be opened.
-                            promise.transaction(args[0], objectStoreNames, transactionType, autoGenerateAllowed).then(function (args1 /*txn, ev*/) {
+                            //promise.transaction(args[0], objectStoreNames, transactionType, autoGenerateAllowed).then(function (args1 /*txn, ev*/) {
+                            //    // txn completed
+                            //    pw.complete(this, args1);
+                            //},
+                            //function (args1 /*error, ev*/) {
+                            //    // txn error or abort
+                            //    pw.error(this, args1);
+                            //},
+                            //function (args1 /*txn*/) {
+                            //    // txn created
+                            //    pw.progress(this, args1);
+                            //});
+
+                            // Necessary for getting it work in WIN 8, WinJS promises have troubles with nesting promises
+                            var txn = args[0].transaction(objectStoreNames, transactionType);
+
+                            // Handle transaction events
+                            handlers.IDBTransaction(txn).then(function (args /*result, event*/) {
                                 // txn completed
-                                pw.complete(this, args1);
+                                pw.complete(this, args);
                             },
-                            function (args1 /*error, ev*/) {
+                            function (args /*err, event*/) {
                                 // txn error or abort
-                                pw.error(this, args1);
-                            },
-                            function (args1 /*txn*/) {
-                                // txn created
-                                pw.progress(this, args1);
+                                pw.error(this, args);
                             });
+
+                            // txn created
+                            log("Transaction transaction created.", txn);
+                            pw.progress(txn, [txn]);
                         },
                         function (args /*error, event*/) {
                             // When an error occures, bubble up.
@@ -892,7 +915,7 @@
                     pw.error(this, [ex.message, ex]);
                 }
             },
-            changeDatabaseStructure: function(db, version) {
+            changeDatabaseStructure: function (db, version) {
                 log("changeDatabaseStructure started", db, version);
                 handlers.IDBBlockedRequest(setVersion(version)).then(function (args /*txn, event*/) {
                     // txn created
@@ -947,7 +970,7 @@
                             log("ObjectStore Found", args[1], objectStoreName);
                             log("createObjectStore Promise", args[0], args[1]);
                             pw.complete(store, args);
-                        }, 
+                        },
                         function (args /*error, event*/) {
                             // store error
                             pw.error(this, args);
@@ -1082,7 +1105,7 @@
             cursor: function (pw, source, range, direction) {
                 log("Cursor Promise Started", source);
 
-                try{
+                try {
                     var returnData = [];
 
                     handlers.IDBCursorRequest(source.openCursor(range || IDBKeyRange.lowerBound(0), direction)).then(function (args1 /*result, e*/) {
@@ -1121,7 +1144,7 @@
                 log("keyCursor Started", index, range, direction);
                 var returnData = [];
 
-                try{
+                try {
                     handlers.IDBRequest(index.openKeyCursor(range || IDBKeyRange.lowerBound(0), direction)).then(function (args /*result, e*/) {
                         var result = args[0];
                         var e = args[1];
@@ -1179,7 +1202,7 @@
             getKey: function (pw, index, key) {
                 log("GetKey Started", index, key);
 
-                try{
+                try {
                     handlers.IDBRequest(index.getKey(key)).then(function (args /*result, e*/) {
                         var result = args[0];
                         var e = args[1];
@@ -1704,15 +1727,13 @@
         }
 
         function executeRead(queryBuilder, pw, dbPromise) {
-            var transactionPromise = linq2indexedDB.core.transaction(dbPromise, queryBuilder.from, IDBTransaction.READ_ONLY, dbConfig.autoGenerateAllowed);
-
-            transactionPromise.then(function (args /* [txn] */) {
+            linq2indexedDB.core.transaction(dbPromise, queryBuilder.from, IDBTransaction.READ_ONLY, dbConfig.autoGenerateAllowed).then(function (args /* [txn] */) {
                 var txn = args[0];
                 txn.db.close();
             },
             pw.error,
             function (args /* [txn] */) {
-                try{
+                try {
                     var objPromise = linq2indexedDB.core.objectStore(args[0], queryBuilder.from);
                     var cursorPromis;
                     var whereClauses = [];
@@ -1730,46 +1751,46 @@
 
                     cursorPromis.then(
                         function (args /*data*/) {
-                        var data = args[0];
+                            var data = args[0];
 
-                        function asyncForWhere(data, i) {
-                            if (i < whereClauses.length) {
-                                linq2indexedDB.utilities.where(data, whereClauses[i]).then(function (d) {
-                                    asyncForWhere(d, ++i);
-                                }, pw.error);
-                            }
-                            else {
-                                asyncForSort(data, 0);
-                            }
-                        }
-
-                        function asyncForSort(data, i) {
-                            if (i < queryBuilder.orderBy.length) {
-                                linq2indexedDB.utilities.sort(data, queryBuilder.orderBy[i].propertyName, queryBuilder.orderBy[i].descending).then(function (d, e) {
-                                    asyncForSort(d, ++i);
-                                }, pw.error);
-                            }
-                            else {
-                                // No need to notify again if it allready happend in the onProgress method.
-                                if (returnData.length == 0) {
-                                    for (var j = 0; j < data.length; j++) {
-                                        var obj = SelectData(data[j], queryBuilder.select)
-                                        returnData.push(obj);
-                                        pw.progress(this, obj /*[obj]*/);
-                                    }
+                            function asyncForWhere(data, i) {
+                                if (i < whereClauses.length) {
+                                    linq2indexedDB.utilities.where(data, whereClauses[i]).then(function (d) {
+                                        asyncForWhere(d, ++i);
+                                    }, pw.error);
                                 }
-                                pw.complete(this, returnData /*[returnData]*/);
+                                else {
+                                    asyncForSort(data, 0);
+                                }
                             }
-                        }
 
-                        // Start at 1 because we allready executed the first clause
-                        var start = 0;
-                        if (whereClauses.length > 0 && (whereClauses[0].type == whereType.equals || whereClauses[0].type == whereType.between || whereClauses[0].type == whereType.smallerThen || whereClauses[0].type == whereType.greaterThen)) {
-                            start = 1;
-                        }
-                        asyncForWhere(data, start);
-                    }, 
-                        pw.error, 
+                            function asyncForSort(data, i) {
+                                if (i < queryBuilder.orderBy.length) {
+                                    linq2indexedDB.utilities.sort(data, queryBuilder.orderBy[i].propertyName, queryBuilder.orderBy[i].descending).then(function (d, e) {
+                                        asyncForSort(d, ++i);
+                                    }, pw.error);
+                                }
+                                else {
+                                    // No need to notify again if it allready happend in the onProgress method.
+                                    if (returnData.length == 0) {
+                                        for (var j = 0; j < data.length; j++) {
+                                            var obj = SelectData(data[j], queryBuilder.select)
+                                            returnData.push(obj);
+                                            pw.progress(this, obj /*[obj]*/);
+                                        }
+                                    }
+                                    pw.complete(this, returnData /*[returnData]*/);
+                                }
+                            }
+
+                            // Start at 1 because we allready executed the first clause
+                            var start = 0;
+                            if (whereClauses.length > 0 && (whereClauses[0].type == whereType.equals || whereClauses[0].type == whereType.between || whereClauses[0].type == whereType.smallerThen || whereClauses[0].type == whereType.greaterThen)) {
+                                start = 1;
+                            }
+                            asyncForWhere(data, start);
+                        },
+                        pw.error,
                         function (args /*data*/) {
                             var data = args[0];
 
@@ -1783,7 +1804,7 @@
                         }
                     );
                 }
-                catch (ex){
+                catch (ex) {
                     // Handle errors like an invalid keyRange.
                     linq2indexedDB.core.abortTransaction(args[0]);
                     pw.error(this, [ex.message, ex]);
