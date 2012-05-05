@@ -439,9 +439,14 @@
                     if (db.then) {
                         db.then(function (args /*db, e*/) {
                             // Timeout necessary for letting it work on win8. If not, progress event triggers before listeners are coupled
-                            setTimeout(function () {
+                            if (typeof Windows != "undefined") {
+                                setTimeout(function () {
+                                    internal.transaction(pw, args[0], objectStoreNames, transactionType, autoGenerateAllowed);
+                                }, 1);
+                            }
+                            else {
                                 internal.transaction(pw, args[0], objectStoreNames, transactionType, autoGenerateAllowed);
-                            }, 1);
+                            }
                         },
                         function (args /*error, e*/) {
                             pw.error(this, args);
@@ -498,7 +503,7 @@
             deleteObjectStore: function (transaction, objectStoreName) {
                 return promiseWrapper(function (pw) {
                     if (transaction.then) {
-                        changeDatabaseStructurePromise.then(function (args /*txn, e*/) {
+                        transaction.then(function (args /*txn, e*/) {
                             // txn completed
                             // TODO: what todo in this case?
                         }, function (args /*error, e*/) {
@@ -758,17 +763,18 @@
                                         var context = req;
                                         context.transaction = txn;
 
-                                        var upgardeEvent = event;
+                                        var upgardeEvent = {};
                                         upgardeEvent.type = "upgradeneeded";
                                         upgardeEvent.newVersion = version;
                                         upgardeEvent.oldVersion = currentVersion;
+                                        upgardeEvent.originalEvent = event;
 
                                         pw.progress(context, [txn, upgardeEvent]);
 
                                         handlers.IDBTransaction(txn).then(function (args2 /*trans, args*/) {
                                             // When the new version is completed, close the db connection, and make a new connection.
                                             promise.closeDatabaseConnection(txn.db);
-                                            promise.db(name).then(function (arg3 /*dbConnection, ev*/) {
+                                            promise.db(name).then(function (args3 /*dbConnection, ev*/) {
                                                 // Connection resolved
                                                 pw.complete(this, args3);
                                             },
@@ -916,18 +922,20 @@
                 }
             },
             changeDatabaseStructure: function (db, version) {
-                log("changeDatabaseStructure started", db, version);
-                handlers.IDBBlockedRequest(setVersion(version)).then(function (args /*txn, event*/) {
-                    // txn created
-                    pw.complete(this, args);
-                },
-                function (args /*error, event*/) {
-                    // txn error or abort
-                    pw.error(this, args);
-                },
-                function (args /*txn, event*/) {
-                    // txn blocked
-                    pw.progress(this, args);
+                return promiseWrapper(function (pw) {
+                    log("changeDatabaseStructure started", db, version);
+                    handlers.IDBBlockedRequest(db.setVersion(version)).then(function (args /*txn, event*/) {
+                        // txn created
+                        pw.complete(this, args);
+                    },
+                    function (args /*error, event*/) {
+                        // txn error or abort
+                        pw.error(this, args);
+                    },
+                    function (args /*txn, event*/) {
+                        // txn blocked
+                        pw.progress(this, args);
+                    });
                 });
             },
             objectStore: function (pw, transaction, objectStoreName) {
@@ -1107,8 +1115,22 @@
 
                 try {
                     var returnData = [];
+                    var request;
+                    var keyRange = range;
 
-                    handlers.IDBCursorRequest(source.openCursor(range || IDBKeyRange.lowerBound(0), direction)).then(function (args1 /*result, e*/) {
+                    if (!keyRange) {
+                        keyRange = IDBKeyRange.lowerBound(0)
+                    }
+
+                    // direction can not be null when passed.
+                    if (direction) {
+                        handlers.IDBCursorRequest(source.openCursor(keyRange, direction))
+                    }
+                    else {
+                        handlers.IDBCursorRequest(source.openCursor(keyRange))
+                    }
+
+                    request.then(function (args1 /*result, e*/) {
                         var result = args1[0];
                         var e = args1[1];
                         var txn = source.transaction || source.objectStore.transaction;
@@ -1591,10 +1613,8 @@
         }
 
         function executeQuery(queryBuilder) {
-            return /*promiseWrapperLinq*/promiseWrapper(function (pw) {
-                var dbPromis = linq2indexedDB.core.db(dbConfig.name, dbConfig.version);
-
-                dbPromis.then(function (args /* [db, event] */) {
+            return promiseWrapper(function (pw) {
+                linq2indexedDB.core.db(dbConfig.name, dbConfig.version).then(function (args /* [db, event] */) {
                     if (queryBuilder.insert.length > 0) {
                         executeInsert(queryBuilder, pw, args[0]);
                     }
