@@ -33,13 +33,13 @@ $(function () {
 
     $('#cboTypeConsumption').empty();
 
-    db.deleteDatabase().then(function(){
+    //db.deleteDatabase().then(function(){
         db.initialize().then(function () {
             db.linq.from(CONSUMPTIONTYPE).select().then(function (data) { }, handleError, function (data) {
                 InitializeConsumptionType(data);
             });
         }, handleError);
-    });
+    //});
 
     if (!Modernizr.inputtypes.date) {
         $('input[type=date]').datepicker();

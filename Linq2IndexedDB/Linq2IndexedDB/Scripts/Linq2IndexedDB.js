@@ -41,8 +41,8 @@
     connectionCounter = 0,
     connections = [],
     defaultDatabaseName = "Default",
-    sortFileLocation = "../Scripts/Sort.js",
-    whereFileLocation = "../Scripts/Where.js";
+    sortFileLocation = "/Scripts/Sort.js",
+    whereFileLocation = "/Scripts/Where.js";
 
     function initializeIndexedDB() {
         if (window.indexedDB) {
@@ -1124,10 +1124,10 @@
 
                     // direction can not be null when passed.
                     if (direction) {
-                        handlers.IDBCursorRequest(source.openCursor(keyRange, direction))
+                        request = handlers.IDBCursorRequest(source.openCursor(keyRange, direction))
                     }
                     else {
-                        handlers.IDBCursorRequest(source.openCursor(keyRange))
+                        request = handlers.IDBCursorRequest(source.openCursor(keyRange))
                     }
 
                     request.then(function (args1 /*result, e*/) {
@@ -1167,7 +1167,22 @@
                 var returnData = [];
 
                 try {
-                    handlers.IDBRequest(index.openKeyCursor(range || IDBKeyRange.lowerBound(0), direction)).then(function (args /*result, e*/) {
+                    var request;
+                    var keyRange = range;
+
+                    if (!keyRange) {
+                        keyRange = IDBKeyRange.lowerBound(0)
+                    }
+
+                    // direction can not be null when passed.
+                    if (direction) {
+                        request = handlers.IDBCursorRequest(source.openKeyCursor(keyRange, direction))
+                    }
+                    else {
+                        request = handlers.IDBCursorRequest(source.openKeyCursor(keyRange))
+                    }
+
+                    request.then(function (args /*result, e*/) {
                         var result = args[0];
                         var e = args[1];
 
