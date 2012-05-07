@@ -1280,8 +1280,8 @@
                             data[objectStore.keyPath] = result;
                         }
 
-                        log("Insert completed", data, objectStore.transaction, e);
-                        pw.complete(this, [data, objectStore.transaction, e]);
+                        log("Insert completed", data, result, objectStore.transaction, e);
+                        pw.complete(this, [data, result, objectStore.transaction, e]);
                     }, function (args /*error, e*/) {
                         log("Insert error", args);
                         pw.error(this, args);
@@ -1309,8 +1309,8 @@
                         var result = args[0];
                         var e = args[1];
 
-                        log("Update completed", data, objectStore.transaction, e);
-                        pw.complete(this, [data, objectStore.transaction, e]);
+                        log("Update completed", data, result, objectStore.transaction, e);
+                        pw.complete(this, [data, result, objectStore.transaction, e]);
                     }, function (args /*error, e*/) {
                         log("Update error", args);
                         pw.error(this, args);
@@ -1738,7 +1738,7 @@
             function (args /* [transaction] */) {
                 var updatePromis = linq2indexedDB.core.update(linq2indexedDB.core.objectStore(args[0], queryBuilder.from), queryBuilder.update[0].data, queryBuilder.update[0].key);
                 updatePromis.then(function (args /*storedData, storedkey*/) {
-                    pw.complete(this, args[0] /*[storedData, storedkey]*/);
+                    pw.complete(this, args[0] /*{object: args[0], key: args[1]}*/ /*[storedData, storedkey]*/);
                 }
                 , pw.error);
             });
@@ -1755,7 +1755,7 @@
             function (args /* [transaction] */) {
                 var insertPromis = linq2indexedDB.core.insert(linq2indexedDB.core.objectStore(args[0], queryBuilder.from), queryBuilder.insert[0].data, queryBuilder.insert[0].key)
                 insertPromis.then(function (args /*storedData, storedkey*/) {
-                    pw.complete(this, args[0] /*[storedData, storedkey]*/);
+                    pw.complete(this, args[0] /*{object: args[0], key: args[1]}*/ /*[storedData, storedkey]*/);
                 }
                 , pw.error);
             });
