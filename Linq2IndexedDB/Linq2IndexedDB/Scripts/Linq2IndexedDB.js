@@ -295,11 +295,6 @@
     linq2indexedDB.prototype.core = linq2indexedDB.core = core();
 
     linq2indexedDB.prototype.utilities = linq2indexedDB.utilities = {
-        self: function (context, args) {
-            return promiseWrapper(function (pw) {
-                pw.complete(context, args);
-            });
-        },
         sort: function (data, propertyName, descending) {
             return promiseWrapper(function (pw) {
                 var worker = new Worker(sortFileLocation);
@@ -1414,7 +1409,7 @@
                             // When an upgradeneeded event is thrown, create the non-existing object stores
                             if (event.type == "upgradeneeded") {
                                 for (var i = 0; i < dbConnection.objectStoreNames.length; i++) {
-                                    linq2indexedDB.core.deleteObjectStore(selfTransaction(this, [dbConnection.txn, event]), dbConnection.objectStoreNames[i]);
+                                    linq2indexedDB.core.deleteObjectStore(dbConnection.txn, dbConnection.objectStoreNames[i]);
                                 }
                                 promise.closeDatabaseConnection(dbConnection);
                             }
@@ -1949,18 +1944,6 @@
             log("initialize version exception: ", ex);
             linq2indexedDB.core.abortTransaction(txn);
         }
-    }
-
-    function selfTransaction(context, args) {
-        return promiseWrapper(function (pw) {
-            var txn = args[0];
-
-            pw.progress(context, args);
-
-            txn.oncomplete = function (args1 /*result, e*/) {
-                pw.complete(this, args1 /*[result, e]*/);
-            }
-        })
     }
 
     function promiseWrapper(promise) {
