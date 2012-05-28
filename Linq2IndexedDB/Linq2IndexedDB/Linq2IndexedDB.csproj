@@ -123,6 +123,8 @@
     <Content Include="Content\themes\base\minified\jquery.ui.slider.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.tabs.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.theme.min.css" />
+    <Content Include="IndexedDBViewer\IndexedDBViewer.html" />
+    <Content Include="Scripts\IndexedDBViewer.js" />
     <Content Include="Samples\Consumptions.css" />
     <Content Include="Samples\Consumptions.htm" />
     <Content Include="Samples\Consumptions.js" />

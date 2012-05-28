@@ -1,0 +1,33 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="../Content/themes/base/minified/jquery.ui.all.min.css" />
+
+    <style>
+        body { font-size: 62.5%; }
+        label, input { display:block; }
+        input.text { margin-bottom:12px; width:95%; padding: .4em; }
+        fieldset { padding:0; border:0; margin-top:25px; }
+        h1 { font-size: 1.2em; margin: .6em 0; }
+        div#tabs { height: 100%; }
+        div#tabs div table { margin: 1em 0; border-collapse: collapse; width: 100%; }
+        div#tabs div table td, div#tabs div table th { border: 1px solid #eee; padding: .6em 10px; text-align: left; }
+        /*div#tabs div table td:last-child, div#tabs div table th:last-child { width: 150px;}*/
+        .ui-dialog .ui-state-error { padding: .3em; }
+        .invisible { display: none;}
+    </style>
+
+    <script type="text/javascript" src="../Scripts/jquery-1.7.1.min.js"></script>
+    <script type="text/javascript" src="../Scripts/jquery-ui-1.8.17.min.js"></script>
+    <script type="text/javascript" src="../Scripts/Linq2IndexedDB.js"></script>
+    <script type="text/javascript" src="../Scripts/IndexedDBViewer.js"></script>
+</head>
+<body>
+    <p><label id="lblDatabaseName" for="txtDatabaseName">Database name:</label> <input type="text" id="txtDatabaseName" /><input type="button" id="btnViewDatabase" value="View database" /></p>
+    <div id="tabs">
+        <ul>
+        </ul>
+	</div>
+</body>
+</html>

@@ -1013,9 +1013,14 @@
             index: function (pw, objectStore, propertyName, autoGenerateAllowed) {
                 log("Index started", objectStore, propertyName, autoGenerateAllowed)
                 try {
-                    if (objectStore.indexNames.contains(propertyName + "-index")) {
+                    var indexName = propertyName;
+                    if (propertyName.indexOf("-index") == -1) {
+                        indexName = indexName + "-index"
+                    }
+
+                    if (objectStore.indexNames.contains(indexName)) {
                         // If index exists, resolve it
-                        var index = objectStore.index(propertyName + "-index");
+                        var index = objectStore.index(indexName);
                         log("Index completed", objectStore.transaction, index, objectStore);
                         pw.complete(this, [objectStore.transaction, index, objectStore]);
                     }
@@ -1143,7 +1148,7 @@
 
                         log("Cursor progress", result, e);
                         if (result.value) {
-                            pw.progress(this, [result.value, e]);
+                            pw.progress(this, [result.value, result, e]);
                             returnData.push(result.value);
                         }
                         result["continue"]();
