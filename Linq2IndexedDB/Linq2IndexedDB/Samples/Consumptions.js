@@ -2,6 +2,7 @@
 /// <reference path="../Scripts/jquery-1.7.1.js" />
 /// <reference path="../Scripts/jquery-ui-1.8.16.js" />
 /// <reference path="../Scripts/Linq2IndexedDB.js" />
+/// <reference path="../Scripts/modernizr-2.0.6-development-only.js" />
 
 var consumptionTypes = [];
 var indexedDBName = "Consumption database";
@@ -68,7 +69,12 @@ $(function () {
                         consumption.Id = id
                     }
 
-                    consumption.Date = dtpDate.datepicker("getDate");
+                    if (Modernizr.inputtypes.date) {
+                        consumption.Date = new Date(dtpDate.val());
+                    }
+                    else {
+                        consumption.Date = dtpDate.datepicker("getDate");
+                    }
                     consumption.ConsumptionTypeId = parseInt(cboTypeConsumption.val());
                     consumption.DayValue = parseInt(txtDayValue.val());
                     consumption.NightValue = parseInt(txtNightValue.val());

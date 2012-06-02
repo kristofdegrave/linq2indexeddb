@@ -61,16 +61,16 @@
                 // Initialising the window.indexedDB Object for Chrome
             else if (window.webkitIndexedDB) {
                 if (!window.indexedDB) window.indexedDB = window.webkitIndexedDB;
-                if (!window.IDBCursor) window.IDBCursor = webkitIDBCursor
-                if (!window.IDBDatabase) window.IDBDatabase = webkitIDBDatabase
-                if (!window.IDBDatabaseError) window.IDBDatabaseError = webkitIDBDatabaseError
-                if (!window.IDBDatabaseException) window.IDBDatabaseException = webkitIDBDatabaseException
-                if (!window.IDBFactory) window.IDBFactory = webkitIDBFactory
-                if (!window.IDBIndex) window.IDBIndex = webkitIDBIndex
-                if (!window.IDBKeyRange) window.IDBKeyRange = webkitIDBKeyRange
-                if (!window.IDBObjectStore) window.IDBObjectStore = webkitIDBObjectStore
-                if (!window.IDBRequest) window.IDBRequest = webkitIDBRequest
-                if (!window.IDBTransaction) window.IDBTransaction = webkitIDBTransaction
+                if (!window.IDBCursor) window.IDBCursor = window.webkitIDBCursor
+                if (!window.IDBDatabase) window.IDBDatabase = window.webkitIDBDatabase
+                //if (!window.IDBDatabaseError) window.IDBDatabaseError = window.webkitIDBDatabaseError
+                if (!window.IDBDatabaseException) window.IDBDatabaseException = window.webkitIDBDatabaseException
+                if (!window.IDBFactory) window.IDBFactory = window.webkitIDBFactory
+                if (!window.IDBIndex) window.IDBIndex = window.webkitIDBIndex
+                if (!window.IDBKeyRange) window.IDBKeyRange = window.webkitIDBKeyRange
+                if (!window.IDBObjectStore) window.IDBObjectStore = window.webkitIDBObjectStore
+                if (!window.IDBRequest) window.IDBRequest = window.webkitIDBRequest
+                if (!window.IDBTransaction) window.IDBTransaction = window.webkitIDBTransaction
 
                 log("Chrome Initialized", window.indexedDB);
                 return implementations.GOOGLE;
