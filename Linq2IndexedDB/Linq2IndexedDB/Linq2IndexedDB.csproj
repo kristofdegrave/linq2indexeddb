@@ -124,6 +124,7 @@
     <Content Include="Content\themes\base\minified\jquery.ui.tabs.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.theme.min.css" />
     <Content Include="IndexedDBViewer\IndexedDBViewer.html" />
+    <Content Include="Scripts\indexeddb.shim.js" />
     <Content Include="Scripts\IndexedDBViewer.js" />
     <Content Include="Samples\Consumptions.css" />
     <Content Include="Samples\Consumptions.htm" />

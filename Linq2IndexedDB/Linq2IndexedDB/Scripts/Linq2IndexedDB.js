@@ -1,6 +1,7 @@
 /// <reference path="../Scripts/jquery-1.7.1.js" />
 /// <reference path="../Scripts/jquery-1.7.1-vsdoc.js" />
-/// <reference path="../Scripts/Sort.js"
+/// <reference path="../Scripts/Sort.js" />
+/// <reference path="indexeddb.shim.js" />
 
 (function (window, $) {
     /// <param name="$" type="jQuery" />
@@ -28,7 +29,8 @@
         MICROSOFT: 2,
         MOZILLA: 3,
         GOOGLE: 4,
-        MICROSOFTPROTOTYPE: 5
+        MICROSOFTPROTOTYPE: 5,
+        SHIM: 6
     },
     enableLogging = false,
     log = function () {
@@ -44,6 +46,11 @@
     sortFileLocation = "/Scripts/Sort.js",
     whereFileLocation = "/Scripts/Where.js";
 
+    // Extend array for Opera
+    Array.prototype.contains = function(obj){
+        return this.indexOf(obj) > -1
+    }
+
     function initializeIndexedDB() {
         if (window.indexedDB) {
             log("Native implementation", window.indexedDB);
@@ -53,6 +60,12 @@
             // Initialising the window.indexedDB Object for FireFox
             if (window.mozIndexedDB) {
                 window.indexedDB = window.mozIndexedDB;
+
+                if (!window.IDBTransaction.READ_ONLY && !window.IDBTransaction.READ_WRITE && !window.IDBTransaction.VERSION_CHANGE) {
+                    window.IDBTransaction.READ_ONLY = "readonly";
+                    window.IDBTransaction.READ_WRITE = "readwrite";
+                    window.IDBTransaction.VERSION_CHANGE = "versionchange";
+                }
 
                 log("FireFox Initialized", window.indexedDB);
                 return implementations.MOZILLA;
@@ -72,6 +85,12 @@
                 if (!window.IDBRequest) window.IDBRequest = window.webkitIDBRequest
                 if (!window.IDBTransaction) window.IDBTransaction = window.webkitIDBTransaction
 
+                if (!window.IDBTransaction.READ_ONLY && !window.IDBTransaction.READ_WRITE && !window.IDBTransaction.VERSION_CHANGE) {
+                    window.IDBTransaction.READ_ONLY = "readonly";
+                    window.IDBTransaction.READ_WRITE = "readwrite";
+                    window.IDBTransaction.VERSION_CHANGE = "versionchange";
+                }
+
                 log("Chrome Initialized", window.indexedDB);
                 return implementations.GOOGLE;
             }
@@ -79,6 +98,12 @@
                     // Initialiseing the window.indexedDB Object for IE 10 preview 3+
             else if (window.msIndexedDB) {
                 window.indexedDB = window.msIndexedDB;
+
+                if (!window.IDBTransaction.READ_ONLY && !window.IDBTransaction.READ_WRITE && !window.IDBTransaction.VERSION_CHANGE) {
+                    window.IDBTransaction.READ_ONLY = "readonly";
+                    window.IDBTransaction.READ_WRITE = "readwrite";
+                    window.IDBTransaction.VERSION_CHANGE = "versionchange";
+                }
 
                 log("IE10+ Initialized", window.indexedDB);
                 return implementations.MICROSOFT;
@@ -165,6 +190,16 @@
                 };
 
                 return implementations.MICROSOFTPROTOTYPE;
+            }
+            else if(window.shimIndexedDB){
+                window.indexedDB = window.shimIndexedDB;
+                window.IDBTransaction = {
+                    READ_ONLY: "readonly",
+                    READ_WRITE: "readwrite",
+                    VERSION_CHANGE: "versionchange"
+                }
+
+                return implementations.SHIM;
             }
             else {
                 log("Your browser doesn't support indexedDB.");
@@ -264,7 +299,9 @@
                                     }
                                     if (dbConfig.definition) {
                                         var versionDefinition = getVersionDefinition(version, dbConfig.definition)
-                                        InitializeVersion(txn, versionDefinition);
+                                        if(versionDefinition){
+                                            InitializeVersion(txn, versionDefinition);
+                                        }
                                     }
                                     else if (dbConfig.oninitializeversion) {
                                         dbConfig.oninitializeversion(txn, version);
@@ -1086,9 +1123,22 @@
             createIndex: function (pw, objectStore, propertyName, indexOptions) {
                 log("createIndex started", objectStore, propertyName, indexOptions)
                 try {
-                    var index = objectStore.createIndex(propertyName + "-index", propertyName, { unique: indexOptions ? indexOptions.unique : false/*, multirow: indexOptions ? indexOptions.multirow : false*/ });
-                    log("createIndex compelted", objectStore.transaction, index, objectStore);
-                    pw.complete(this, [objectStore.transaction, index, objectStore]);
+                    var indexName = propertyName;
+                    if (propertyName.indexOf("-index") == -1) {
+                        indexName = indexName + "-index"
+                    }    
+
+                    if(!objectStore.indexNames.contains(indexName)){
+                        var index = objectStore.createIndex(indexName, propertyName, { unique: indexOptions ? indexOptions.unique : false/*, multirow: indexOptions ? indexOptions.multirow : false*/ });
+                        log("createIndex compelted", objectStore.transaction, index, objectStore);
+                        pw.complete(this, [objectStore.transaction, index, objectStore]);
+                    }
+                    else{
+                        // if the index exists retrieve it
+                        promise.index(objectStore, propertyName, false).then(function(args){
+                            pw.complete(this, args);
+                        })
+                    }
                 }
                 catch (ex) {
                     log("createIndex Failed", ex);
@@ -1099,7 +1149,12 @@
             deleteIndex: function (pw, objectStore, propertyName) {
                 log("deleteIndex started", objectStore, propertyName)
                 try {
-                    objectStore.deleteIndex(propertyName + "-index");
+                    var indexName = propertyName;
+                    if (propertyName.indexOf("-index") == -1) {
+                        indexName = indexName + "-index"
+                    }
+
+                    objectStore.deleteIndex(indexName);
 
                     log("deleteIndex completed", objectStore.transaction, propertyName, objectStore);
                     pw.complete(this, [objectStore.transaction, propertyName, objectStore]);
@@ -1119,15 +1174,23 @@
                     var keyRange = range;
 
                     if (!keyRange) {
-                        keyRange = IDBKeyRange.lowerBound(0)
+                        if(implementation != implementations.GOOGLE){
+                            keyRange = IDBKeyRange.lowerBound(0);
+                        }
+                        else{
+                            keyRange = IDBKeyRange.lowerBound(parseFloat(0));
+                        }
                     }
 
                     // direction can not be null when passed.
                     if (direction) {
-                        request = handlers.IDBCursorRequest(source.openCursor(keyRange, direction))
+                        request = handlers.IDBCursorRequest(source.openCursor(keyRange, direction));
                     }
-                    else {
-                        request = handlers.IDBCursorRequest(source.openCursor(keyRange))
+                    else if(keyRange) {
+                        request = handlers.IDBCursorRequest(source.openCursor(keyRange));
+                    }
+                    else{
+                        request = handlers.IDBCursorRequest(source.openCursor());
                     }
 
                     request.then(function (args1 /*result, e*/) {
