@@ -54,6 +54,13 @@
     function initializeIndexedDB() {
         if (window.indexedDB) {
             log("Native implementation", window.indexedDB);
+
+            if (!window.IDBTransaction.READ_ONLY && !window.IDBTransaction.READ_WRITE && !window.IDBTransaction.VERSION_CHANGE) {
+                window.IDBTransaction.READ_ONLY = "readonly";
+                window.IDBTransaction.READ_WRITE = "readwrite";
+                window.IDBTransaction.VERSION_CHANGE = "versionchange";
+            }
+
             return implementations.NATIVE;
         }
         else {
@@ -98,12 +105,6 @@
                     // Initialiseing the window.indexedDB Object for IE 10 preview 3+
             else if (window.msIndexedDB) {
                 window.indexedDB = window.msIndexedDB;
-
-                if (!window.IDBTransaction.READ_ONLY && !window.IDBTransaction.READ_WRITE && !window.IDBTransaction.VERSION_CHANGE) {
-                    window.IDBTransaction.READ_ONLY = "readonly";
-                    window.IDBTransaction.READ_WRITE = "readwrite";
-                    window.IDBTransaction.VERSION_CHANGE = "versionchange";
-                }
 
                 log("IE10+ Initialized", window.indexedDB);
                 return implementations.MICROSOFT;
