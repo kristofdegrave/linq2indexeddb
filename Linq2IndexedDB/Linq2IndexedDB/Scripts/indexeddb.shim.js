@@ -2,6 +2,12 @@
 	if (typeof window.openDatabase === 'undefined') {
 		return;
 	}
+	if (typeof window.indexedDB !== 'undefined'
+        || typeof window.msIndexedDB !== 'undefined'
+        || typeof window.mozIndexedDB !== 'undefined'
+        || typeof window.webkitIndexedDB !== 'undefined') {
+	    return;
+	}
 	var idbModules = {};
 	(function(idbModules){
 		/**

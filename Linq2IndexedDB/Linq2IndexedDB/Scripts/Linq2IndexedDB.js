@@ -32,6 +32,11 @@
         MICROSOFTPROTOTYPE: 5,
         SHIM: 6
     },
+    transactionTypes = {
+        READ_ONLY: "readonly",
+        READ_WRITE: "readwrite",
+        VERSION_CHANGE: "versionchange"
+    },
     enableLogging = false,
     log = function () {
         if (typeof (window.console) === "undefined" || !enableLogging) {
@@ -54,13 +59,6 @@
     function initializeIndexedDB() {
         if (window.indexedDB) {
             log("Native implementation", window.indexedDB);
-
-            if (!window.IDBTransaction.READ_ONLY && !window.IDBTransaction.READ_WRITE && !window.IDBTransaction.VERSION_CHANGE) {
-                window.IDBTransaction.READ_ONLY = "readonly";
-                window.IDBTransaction.READ_WRITE = "readwrite";
-                window.IDBTransaction.VERSION_CHANGE = "versionchange";
-            }
-
             return implementations.NATIVE;
         }
         else {
@@ -68,10 +66,12 @@
             if (window.mozIndexedDB) {
                 window.indexedDB = window.mozIndexedDB;
 
-                if (!window.IDBTransaction.READ_ONLY && !window.IDBTransaction.READ_WRITE && !window.IDBTransaction.VERSION_CHANGE) {
-                    window.IDBTransaction.READ_ONLY = "readonly";
-                    window.IDBTransaction.READ_WRITE = "readwrite";
-                    window.IDBTransaction.VERSION_CHANGE = "versionchange";
+                if (typeof window.IDBTransaction.READ_ONLY === "number"
+                    && typeof window.IDBTransaction.READ_WRITE === "number"
+                    && typeof window.IDBTransaction.VERSION_CHANGE === "number") {
+                    transactionTypes.READ_ONLY = window.IDBTransaction.READ_ONLY;
+                    transactionTypes.READ_WRITE = window.IDBTransaction.READ_WRITE;
+                    transactionTypes.VERSION_CHANGE = window.IDBTransaction.VERSION_CHANGE;
                 }
 
                 log("FireFox Initialized", window.indexedDB);
@@ -92,10 +92,12 @@
                 if (!window.IDBRequest) window.IDBRequest = window.webkitIDBRequest
                 if (!window.IDBTransaction) window.IDBTransaction = window.webkitIDBTransaction
 
-                if (!window.IDBTransaction.READ_ONLY && !window.IDBTransaction.READ_WRITE && !window.IDBTransaction.VERSION_CHANGE) {
-                    window.IDBTransaction.READ_ONLY = "readonly";
-                    window.IDBTransaction.READ_WRITE = "readwrite";
-                    window.IDBTransaction.VERSION_CHANGE = "versionchange";
+                if (typeof window.IDBTransaction.READ_ONLY === "number"
+                    && typeof window.IDBTransaction.READ_WRITE === "number"
+                    && typeof window.IDBTransaction.VERSION_CHANGE === "number") {
+                    transactionTypes.READ_ONLY = window.IDBTransaction.READ_ONLY;
+                    transactionTypes.READ_WRITE = window.IDBTransaction.READ_WRITE;
+                    transactionTypes.VERSION_CHANGE = window.IDBTransaction.VERSION_CHANGE;
                 }
 
                 log("Chrome Initialized", window.indexedDB);
@@ -105,6 +107,10 @@
                     // Initialiseing the window.indexedDB Object for IE 10 preview 3+
             else if (window.msIndexedDB) {
                 window.indexedDB = window.msIndexedDB;
+
+                transactionTypes.READ_ONLY = 0;
+                transactionTypes.READ_WRITE = 1;
+                transactionTypes.VERSION_CHANGE = 2;
 
                 log("IE10+ Initialized", window.indexedDB);
                 return implementations.MICROSOFT;
@@ -170,6 +176,10 @@
                     VERSION_CHANGE: 2
                 };
 
+                transactionTypes.READ_ONLY = 0;
+                transactionTypes.READ_WRITE = 1;
+                transactionTypes.VERSION_CHANGE = 2;
+
                 window.IDBKeyRange.only = function (value) {
                     return window.indexedDB.range.only(value);
                 };
@@ -194,11 +204,6 @@
             }
             else if(window.shimIndexedDB){
                 window.indexedDB = window.shimIndexedDB;
-                window.IDBTransaction = {
-                    READ_ONLY: "readonly",
-                    READ_WRITE: "readwrite",
-                    VERSION_CHANGE: "versionchange"
-                }
 
                 return implementations.SHIM;
             }
@@ -861,7 +866,7 @@
 
                 // Initialize defaults
                 if (!isArray(objectStoreNames)) objectStoreNames = [objectStoreNames];
-                transactionType = transactionType || IDBTransaction.READ_ONLY;
+                transactionType = transactionType || transactionTypes.READ_ONLY;
 
                 try {
                     var nonExistingObjectStores = [];
@@ -1741,7 +1746,7 @@
         }
 
         function executeGet(queryBuilder, pw, dbPromise) {
-            var transactionPromise = linq2indexedDB.core.transaction(dbPromise, queryBuilder.from, IDBTransaction.READ_ONLY, dbConfig.autoGenerateAllowed);
+            var transactionPromise = linq2indexedDB.core.transaction(dbPromise, queryBuilder.from, transactionTypes.READ_ONLY, dbConfig.autoGenerateAllowed);
 
             transactionPromise.then(function (args /* [transaction] */) {
                 var txn = args[0];
@@ -1758,7 +1763,7 @@
         }
 
         function executeClear(queryBuilder, pw, dbPromise) {
-            var transactionPromise = linq2indexedDB.core.transaction(dbPromise, queryBuilder.from, IDBTransaction.READ_WRITE, dbConfig.autoGenerateAllowed);
+            var transactionPromise = linq2indexedDB.core.transaction(dbPromise, queryBuilder.from, transactionTypes.READ_WRITE, dbConfig.autoGenerateAllowed);
 
             transactionPromise.then(function (args /* [transaction] */) {
                 var txn = args[0];
@@ -1775,7 +1780,7 @@
         }
 
         function executeRemove(queryBuilder, pw, dbPromise) {
-            var transactionPromise = linq2indexedDB.core.transaction(dbPromise, queryBuilder.from, IDBTransaction.READ_WRITE, dbConfig.autoGenerateAllowed);
+            var transactionPromise = linq2indexedDB.core.transaction(dbPromise, queryBuilder.from, transactionTypes.READ_WRITE, dbConfig.autoGenerateAllowed);
 
             transactionPromise.then(function (args /* [transaction] */) {
                 var txn = args[0];
@@ -1792,7 +1797,7 @@
         }
 
         function executeUpdate(queryBuilder, pw, dbPromise) {
-            var transactionPromise = linq2indexedDB.core.transaction(dbPromise, queryBuilder.from, IDBTransaction.READ_WRITE, dbConfig.autoGenerateAllowed);
+            var transactionPromise = linq2indexedDB.core.transaction(dbPromise, queryBuilder.from, transactionTypes.READ_WRITE, dbConfig.autoGenerateAllowed);
 
             transactionPromise.then(function (args /* [transaction] */) {
                 var txn = args[0];
@@ -1809,7 +1814,7 @@
         }
 
         function executeInsert(queryBuilder, pw, dbPromise) {
-            var transactionPromise = linq2indexedDB.core.transaction(dbPromise, queryBuilder.from, IDBTransaction.READ_WRITE, dbConfig.autoGenerateAllowed);
+            var transactionPromise = linq2indexedDB.core.transaction(dbPromise, queryBuilder.from, transactionTypes.READ_WRITE, dbConfig.autoGenerateAllowed);
 
             transactionPromise.then(function (args /* [transaction] */) {
                 var txn = args[0];
@@ -1826,7 +1831,7 @@
         }
 
         function executeRead(queryBuilder, pw, dbPromise) {
-            linq2indexedDB.core.transaction(dbPromise, queryBuilder.from, IDBTransaction.READ_ONLY, dbConfig.autoGenerateAllowed).then(function (args /* [txn] */) {
+            linq2indexedDB.core.transaction(dbPromise, queryBuilder.from, transactionTypes.READ_ONLY, dbConfig.autoGenerateAllowed).then(function (args /* [txn] */) {
                 var txn = args[0];
                 txn.db.close();
             },
