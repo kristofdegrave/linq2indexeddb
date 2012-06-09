@@ -1057,8 +1057,15 @@
                 log("Index started", objectStore, propertyName, autoGenerateAllowed)
                 try {
                     var indexName = propertyName;
-                    if (propertyName.indexOf("-index") == -1) {
-                        indexName = indexName + "-index"
+                    if (implementation == implementations.SHIM) {
+                        if (propertyName.indexOf("IIndex") == -1) {
+                            indexName = indexName + "IIndex"
+                        }
+                    }
+                    else {
+                        if (propertyName.indexOf("-index") == -1) {
+                            indexName = indexName + "-index"
+                        }
                     }
 
                     if (objectStore.indexNames.contains(indexName)) {
@@ -1130,9 +1137,16 @@
                 log("createIndex started", objectStore, propertyName, indexOptions)
                 try {
                     var indexName = propertyName;
-                    if (propertyName.indexOf("-index") == -1) {
-                        indexName = indexName + "-index"
-                    }    
+                    if (implementation == implementations.SHIM) {
+                        if (propertyName.indexOf("IIndex") == -1) {
+                            indexName = indexName + "IIndex"
+                        }
+                    }
+                    else {
+                        if (propertyName.indexOf("-index") == -1) {
+                            indexName = indexName + "-index"
+                        }
+                    }
 
                     if(!objectStore.indexNames.contains(indexName)){
                         var index = objectStore.createIndex(indexName, propertyName, { unique: indexOptions ? indexOptions.unique : false/*, multirow: indexOptions ? indexOptions.multirow : false*/ });
@@ -1156,8 +1170,15 @@
                 log("deleteIndex started", objectStore, propertyName)
                 try {
                     var indexName = propertyName;
-                    if (propertyName.indexOf("-index") == -1) {
-                        indexName = indexName + "-index"
+                    if (implementation == implementations.SHIM) {
+                        if (propertyName.indexOf("IIndex") == -1) {
+                            indexName = indexName + "IIndex"
+                        }
+                    }
+                    else {
+                        if (propertyName.indexOf("-index") == -1) {
+                            indexName = indexName + "-index"
+                        }
                     }
 
                     objectStore.deleteIndex(indexName);
