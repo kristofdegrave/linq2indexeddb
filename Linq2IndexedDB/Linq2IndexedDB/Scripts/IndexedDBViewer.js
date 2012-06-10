@@ -1,6 +1,6 @@
-﻿/// <reference path="../Scripts/jquery-1.7.1.js" />
-/// <reference path="../Scripts/Linq2IndexedDB.js" />
-/// <reference path="../Scripts/jquery-ui-1.8.17.js" />
+﻿/// <reference path="jquery-1.7.2.js" />
+/// <reference path="jquery-ui-1.8.20.js" />
+/// <reference path="Linq2IndexedDB.js" />
 
 $(function () {
     $('#tabs').hide();
@@ -12,7 +12,7 @@ $(function () {
     $('#btnViewDatabase').click(function(){
         viewDatabase($('#txtDatabaseName').val());
     });
-
+   
     function viewDatabase(dbName) {
         $('#tabs').show();
 

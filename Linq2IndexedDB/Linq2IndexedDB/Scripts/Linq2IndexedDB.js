@@ -1,6 +1,5 @@
-/// <reference path="../Scripts/jquery-1.7.1.js" />
-/// <reference path="../Scripts/jquery-1.7.1-vsdoc.js" />
-/// <reference path="../Scripts/Sort.js" />
+/// <reference path="jquery-1.7.2.js" />
+/// <reference path="Sort.js" />
 /// <reference path="indexeddb.shim.js" />
 
 (function (window, $) {

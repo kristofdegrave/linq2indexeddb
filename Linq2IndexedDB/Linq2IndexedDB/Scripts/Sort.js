@@ -1,5 +1,4 @@
-﻿/// <reference path="../Scripts/jquery-1.7.1.js" />
-/// <reference path="../Scripts/jquery-1.7.1-vsdoc.js" />
+﻿/// <reference path="jquery-1.7.2.js" />
 
 onmessage = function (event) {
     var data = event.data.data;

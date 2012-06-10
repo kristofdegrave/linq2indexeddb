@@ -1,8 +1,7 @@
-﻿/// <reference path="../Scripts/jquery-1.7.1-vsdoc.js" />
-/// <reference path="../Scripts/jquery-1.7.1.js" />
-/// <reference path="../Scripts/jquery-ui-1.8.16.js" />
+﻿/// <reference path="../Scripts/jquery-1.7.2.js" />
+/// <reference path="../Scripts/jquery-ui-1.8.20.js" />
 /// <reference path="../Scripts/Linq2IndexedDB.js" />
-/// <reference path="../Scripts/modernizr-2.0.6-development-only.js" />
+/// <reference path="../Scripts/modernizr-2.5.3.js" />
 
 var consumptionTypes = [];
 var indexedDBName = "Consumption database";
@@ -34,13 +33,13 @@ $(function () {
 
     $('#cboTypeConsumption').empty();
 
-    db.deleteDatabase().then(function(){
+    //db.deleteDatabase().then(function(){
         db.initialize().then(function () {
             db.linq.from(CONSUMPTIONTYPE).select().then(function (data) { }, handleError, function (data) {
                 InitializeConsumptionType(data);
             });
         }, handleError);
-    });
+    //});
 
     if (!Modernizr.inputtypes.date) {
         $('input[type=date]').datepicker();
