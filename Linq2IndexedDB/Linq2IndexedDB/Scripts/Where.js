@@ -3,8 +3,8 @@
 var whereType = {
     equals: 0,
     between: 1,
-    greaterThen: 2,
-    smallerThen: 3,
+    greaterThan: 2,
+    smallerThan: 3,
     inArray: 4,
     like: 5
 };

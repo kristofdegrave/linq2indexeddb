@@ -80,8 +80,9 @@
             	
             	asyncTest("Simple sorting", function(){
             		var db = $.linq2indexedDB("QueryTest", null, true);
-            		db.linq.from("test").orderBy("Int").select().then(function(data){
-            			var min = Math.min;
+            		db.linq.from("test").orderBy("Int").select().then(function (data) {
+            		    // Math.max() == -Infinity
+            			var min = Math.max();
             			for (var i = 0; i < data.length; i++) {
             				if (data[i]["Int"] < min) {
             					ok(false, "Data is not sorted");
@@ -98,8 +99,9 @@
             	
             	asyncTest("Simple Reverse sorting", function(){
             		var db = $.linq2indexedDB("QueryTest", null, true);
-            		db.linq.from("test").orderByDesc("Float").select().then(function(data){
-            			var max = Math.max;
+            		db.linq.from("test").orderByDesc("Float").select().then(function (data) {
+            		    // Math.min() == Infinity
+            			var max = Math.min();
             			for (var i = 0; i < data.length; i++) {
             				if (data[i]["Float"] > max) {
             					ok(false, "Data is not sorted");
@@ -117,8 +119,9 @@
             	
             	asyncTest("Sorting with range, same property", function(){
             		var db = $.linq2indexedDB("QueryTest", null, true);
-            		db.linq.from("test").where("Int").greaterThen("0").orderByDesc("Float").select().then(function(data){
-            			var max = Math.max;
+            		db.linq.from("test").where("Int").greaterThan(20).orderByDesc("Float").select().then(function(data){
+            		    // Math.min() == Infinity
+            		    var max = Math.min();
             			if (data.length === 0) {
             				ok(false, "Could not find any records");
             			}
@@ -126,7 +129,7 @@
             				if (data[i]["Float"] > max) {
             					ok(false, "Data is not sorted");
             				}
-            				if (data[i]["Float"] < 0.2) {
+            				if (data[i]["Int"] < 20) {
             					ok(false, "Where clause not satisfied");
             				}
             				max = data[i]["Float"];

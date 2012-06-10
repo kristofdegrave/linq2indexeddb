@@ -127,7 +127,6 @@
     <Content Include="Samples\Consumptions.css" />
     <Content Include="Samples\Consumptions.htm" />
     <Content Include="Samples\Consumptions.js" />
-    <Content Include="Samples\OrderBy.htm" />
     <Content Include="Scripts\IndexedDBAdapter.js" />
     <None Include="Scripts\jquery-1.7.2.intellisense.js">
       <DependentUpon>jquery-1.7.2.js</DependentUpon>
@@ -148,7 +147,6 @@
     <Content Include="Tests\qunit.css" />
     <Content Include="Tests\qunit.js" />
     <Content Include="Scripts\Linq2IndexedDB.js" />
-    <Content Include="Samples\Insert.htm" />
     <Content Include="Samples\Linq2indexedDB Sample.htm" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
@@ -157,6 +155,7 @@
     <Content Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </Content>
+    <Content Include="Scripts\Linq2IndexedDB.Worker.js" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />

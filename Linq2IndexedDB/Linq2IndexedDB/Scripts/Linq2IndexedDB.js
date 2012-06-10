@@ -23,9 +23,7 @@
     var linq2indexedDB,
     enableLogging = false,
     defaultDatabaseName = "Default",
-    sortFileLocation = "/Scripts/Sort.js",
-    whereFileLocation = "/Scripts/Where.js",
-    implementation = initializeIndexedDB(),
+    linq2indexedDBWorkerFileLocation = "../Scripts/Linq2indexedDB.Worker.js",
     log = function () {
         if (typeof (window.console) === "undefined" || !enableLogging) {
             return false;
@@ -45,7 +43,8 @@
         READ_ONLY: "readonly",
         READ_WRITE: "readwrite",
         VERSION_CHANGE: "versionchange"
-    };
+    },
+    implementation = initializeIndexedDB();
 
     linq2indexedDB = function (name, configuration, logging) {
         /// <summary>Creates a new or opens an existing database for the given name</summary>
@@ -154,28 +153,18 @@
     if (typeof ($) === "function") {
         $.linq2indexedDB = linq2indexedDB;
     }
-
+    F
     linq2indexedDB.prototype.core = linq2indexedDB.core = core();
 
     linq2indexedDB.prototype.utilities = linq2indexedDB.utilities = {
-        sort: function (data, propertyName, descending) {
+        linq2indexedDBWorker: function (data, filters, sortClauses) {
             return promiseWrapper(function (pw) {
-                var worker = new Worker(sortFileLocation);
+                var worker = new Worker(linq2indexedDBWorkerFileLocation);
                 worker.onmessage = function (event) {
                     pw.complete(this, event.data)
                 };
                 worker.onerror = pw.error;
-                worker.postMessage({ data: data, propertyName: propertyName, descending: descending });
-            })
-        },
-        where: function (data, clause) {
-            return promiseWrapper(function (pw) {
-                var worker = new Worker(whereFileLocation);
-                worker.onmessage = function (event) {
-                    pw.complete(this, event.data)
-                };
-                worker.onerror = pw.error;
-                worker.postMessage({ data: data, clause: clause });
+                worker.postMessage({ data: data, filters: filters, sortClauses: sortClauses });
             })
         },
         isArray: function (array) {
@@ -705,7 +694,7 @@
                 log("Transaction promise started", db, objectStoreNames, transactionType);
 
                 // Initialize defaults
-                if (!linq2IndexedDB.utilities.isArray(objectStoreNames)) objectStoreNames = [objectStoreNames];
+                if (!linq2indexedDB.utilities.isArray(objectStoreNames)) objectStoreNames = [objectStoreNames];
                 transactionType = transactionType || transactionTypes.READ_ONLY;
 
                 try {
@@ -1384,7 +1373,7 @@
             this.from = objectStoreName;
             this.where = [];
             this.select = [];
-            this.orderBy = [];
+            this.sortClauses = [];
             this.get = [];
             this.insert = [];
             this.update = [];
@@ -1395,16 +1384,39 @@
         queryBuilderObj.prototype = {
             executeQuery: function () {
                 executeQuery(this);
+            },
+            filters:{
+                equals: {
+                    name: "equals",
+                    indexeddbFilter: true,
+                    sortOrder: 0
+                },
+                between: {
+                    name: "between",
+                    sortOrder: 1,
+                    indexeddbFilter: true
+                },
+                greaterThan: {
+                    name: "greaterThan",
+                    sortOrder: 2,
+                    indexeddbFilter: true
+                },
+                smallerThan: {
+                    name: "smallerThan",
+                    sortOrder: 2,
+                    indexeddbFilter: true
+                },
+                inArray: {
+                    name: "inArray",
+                    sortOrder: 3,
+                    indexeddbFilter: false
+                },
+                like: {
+                    name: "like",
+                    sortOrder: 4,
+                    indexeddbFilter: false
+                }
             }
-        };
-
-        var whereType = {
-            equals: 0,
-            between: 1,
-            greaterThen: 2,
-            smallerThen: 3,
-            inArray: 4,
-            like: 5
         };
 
         function from(queryBuilder, objectStoreName) {
@@ -1461,26 +1473,26 @@
             else {
                 return {
                     equals: function (value) {
-                        return whereClause(queryBuilder, { type: whereType.equals, propertyName: propertyName, value: value });
+                        return whereClause(queryBuilder, { filter: queryBuilderObj.prototype.filters.equals, propertyName: propertyName, value: value });
                     },
-                    greaterThen: function (value, valueIncluded) {
+                    greaterThan: function (value, valueIncluded) {
                         var isValueIncluded = typeof (valueIncluded) === undefined ? false : valueIncluded;
-                        return whereClause(queryBuilder, { type: whereType.greaterThen, propertyName: propertyName, value: value, valueIncluded: isValueIncluded });
+                        return whereClause(queryBuilder, { filter: queryBuilderObj.prototype.filters.greaterThan, propertyName: propertyName, value: value, valueIncluded: isValueIncluded });
                     },
-                    smallerThen: function (value, valueIncluded) {
+                    smallerThan: function (value, valueIncluded) {
                         var isValueIncluded = typeof (valueIncluded) === undefined ? false : valueIncluded;
-                        return whereClause(queryBuilder, { type: whereType.smallerThen, propertyName: propertyName, value: value, valueIncluded: isValueIncluded });
+                        return whereClause(queryBuilder, { filter: queryBuilderObj.prototype.filters.smallerThan, propertyName: propertyName, value: value, valueIncluded: isValueIncluded });
                     },
                     between: function (minValue, maxValue, minValueIncluded, maxValueIncluded) {
                         var isMinValueIncluded = typeof (minValueIncluded) === undefined ? false : minValueIncluded;
                         var isMasValueIncluded = typeof (maxValueIncluded) === undefined ? false : maxValueIncluded;
-                        return whereClause(queryBuilder, { type: whereType.between, propertyName: propertyName, minValue: minValue, maxValue: maxValue, minValueIncluded: isMinValueIncluded, maxValueIncluded: isMasValueIncluded });
+                        return whereClause(queryBuilder, { filter: queryBuilderObj.prototype.filters.between, propertyName: propertyName, minValue: minValue, maxValue: maxValue, minValueIncluded: isMinValueIncluded, maxValueIncluded: isMasValueIncluded });
                     },
                     inArray: function (array) {
-                        return whereClause(queryBuilder, { type: whereType.inArray, propertyName: propertyName, value: array });
+                        return whereClause(queryBuilder, { filter: queryBuilderObj.prototype.filters.inArray, propertyName: propertyName, value: array });
                     },
                     like: function (value) {
-                        return whereClause(queryBuilder, { type: whereType.like, propertyName: propertyName, value: value });
+                        return whereClause(queryBuilder, { filter: queryBuilderObj.prototype.filters.like, propertyName: propertyName, value: value });
                     }
                 }
             }
@@ -1505,7 +1517,7 @@
         }
 
         function orderBy(queryBuilder, propertyName, descending) {
-            queryBuilder.orderBy.push({ propertyName: propertyName, descending: descending });
+            queryBuilder.sortClauses.push({ propertyName: propertyName, descending: descending });
             return {
                 orderBy: function (propertyName) {
                     return orderBy(queryBuilder, propertyName, false);
@@ -1521,7 +1533,7 @@
 
         function select(queryBuilder, propertyNames) {
             if (propertyNames) {
-                if (!linq2IndexedDB.utilities.isArray(propertyNames)) {
+                if (!linq2indexedDB.utilities.isArray(propertyNames)) {
                     propertyNames = [propertyNames]
                 }
 
@@ -1706,9 +1718,18 @@
 
                     if (queryBuilder.where.length > 0) {
                         // Sorting the where clauses so the most restrictive ones are on top.
-                        whereClauses = queryBuilder.where.sort(linq2indexedDB.utilities.JSONComparer("type", false).sort);
+                        
+                        whereClauses = queryBuilder.where.sort(function (valueX, valueY) {
+                            return ((valueX.filter.SortOrder == valueY.filter.SortOrder) ? 0 : ((valueX.filter.SortOrder > valueY.filter.SortOrder) ? 1 : -1));
+                        });
                         // Only one condition can be passed to IndexedDB API
-                        cursorPromis = determineCursorPromis(objPromise, whereClauses[0]);
+                        // Takes the first whereClause and removes it from the whereClause collection.
+                        if (whereClauses[0].filter.indexeddbFilter) {
+                            cursorPromis = determineCursorPromis(objPromise, whereClauses.shift());
+                        }
+                        else {
+                            cursorPromis = determineCursorPromis(objPromise);
+                        }
                     }
                     else {
                         cursorPromis = determineCursorPromis(objPromise);
@@ -1717,43 +1738,18 @@
                     cursorPromis.then(
                         function (args /*data*/) {
                             var data = args[0];
-
-                            function asyncForWhere(data, i) {
-                                if (i < whereClauses.length) {
-                                    linq2indexedDB.utilities.where(data, whereClauses[i]).then(function (d) {
-                                        asyncForWhere(d, ++i);
-                                    }, pw.error);
-                                }
-                                else {
-                                    asyncForSort(data, 0);
-                                }
-                            }
-
-                            function asyncForSort(data, i) {
-                                if (i < queryBuilder.orderBy.length) {
-                                    linq2indexedDB.utilities.sort(data, queryBuilder.orderBy[i].propertyName, queryBuilder.orderBy[i].descending).then(function (d, e) {
-                                        asyncForSort(d, ++i);
-                                    }, pw.error);
-                                }
-                                else {
-                                    // No need to notify again if it allready happend in the onProgress method.
-                                    if (returnData.length == 0) {
-                                        for (var j = 0; j < data.length; j++) {
-                                            var obj = SelectData(data[j], queryBuilder.select)
-                                            returnData.push(obj);
-                                            pw.progress(this, obj /*[obj]*/);
-                                        }
+                            
+                            linq2indexedDB.utilities.linq2indexedDBWorker(data, whereClauses, queryBuilder.sortClauses).then(function (d) {
+                                // No need to notify again if it allready happend in the onProgress method of the cursor.
+                                if (returnData.length == 0) {
+                                    for (var j = 0; j < d.length; j++) {
+                                        var obj = SelectData(d[j], queryBuilder.select)
+                                        returnData.push(obj);
+                                        pw.progress(this, obj /*[obj]*/);
                                     }
-                                    pw.complete(this, returnData /*[returnData]*/);
                                 }
-                            }
-
-                            // Start at 1 because we allready executed the first clause
-                            var start = 0;
-                            if (whereClauses.length > 0 && (whereClauses[0].type == whereType.equals || whereClauses[0].type == whereType.between || whereClauses[0].type == whereType.smallerThen || whereClauses[0].type == whereType.greaterThen)) {
-                                start = 1;
-                            }
-                            asyncForWhere(data, start);
+                                pw.complete(this, returnData /*[returnData]*/);
+                            })
                         },
                         pw.error,
                         function (args /*data*/) {
@@ -1761,7 +1757,7 @@
 
                             // When there are no more where clauses to fulfill and the collection doesn't need to be sorted, the data can be returned.
                             // In the other case let the complete handle it.
-                            if (whereClauses.length == 0 && queryBuilder.orderBy.length == 0) {
+                            if (whereClauses.length == 0 && queryBuilder.sortClauses.length == 0) {
                                 var obj = SelectData(data, queryBuilder.select)
                                 returnData.push(obj);
                                 pw.progress(this, obj /*[obj]*/);
@@ -1780,17 +1776,17 @@
         function determineCursorPromis(objPromise, clause) {
             var cursorPromise;
             if (clause) {
-                switch (clause.type) {
-                    case whereType.equals:
+                switch (clause.filter) {
+                    case queryBuilderObj.prototype.filters.equals:
                         cursorPromise = linq2indexedDB.core.cursor(linq2indexedDB.core.index(objPromise, clause.propertyName, dbConfig.autoGenerateAllowed), IDBKeyRange.only(clause.value));
                         break;
-                    case whereType.between:
+                    case queryBuilderObj.prototype.filters.between:
                         cursorPromise = linq2indexedDB.core.cursor(linq2indexedDB.core.index(objPromise, clause.propertyName, dbConfig.autoGenerateAllowed), IDBKeyRange.bound(clause.minValue, clause.maxValue, clause.minValueIncluded, clause.maxValueIncluded));
                         break;
-                    case whereType.greaterThen:
+                    case queryBuilderObj.prototype.filters.greaterThan:
                         cursorPromise = linq2indexedDB.core.cursor(linq2indexedDB.core.index(objPromise, clause.propertyName, dbConfig.autoGenerateAllowed), IDBKeyRange.lowerBound(clause.value, clause.valueIncluded));
                         break;
-                    case whereType.smallerThen:
+                    case queryBuilderObj.prototype.filters.smallerThan:
                         cursorPromise = linq2indexedDB.core.cursor(linq2indexedDB.core.index(objPromise, clause.propertyName, dbConfig.autoGenerateAllowed), IDBKeyRange.upperBound(clause.value, clause.valueIncluded));
                         break;
                     default:
@@ -1807,7 +1803,7 @@
 
         function SelectData(data, propertyNames) {
             if (propertyNames && propertyNames.length > 0) {
-                if (!linq2IndexedDB.utilities.isArray(propertyNames)) {
+                if (!linq2indexedDB.utilities.isArray(propertyNames)) {
                     propertyNames = [propertyNames];
                 }
 
