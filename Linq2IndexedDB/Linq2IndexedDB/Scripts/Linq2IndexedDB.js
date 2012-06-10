@@ -21,7 +21,17 @@
     }
 
     var linq2indexedDB,
-    events = {},
+    enableLogging = false,
+    defaultDatabaseName = "Default",
+    sortFileLocation = "/Scripts/Sort.js",
+    whereFileLocation = "/Scripts/Where.js",
+    implementation = initializeIndexedDB(),
+    log = function () {
+        if (typeof (window.console) === "undefined" || !enableLogging) {
+            return false;
+        }
+        return window.console.log.apply(console, arguments);
+    },
     implementations = {
         NONE: 0,
         NATIVE: 1,
@@ -35,198 +45,9 @@
         READ_ONLY: "readonly",
         READ_WRITE: "readwrite",
         VERSION_CHANGE: "versionchange"
-    },
-    enableLogging = false,
-    log = function () {
-        if (typeof (window.console) === "undefined" || !enableLogging) {
-            return false;
-        }
-        return window.console.log.apply(console, arguments);
-    },
-    implementation = initializeIndexedDB(),
-    connectionCounter = 0,
-    connections = [],
-    defaultDatabaseName = "Default",
-    sortFileLocation = "/Scripts/Sort.js",
-    whereFileLocation = "/Scripts/Where.js";
-
-    // Extend array for Opera
-    Array.prototype.contains = function(obj){
-        return this.indexOf(obj) > -1
-    }
-
-    function initializeIndexedDB() {
-        if (window.indexedDB) {
-            log("Native implementation", window.indexedDB);
-            return implementations.NATIVE;
-        }
-        else {
-            // Initialising the window.indexedDB Object for FireFox
-            if (window.mozIndexedDB) {
-                window.indexedDB = window.mozIndexedDB;
-
-                if (typeof window.IDBTransaction.READ_ONLY === "number"
-                    && typeof window.IDBTransaction.READ_WRITE === "number"
-                    && typeof window.IDBTransaction.VERSION_CHANGE === "number") {
-                    transactionTypes.READ_ONLY = window.IDBTransaction.READ_ONLY;
-                    transactionTypes.READ_WRITE = window.IDBTransaction.READ_WRITE;
-                    transactionTypes.VERSION_CHANGE = window.IDBTransaction.VERSION_CHANGE;
-                }
-
-                log("FireFox Initialized", window.indexedDB);
-                return implementations.MOZILLA;
-            }
-
-                // Initialising the window.indexedDB Object for Chrome
-            else if (window.webkitIndexedDB) {
-                if (!window.indexedDB) window.indexedDB = window.webkitIndexedDB;
-                if (!window.IDBCursor) window.IDBCursor = window.webkitIDBCursor
-                if (!window.IDBDatabase) window.IDBDatabase = window.webkitIDBDatabase
-                //if (!window.IDBDatabaseError) window.IDBDatabaseError = window.webkitIDBDatabaseError
-                if (!window.IDBDatabaseException) window.IDBDatabaseException = window.webkitIDBDatabaseException
-                if (!window.IDBFactory) window.IDBFactory = window.webkitIDBFactory
-                if (!window.IDBIndex) window.IDBIndex = window.webkitIDBIndex
-                if (!window.IDBKeyRange) window.IDBKeyRange = window.webkitIDBKeyRange
-                if (!window.IDBObjectStore) window.IDBObjectStore = window.webkitIDBObjectStore
-                if (!window.IDBRequest) window.IDBRequest = window.webkitIDBRequest
-                if (!window.IDBTransaction) window.IDBTransaction = window.webkitIDBTransaction
-
-                if (typeof window.IDBTransaction.READ_ONLY === "number"
-                    && typeof window.IDBTransaction.READ_WRITE === "number"
-                    && typeof window.IDBTransaction.VERSION_CHANGE === "number") {
-                    transactionTypes.READ_ONLY = window.IDBTransaction.READ_ONLY;
-                    transactionTypes.READ_WRITE = window.IDBTransaction.READ_WRITE;
-                    transactionTypes.VERSION_CHANGE = window.IDBTransaction.VERSION_CHANGE;
-                }
-
-                log("Chrome Initialized", window.indexedDB);
-                return implementations.GOOGLE;
-            }
-
-                    // Initialiseing the window.indexedDB Object for IE 10 preview 3+
-            else if (window.msIndexedDB) {
-                window.indexedDB = window.msIndexedDB;
-
-                transactionTypes.READ_ONLY = 0;
-                transactionTypes.READ_WRITE = 1;
-                transactionTypes.VERSION_CHANGE = 2;
-
-                log("IE10+ Initialized", window.indexedDB);
-                return implementations.MICROSOFT;
-            }
-
-                    // Initialising the window.indexedDB Object for IE 8 & 9
-            else if (navigator.appName == 'Microsoft Internet Explorer') {
-                try {
-                    window.indexedDB = new ActiveXObject("SQLCE.Factory.4.0");
-                    window.indexedDBSync = new ActiveXObject("SQLCE.FactorySync.4.0");
-                }
-                catch (ex) {
-                    log("Initializing IE prototype exception", ex);
-                }
-
-                if (window.JSON) {
-                    window.indexedDB.json = window.JSON;
-                    window.indexedDBSync.json = window.JSON;
-                } else {
-                    var jsonObject = {
-                        parse: function (txt) {
-                            if (txt === "[]") return [];
-                            if (txt === "{}") return {};
-                            throw { message: "Unrecognized JSON to parse: " + txt };
-                        }
-                    };
-                    window.indexedDB.json = jsonObject;
-                    window.indexedDBSync.json = jsonObject;
-                }
-
-                // Add some interface-level constants and methods.
-                window.IDBDatabaseException = {
-                    UNKNOWN_ERR: 0,
-                    NON_TRANSIENT_ERR: 1,
-                    NOT_FOUND_ERR: 2,
-                    CONSTRAINT_ERR: 3,
-                    DATA_ERR: 4,
-                    NOT_ALLOWED_ERR: 5,
-                    SERIAL_ERR: 11,
-                    RECOVERABLE_ERR: 21,
-                    TRANSIENT_ERR: 31,
-                    TIMEOUT_ERR: 32,
-                    DEADLOCK_ERR: 33
-                };
-
-                window.IDBKeyRange = {
-                    SINGLE: 0,
-                    LEFT_OPEN: 1,
-                    RIGHT_OPEN: 2,
-                    LEFT_BOUND: 4,
-                    RIGHT_BOUND: 8
-                };
-
-                window.IDBRequest = {
-                    INITIAL: 0,
-                    LOADING: 1,
-                    DONE: 2
-                };
-
-                window.IDBTransaction = {
-                    READ_ONLY: 0,
-                    READ_WRITE: 1,
-                    VERSION_CHANGE: 2
-                };
-
-                transactionTypes.READ_ONLY = 0;
-                transactionTypes.READ_WRITE = 1;
-                transactionTypes.VERSION_CHANGE = 2;
-
-                window.IDBKeyRange.only = function (value) {
-                    return window.indexedDB.range.only(value);
-                };
-
-                window.IDBKeyRange.leftBound = function (bound, open) {
-                    return window.indexedDB.range.lowerBound(bound, open);
-                };
-
-                window.IDBKeyRange.rightBound = function (bound, open) {
-                    return window.indexedDB.range.upperBound(bound, open);
-                };
-
-                window.IDBKeyRange.bound = function (left, right, openLeft, openRight) {
-                    return window.indexedDB.range.bound(left, right, openLeft, openRight);
-                };
-
-                window.IDBKeyRange.lowerBound = function (left, openLeft) {
-                    return window.IDBKeyRange.leftBound(left, openLeft);
-                };
-
-                return implementations.MICROSOFTPROTOTYPE;
-            }
-            else if(window.shimIndexedDB){
-                window.indexedDB = window.shimIndexedDB;
-
-                return implementations.SHIM;
-            }
-            else {
-                log("Your browser doesn't support indexedDB.");
-                return implementations.NONE;
-            }
-        }
     };
 
-    function JSONComparer(propertyName, descending) {
-        return {
-            sort: function (valueX, valueY) {
-                if (descending) {
-                    return ((valueX[propertyName] == valueY[propertyName]) ? 0 : ((valueX[propertyName] > valueY[propertyName]) ? -1 : 1));
-                }
-                else {
-                    return ((valueX[propertyName] == valueY[propertyName]) ? 0 : ((valueX[propertyName] > valueY[propertyName]) ? 1 : -1));
-                }
-            }
-        }
-    };
-
-    var linq2indexedDB = function (name, configuration, logging) {
+    linq2indexedDB = function (name, configuration, logging) {
         /// <summary>Creates a new or opens an existing database for the given name</summary>
         /// <param name="name" type="String">The name of the database</param>
         /// <param name="configuration" type="Object">
@@ -330,7 +151,7 @@
 
     window.linq2indexedDB = linq2indexedDB;
 
-    if ($) {
+    if (typeof ($) === "function") {
         $.linq2indexedDB = linq2indexedDB;
     }
 
@@ -363,6 +184,18 @@
             }
             else {
                 return false;
+            }
+        },
+        JSONComparer: function (propertyName, descending) {
+            return {
+                sort: function (valueX, valueY) {
+                    if (descending) {
+                        return ((valueX[propertyName] == valueY[propertyName]) ? 0 : ((valueX[propertyName] > valueY[propertyName]) ? -1 : 1));
+                    }
+                    else {
+                        return ((valueX[propertyName] == valueY[propertyName]) ? 0 : ((valueX[propertyName] > valueY[propertyName]) ? 1 : -1));
+                    }
+                }
             }
         }
     };
@@ -1873,7 +1706,7 @@
 
                     if (queryBuilder.where.length > 0) {
                         // Sorting the where clauses so the most restrictive ones are on top.
-                        whereClauses = queryBuilder.where.sort(JSONComparer("type", false).sort);
+                        whereClauses = queryBuilder.where.sort(linq2indexedDB.utilities.JSONComparer("type", false).sort);
                         // Only one condition can be passed to IndexedDB API
                         cursorPromis = determineCursorPromis(objPromise, whereClauses[0]);
                     }
@@ -1994,6 +1827,164 @@
         }
     };
 
+    function initializeIndexedDB() {
+        if (window.indexedDB) {
+            log("Native implementation", window.indexedDB);
+            return implementations.NATIVE;
+        }
+        else {
+            // Initialising the window.indexedDB Object for FireFox
+            if (window.mozIndexedDB) {
+                window.indexedDB = window.mozIndexedDB;
+
+                if (typeof window.IDBTransaction.READ_ONLY === "number"
+                    && typeof window.IDBTransaction.READ_WRITE === "number"
+                    && typeof window.IDBTransaction.VERSION_CHANGE === "number") {
+                    transactionTypes.READ_ONLY = window.IDBTransaction.READ_ONLY;
+                    transactionTypes.READ_WRITE = window.IDBTransaction.READ_WRITE;
+                    transactionTypes.VERSION_CHANGE = window.IDBTransaction.VERSION_CHANGE;
+                }
+
+                log("FireFox Initialized", window.indexedDB);
+                return implementations.MOZILLA;
+            }
+
+                // Initialising the window.indexedDB Object for Chrome
+            else if (window.webkitIndexedDB) {
+                if (!window.indexedDB) window.indexedDB = window.webkitIndexedDB;
+                if (!window.IDBCursor) window.IDBCursor = window.webkitIDBCursor
+                if (!window.IDBDatabase) window.IDBDatabase = window.webkitIDBDatabase
+                //if (!window.IDBDatabaseError) window.IDBDatabaseError = window.webkitIDBDatabaseError
+                if (!window.IDBDatabaseException) window.IDBDatabaseException = window.webkitIDBDatabaseException
+                if (!window.IDBFactory) window.IDBFactory = window.webkitIDBFactory
+                if (!window.IDBIndex) window.IDBIndex = window.webkitIDBIndex
+                if (!window.IDBKeyRange) window.IDBKeyRange = window.webkitIDBKeyRange
+                if (!window.IDBObjectStore) window.IDBObjectStore = window.webkitIDBObjectStore
+                if (!window.IDBRequest) window.IDBRequest = window.webkitIDBRequest
+                if (!window.IDBTransaction) window.IDBTransaction = window.webkitIDBTransaction
+
+                if (typeof window.IDBTransaction.READ_ONLY === "number"
+                    && typeof window.IDBTransaction.READ_WRITE === "number"
+                    && typeof window.IDBTransaction.VERSION_CHANGE === "number") {
+                    transactionTypes.READ_ONLY = window.IDBTransaction.READ_ONLY;
+                    transactionTypes.READ_WRITE = window.IDBTransaction.READ_WRITE;
+                    transactionTypes.VERSION_CHANGE = window.IDBTransaction.VERSION_CHANGE;
+                }
+
+                log("Chrome Initialized", window.indexedDB);
+                return implementations.GOOGLE;
+            }
+
+                // Initialiseing the window.indexedDB Object for IE 10 preview 3+
+            else if (window.msIndexedDB) {
+                window.indexedDB = window.msIndexedDB;
+
+                transactionTypes.READ_ONLY = 0;
+                transactionTypes.READ_WRITE = 1;
+                transactionTypes.VERSION_CHANGE = 2;
+
+                log("IE10+ Initialized", window.indexedDB);
+                return implementations.MICROSOFT;
+            }
+
+                // Initialising the window.indexedDB Object for IE 8 & 9
+            else if (navigator.appName == 'Microsoft Internet Explorer') {
+                try {
+                    window.indexedDB = new ActiveXObject("SQLCE.Factory.4.0");
+                    window.indexedDBSync = new ActiveXObject("SQLCE.FactorySync.4.0");
+                }
+                catch (ex) {
+                    log("Initializing IE prototype exception", ex);
+                }
+
+                if (window.JSON) {
+                    window.indexedDB.json = window.JSON;
+                    window.indexedDBSync.json = window.JSON;
+                } else {
+                    var jsonObject = {
+                        parse: function (txt) {
+                            if (txt === "[]") return [];
+                            if (txt === "{}") return {};
+                            throw { message: "Unrecognized JSON to parse: " + txt };
+                        }
+                    };
+                    window.indexedDB.json = jsonObject;
+                    window.indexedDBSync.json = jsonObject;
+                }
+
+                // Add some interface-level constants and methods.
+                window.IDBDatabaseException = {
+                    UNKNOWN_ERR: 0,
+                    NON_TRANSIENT_ERR: 1,
+                    NOT_FOUND_ERR: 2,
+                    CONSTRAINT_ERR: 3,
+                    DATA_ERR: 4,
+                    NOT_ALLOWED_ERR: 5,
+                    SERIAL_ERR: 11,
+                    RECOVERABLE_ERR: 21,
+                    TRANSIENT_ERR: 31,
+                    TIMEOUT_ERR: 32,
+                    DEADLOCK_ERR: 33
+                };
+
+                window.IDBKeyRange = {
+                    SINGLE: 0,
+                    LEFT_OPEN: 1,
+                    RIGHT_OPEN: 2,
+                    LEFT_BOUND: 4,
+                    RIGHT_BOUND: 8
+                };
+
+                window.IDBRequest = {
+                    INITIAL: 0,
+                    LOADING: 1,
+                    DONE: 2
+                };
+
+                window.IDBTransaction = {
+                    READ_ONLY: 0,
+                    READ_WRITE: 1,
+                    VERSION_CHANGE: 2
+                };
+
+                transactionTypes.READ_ONLY = 0;
+                transactionTypes.READ_WRITE = 1;
+                transactionTypes.VERSION_CHANGE = 2;
+
+                window.IDBKeyRange.only = function (value) {
+                    return window.indexedDB.range.only(value);
+                };
+
+                window.IDBKeyRange.leftBound = function (bound, open) {
+                    return window.indexedDB.range.lowerBound(bound, open);
+                };
+
+                window.IDBKeyRange.rightBound = function (bound, open) {
+                    return window.indexedDB.range.upperBound(bound, open);
+                };
+
+                window.IDBKeyRange.bound = function (left, right, openLeft, openRight) {
+                    return window.indexedDB.range.bound(left, right, openLeft, openRight);
+                };
+
+                window.IDBKeyRange.lowerBound = function (left, openLeft) {
+                    return window.IDBKeyRange.leftBound(left, openLeft);
+                };
+
+                return implementations.MICROSOFTPROTOTYPE;
+            }
+            else if (window.shimIndexedDB) {
+                window.indexedDB = window.shimIndexedDB;
+
+                return implementations.SHIM;
+            }
+            else {
+                log("Your browser doesn't support indexedDB.");
+                return implementations.NONE;
+            }
+        }
+    };
+
     function getVersionDefinition(version, definitions) {
         var result;
         for (var i = 0; i < definitions.length; i++) {
@@ -2079,6 +2070,11 @@
                 });
             }).promise();
         }
+    }
+
+    // Extend array for Opera
+    Array.prototype.contains = function (obj) {
+        return this.indexOf(obj) > -1
     }
 
 })(window, window.jQuery);
