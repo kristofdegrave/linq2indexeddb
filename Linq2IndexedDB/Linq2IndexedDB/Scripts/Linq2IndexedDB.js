@@ -5,7 +5,7 @@
 (function (window, $) {
     /// <param name="$" type="jQuery" />
     "use strict";
-    if (typeof Windows == "undefined" && typeof ($) !== "function") {
+    if (typeof Windows === "undefined" && typeof ($) !== "function") {
         // no jQuery!
         throw "linq2indexedDB: no WinJS or JQuery found. Please ensure jQuery is referenced before the linq2indexedDB.js file.";
     }
@@ -356,6 +356,14 @@
                 worker.onerror = pw.error;
                 worker.postMessage({ data: data, clause: clause });
             })
+        },
+        isArray: function (array) {
+            if (array instanceof Array) {
+                return true;
+            }
+            else {
+                return false;
+            }
         }
     };
 
@@ -864,7 +872,7 @@
                 log("Transaction promise started", db, objectStoreNames, transactionType);
 
                 // Initialize defaults
-                if (!isArray(objectStoreNames)) objectStoreNames = [objectStoreNames];
+                if (!linq2IndexedDB.utilities.isArray(objectStoreNames)) objectStoreNames = [objectStoreNames];
                 transactionType = transactionType || transactionTypes.READ_ONLY;
 
                 try {
@@ -1680,7 +1688,7 @@
 
         function select(queryBuilder, propertyNames) {
             if (propertyNames) {
-                if (!isArray(propertyNames)) {
+                if (!linq2IndexedDB.utilities.isArray(propertyNames)) {
                     propertyNames = [propertyNames]
                 }
 
@@ -1966,7 +1974,7 @@
 
         function SelectData(data, propertyNames) {
             if (propertyNames && propertyNames.length > 0) {
-                if (!isArray(propertyNames)) {
+                if (!linq2IndexedDB.utilities.isArray(propertyNames)) {
                     propertyNames = [propertyNames];
                 }
 
@@ -2070,15 +2078,6 @@
                     }
                 });
             }).promise();
-        }
-    }
-
-    function isArray(array) {
-        if (array instanceof Array) {
-            return true;
-        }
-        else {
-            return false;
         }
     }
 
