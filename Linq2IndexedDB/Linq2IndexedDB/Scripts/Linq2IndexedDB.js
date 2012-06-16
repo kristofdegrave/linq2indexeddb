@@ -198,8 +198,19 @@ var enableLogging = true;
 
                 // Builds up the where filter methodes
                 for (var filter in linq2indexedDB.prototype.linq.filters) {
-                    if (typeof linq2indexedDB.prototype.linq.filters[filter].filter === "function") {
-                        whereClauses[filter] = linq2indexedDB.prototype.linq.filters[filter].filter(whereClause, queryBuilder, propertyName);
+                    var validFilter = true;
+
+                    if (typeof linq2indexedDB.prototype.linq.filters[filter].filter !== "function") {
+                        throw "Linq2IndexedDB: a filter methods needs to be provided for the filter '" + filter + "'";
+                        validFilter = false;
+                    }
+                    if (typeof linq2indexedDB.prototype.linq.filters[filter].name === "undefined") {
+                        throw "Linq2IndexedDB: a filter name needs to be provided for the filter '" + filter + "'";
+                        validFilter = false;
+                    }
+
+                    if (validFilter) {
+                        whereClauses[linq2indexedDB.prototype.linq.filters[filter].name] = linq2indexedDB.prototype.linq.filters[filter].filter(whereClause, queryBuilder, propertyName);
                     }
                 }
 
@@ -429,6 +440,15 @@ var enableLogging = true;
                         // Sorting the where clauses so the most restrictive ones are on top.
 
                         whereClauses = queryBuilder.where.sort(function (valueX, valueY) {
+                            if (typeof valueX.filter.SortOrder === "undefined" && typeof valueY.filter.SortOrder === "undefined") {
+                                return 0;
+                            }
+                            if (typeof valueX.filter.SortOrder === "undefined" && typeof valueY.filter.SortOrder !== "undefined") {
+                                return -1;
+                            }
+                            if (typeof valueX.filter.SortOrder !== "undefined" && typeof valueY.filter.SortOrder === "undefined") {
+                                return 1;
+                            }
                             return ((valueX.filter.SortOrder == valueY.filter.SortOrder) ? 0 : ((valueX.filter.SortOrder > valueY.filter.SortOrder) ? 1 : -1));
                         });
                         // Only one condition can be passed to IndexedDB API
@@ -528,8 +548,7 @@ var enableLogging = true;
         return {
             from: function (objectStoreName) {
                 return from(new queryBuilderObj(objectStoreName), objectStoreName);
-            },
-            filters: linq2indexedDB.prototype.linq.filters
+            }
         }
     };
 
@@ -875,11 +894,11 @@ var enableLogging = true;
         },
         isDataValid: function (data, filters) {
             // For now only and is supported.
-                for (var i = 0; i < filters.length; i++) {
-                    if (!linq2indexedDB.prototype.linq.filters[filters[i].filter.name].isValid(data, filters[i])) {
-                        return false;
-                    }
+            for (var i = 0; i < filters.length; i++) {
+                if (!linq2indexedDB.prototype.linq.filters[filters[i].filter.name].isValid(data, filters[i])) {
+                    return false;
                 }
+            }
             return true;
         },
         addToSortedArray: function (array, data, sortClauses) {
