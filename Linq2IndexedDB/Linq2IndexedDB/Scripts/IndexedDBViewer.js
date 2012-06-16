@@ -3,7 +3,7 @@
 /// <reference path="Linq2IndexedDB.js" />
 
 $(function () {
-    $('#tabs').hide();
+     $('#tabs').hide();
 
     $('#tabs').tabs({
         tabTemplate: "<li><a href='#{href}'>#{label}</a></li>"
@@ -20,7 +20,7 @@ $(function () {
             $('#tabs').tabs("remove", i);
         }
 
-        linq2indexedDB.core.db(dbName).then(function (args) {
+        linq2indexedDB.prototype.core.db(dbName).then(function (args) {
             // Definitions
             $("#tabs").tabs("add", '#tab-Definition', 'Definition');
             var definitionTab = $('#tab-Definition');
@@ -57,17 +57,35 @@ $(function () {
             var storeName = connection.objectStoreNames[i];
             $("#tabs").tabs("add", '#tab-' + storeName, storeName);
 
-            linq2indexedDB.core.objectStore(linq2indexedDB.core.transaction(connection, storeName, IDBTransaction.READ_ONLY, false), storeName).then(function (args) {
+            linq2indexedDB.prototype.core.objectStore(linq2indexedDB.prototype.core.transaction(connection, storeName, linq2indexedDB.prototype.core.transactionTypes.READ_ONLY, false), storeName).then(function (args) {
                 var store = args[1];
 
                 objectStoreDefinition(tableObjectStores, store);
                 for (var i = 0; i < store.indexNames.length; i++) {
-                    linq2indexedDB.core.index(store, store.indexNames[i], false).then(function (args1) {
+                    $("#tabs").tabs("add", '#tab-' + store.indexNames[i], store.indexNames[i]);
+                    linq2indexedDB.prototype.core.index(store, store.indexNames[i], false).then(function (args1) {
                         indexDefinitions(tableIndexes, args1[1]);
+
+                        linq2indexedDB.prototype.core.cursor(args1[1]).then(function (args2) {
+
+                        }
+                        , function (args2) { }
+                        , function (args2) {
+                            var storeTab = $('#tab-' + args2[1].source.name);
+                            var tableData = $('<table></table>');
+                            var rowData = $('<tr></tr>');
+                            rowData.append('<th>key</th>');
+                            rowData.append('<th>primary key</th>');
+                            rowData.append('<th>value</th>');
+                            tableData.append(rowData);
+                            storeTab.append(tableData);
+
+                            indexData(tableData, args2)
+                        });
                     });
                 }
 
-                linq2indexedDB.core.cursor(store).then(function (args1) {
+                linq2indexedDB.prototype.core.cursor(store).then(function (args1) {
 
                 }
                 , function (args1) { }
@@ -108,6 +126,18 @@ $(function () {
     function storeData(table, data) {
         var row = $('<tr></tr>');
         row.append('<td>' + data[1].key + '</td>');
+        if (typeof data[0] == "object") {
+            row.append('<td>' + JSON.stringify(data[0]) + '</td>');
+        }
+        else {
+            row.append('<td>' + data[0] + '</td>');
+        }
+        table.append(row);
+    }
+    function indexData(table, data) {
+        var row = $('<tr></tr>');
+        row.append('<td>' + data[1].key + '</td>');
+        row.append('<td>' + data[1].primaryKey + '</td>');
         if (typeof data[0] == "object") {
             row.append('<td>' + JSON.stringify(data[0]) + '</td>');
         }
