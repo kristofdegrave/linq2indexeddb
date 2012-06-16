@@ -5,6 +5,7 @@
 var linq2indexedDB;
 var enableLogging = true;
 
+// Initializes the linq2indexeddb object.
 (function () {
     /// <param name="$" type="jQuery" />
     "use strict";
@@ -174,50 +175,36 @@ var enableLogging = true;
             }
         }
 
-        function where(queryBuilder, propertyName, clause) {
-            if (clause) {
-                if (clause.equals) {
-                    return where(queryBuilder, propertyName).equals(clause.equals);
-                }
-                else if (clause.range) {
-                    return where(queryBuilder, propertyName).Between(clause.range[0], clause.range[1], clause.range[2], clause.range[3]);
-                }
-                else if (clause.inArray) {
-                    return where(queryBuilder, propertyName).inArray(clause.inArray);
-                }
-                else if (clause.like) {
-                    return where(queryBuilder, propertyName).inArray(clause.like);
-                }
-                else {
-                    return where(queryBuilder, propertyName);
-                }
-            }
-            else {
-                return {
-                    equals: function (value) {
-                        return whereClause(queryBuilder, { filter: linq2indexedDB.prototype.linq.filters.equals, propertyName: propertyName, value: value });
-                    },
-                    greaterThan: function (value, valueIncluded) {
-                        var isValueIncluded = typeof (valueIncluded) === undefined ? false : valueIncluded;
-                        return whereClause(queryBuilder, { filter: linq2indexedDB.prototype.linq.filters.greaterThan, propertyName: propertyName, value: value, valueIncluded: isValueIncluded });
-                    },
-                    smallerThan: function (value, valueIncluded) {
-                        var isValueIncluded = typeof (valueIncluded) === undefined ? false : valueIncluded;
-                        return whereClause(queryBuilder, { filter: linq2indexedDB.prototype.linq.filters.smallerThan, propertyName: propertyName, value: value, valueIncluded: isValueIncluded });
-                    },
-                    between: function (minValue, maxValue, minValueIncluded, maxValueIncluded) {
-                        var isMinValueIncluded = typeof (minValueIncluded) === undefined ? false : minValueIncluded;
-                        var isMasValueIncluded = typeof (maxValueIncluded) === undefined ? false : maxValueIncluded;
-                        return whereClause(queryBuilder, { filter: linq2indexedDB.prototype.linq.filters.between, propertyName: propertyName, minValue: minValue, maxValue: maxValue, minValueIncluded: isMinValueIncluded, maxValueIncluded: isMasValueIncluded });
-                    },
-                    inArray: function (array) {
-                        return whereClause(queryBuilder, { filter: linq2indexedDB.prototype.linq.filters.inArray, propertyName: propertyName, value: array });
-                    },
-                    like: function (value) {
-                        return whereClause(queryBuilder, { filter: linq2indexedDB.prototype.linq.filters.like, propertyName: propertyName, value: value });
+        function where(queryBuilder, propertyName/*, clause*/) {
+            //if (clause) {
+            //    if (clause.equals) {
+            //        return where(queryBuilder, propertyName).equals(clause.equals);
+            //    }
+            //    else if (clause.range) {
+            //        return where(queryBuilder, propertyName).Between(clause.range[0], clause.range[1], clause.range[2], clause.range[3]);
+            //    }
+            //    else if (clause.inArray) {
+            //        return where(queryBuilder, propertyName).inArray(clause.inArray);
+            //    }
+            //    else if (clause.like) {
+            //        return where(queryBuilder, propertyName).inArray(clause.like);
+            //    }
+            //    else {
+            //        return where(queryBuilder, propertyName);
+            //    }
+            //}
+            //else {
+                var whereClauses = {};
+
+                // Builds up the where filter methodes
+                for (var filter in linq2indexedDB.prototype.linq.filters) {
+                    if (typeof linq2indexedDB.prototype.linq.filters[filter].filter === "function") {
+                        whereClauses[filter] = linq2indexedDB.prototype.linq.filters[filter].filter(whereClause, queryBuilder, propertyName);
                     }
                 }
-            }
+
+                return whereClauses;
+            //}
         }
 
         function whereClause(queryBuilder, clause) {
@@ -612,6 +599,27 @@ var enableLogging = true;
                 sortOrder: 0,
                 isValid: function (data, filter) {
                     return data[filter.propertyName] == filter.value;
+                },
+                filter: function (callback, queryBuilder, propertyName) {
+                    /// <summary>Creates a function to retrieve values for the filter and adds the filter to the querybuilder.</summary>
+                    /// <param name="callback" type="function">
+                    ///     Callback method so the query expression can be builded.
+                    /// </param>
+                    /// <param name="queryBuilder" type="Object">
+                    ///     The objects that builds up the query for the user.
+                    /// </param>
+                    /// <param name="propertyName" type="string">
+                    ///     The propertyName of the property where the filters applies on.
+                    /// </param>
+                    /// <returns type="function">
+                    ///     returns a function to retrieve the necessary values for the filter
+                    /// </returns>
+                    return function (value) {
+                        if (!value) {
+                            throw "linq2indexedDB: value needs to be provided to the equal clause"
+                        }
+                        return callback(queryBuilder, { filter: linq2indexedDB.prototype.linq.filters.equals, propertyName: propertyName, value: value });
+                    }
                 }
             },
             between: {
@@ -621,6 +629,32 @@ var enableLogging = true;
                 isValid: function (data, filter) {
                     return (data[filter.propertyName] > filter.minValue || (filter.minValueIncluded && data[filter.propertyName] == filter.minValue))
                         && (data[filter.propertyName] < filter.maxValue || (filter.maxValueIncluded && data[filter.propertyName] == filter.maxValue));
+                },
+                filter: function (callback, queryBuilder, propertyName) {
+                    /// <summary>Creates a function to retrieve values for the filter and adds the filter to the querybuilder.</summary>
+                    /// <param name="callback" type="function">
+                    ///     Callback method so the query expression can be builded.
+                    /// </param>
+                    /// <param name="queryBuilder" type="Object">
+                    ///     The objects that builds up the query for the user.
+                    /// </param>
+                    /// <param name="propertyName" type="string">
+                    ///     The propertyName of the property where the filters applies on.
+                    /// </param>
+                    /// <returns type="function">
+                    ///     returns a function to retrieve the necessary values for the filter
+                    /// </returns>
+                    return function (minValue, maxValue, minValueIncluded, maxValueIncluded) {
+                        var isMinValueIncluded = typeof (minValueIncluded) === undefined ? false : minValueIncluded;
+                        var isMasValueIncluded = typeof (maxValueIncluded) === undefined ? false : maxValueIncluded;
+                        if (!minValue) {
+                            throw "linq2indexedDB: minValue needs to be provided to the between clause"
+                        }
+                        if (!maxValue) {
+                            throw "linq2indexedDB: maxValue needs to be provided to the between clause"
+                        }
+                        return callback(queryBuilder, { filter: linq2indexedDB.prototype.linq.filters.between, propertyName: propertyName, minValue: minValue, maxValue: maxValue, minValueIncluded: isMinValueIncluded, maxValueIncluded: isMasValueIncluded });
+                    }
                 }
             },
             greaterThan: {
@@ -629,6 +663,28 @@ var enableLogging = true;
                 indexeddbFilter: true,
                 isValid: function (data, filter) {
                     return data[filter.propertyName] > filter.value || (filter.valueIncluded && data[filter.propertyName] == filter.value);
+                },
+                filter: function (callback, queryBuilder, propertyName) {
+                    /// <summary>Creates a function to retrieve values for the filter and adds the filter to the querybuilder.</summary>
+                    /// <param name="callback" type="function">
+                    ///     Callback method so the query expression can be builded.
+                    /// </param>
+                    /// <param name="queryBuilder" type="Object">
+                    ///     The objects that builds up the query for the user.
+                    /// </param>
+                    /// <param name="propertyName" type="string">
+                    ///     The propertyName of the property where the filters applies on.
+                    /// </param>
+                    /// <returns type="function">
+                    ///     returns a function to retrieve the necessary values for the filter
+                    /// </returns>
+                    return function (value, valueIncluded) {
+                        if (!value) {
+                            throw "linq2indexedDB: value needs to be provided to the greatherThan clause"
+                        }
+                        var isValueIncluded = typeof (valueIncluded) === undefined ? false : valueIncluded;
+                        return callback(queryBuilder, { filter: linq2indexedDB.prototype.linq.filters.greaterThan, propertyName: propertyName, value: value, valueIncluded: isValueIncluded });
+                    }
                 }
             },
             smallerThan: {
@@ -637,6 +693,28 @@ var enableLogging = true;
                 indexeddbFilter: true,
                 isValid: function (data, filter) {
                     return data[filter.propertyName] < filter.value || (filter.valueIncluded && data[filter.propertyName] == filter.value);
+                },
+                filter: function (callback, queryBuilder, propertyName) {
+                    /// <summary>Creates a function to retrieve values for the filter and adds the filter to the querybuilder.</summary>
+                    /// <param name="callback" type="function">
+                    ///     Callback method so the query expression can be builded.
+                    /// </param>
+                    /// <param name="queryBuilder" type="Object">
+                    ///     The objects that builds up the query for the user.
+                    /// </param>
+                    /// <param name="propertyName" type="string">
+                    ///     The propertyName of the property where the filters applies on.
+                    /// </param>
+                    /// <returns type="function">
+                    ///     returns a function to retrieve the necessary values for the filter
+                    /// </returns>
+                    return function (value, valueIncluded) {
+                        if (!value) {
+                            throw "linq2indexedDB: value needs to be provided to the smallerThan clause"
+                        }
+                        var isValueIncluded = typeof (valueIncluded) === undefined ? false : valueIncluded;
+                        return callback(queryBuilder, { filter: linq2indexedDB.prototype.linq.filters.smallerThan, propertyName: propertyName, value: value, valueIncluded: isValueIncluded });
+                    }
                 }
             },
             inArray: {
@@ -645,6 +723,27 @@ var enableLogging = true;
                 indexeddbFilter: false,
                 isValid: function (data, filter) {
                     return filter.value.indexOf(data[filter.propertyName]) >= 0;
+                },
+                filter: function (callback, queryBuilder, propertyName) {
+                    /// <summary>Creates a function to retrieve values for the filter and adds the filter to the querybuilder.</summary>
+                    /// <param name="callback" type="function">
+                    ///     Callback method so the query expression can be builded.
+                    /// </param>
+                    /// <param name="queryBuilder" type="Object">
+                    ///     The objects that builds up the query for the user.
+                    /// </param>
+                    /// <param name="propertyName" type="string">
+                    ///     The propertyName of the property where the filters applies on.
+                    /// </param>
+                    /// <returns type="function">
+                    ///     returns a function to retrieve the necessary values for the filter
+                    /// </returns>
+                    return function (array) {
+                        if (!array && typeof array !== "Array") {
+                            throw "linq2indexedDB: array needs to be provided to the inArray clause"
+                        }
+                        return callback(queryBuilder, { filter: linq2indexedDB.prototype.linq.filters.inArray, propertyName: propertyName, value: array });
+                    }
                 }
             },
             like: {
@@ -653,6 +752,27 @@ var enableLogging = true;
                 indexeddbFilter: false,
                 isValid: function (data, filter) {
                     return data[filter.propertyName].indexOf(filter.value) >= 0
+                },
+                filter: function (callback, queryBuilder, propertyName) {
+                    /// <summary>Creates a function to retrieve values for the filter and adds the filter to the querybuilder.</summary>
+                    /// <param name="callback" type="function">
+                    ///     Callback method so the query expression can be builded.
+                    /// </param>
+                    /// <param name="queryBuilder" type="Object">
+                    ///     The objects that builds up the query for the user.
+                    /// </param>
+                    /// <param name="propertyName" type="string">
+                    ///     The propertyName of the property where the filters applies on.
+                    /// </param>
+                    /// <returns type="function">
+                    ///     returns a function to retrieve the necessary values for the filter
+                    /// </returns>
+                    return function (value) {
+                        if (!value) {
+                            throw "linq2indexedDB: value needs to be provided to the like clause"
+                        }
+                        return callback(queryBuilder, { filter: linq2indexedDB.prototype.linq.filters.like, propertyName: propertyName, value: value });
+                    }
                 }
             }
         }
