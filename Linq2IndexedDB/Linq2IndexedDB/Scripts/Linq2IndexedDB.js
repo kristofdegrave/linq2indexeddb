@@ -1759,7 +1759,11 @@ if (typeof window !== "undefined") {
                             var e = args[1];
 
                             // added for FF, If a db gets deleted that doesn't exist an errorCode 6 ('NOT_ALLOWED_ERR') is given
-                            if (e.currentTarget.errorCode == 6) {
+                            if (e.currentTarget && e.currentTarget.errorCode == 6) {
+                                pw.complete(this, [error, e, name]);
+                            }
+                            else if (implementation == implementations.SHIM
+                                && e.message == "Database does not exist") {
                                 pw.complete(this, [error, e, name]);
                             }
                             else {
