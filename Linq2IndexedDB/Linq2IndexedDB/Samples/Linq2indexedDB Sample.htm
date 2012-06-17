@@ -34,11 +34,11 @@
                 //    $("#txtLog").val(tekst);
                 //});
 
-                db.linq.from("person").where("Age").smallerThan(3).and("Name").like("test").select(["Name", "Firstname"]).then(function () { }, function (error) { }, function (data) {
-                    var tekst = $("#txtLog").val();
-                    tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + "\n\r";
-                    $("#txtLog").val(tekst);
-                });
+                //db.linq.from("person").where("Age").smallerThan(3).and("Name").like("test").select(["Name", "Firstname"]).then(function () { }, function (error) { }, function (data) {
+                //    var tekst = $("#txtLog").val();
+                //    tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + "\n\r";
+                //    $("#txtLog").val(tekst);
+                //});
 
                 //db.linq.from("person").where("Name").inArray(["test1", "test2"]).select(["Name", "Firstname"]).then(function () { }, function () { }, function (data) {
                 //    var tekst = $("#txtLog").val();
@@ -51,6 +51,18 @@
                 //    tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + "\n\r";
                 //    $("#txtLog").val(tekst);
                 //});
+
+                //db.linq.from("person").where("Name").equals("test1").or("Name").equals("test2").select(["Name", "Firstname"]).then(function () { }, function () { }, function (data) {
+                //    var tekst = $("#txtLog").val();
+                //    tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + "\n\r";
+                //    $("#txtLog").val(tekst);
+                //});
+
+                db.linq.from("person").where("Name").equals("test1").or("Name").not().equals("test2").select(["Name", "Firstname"]).then(function () { }, function () { }, function (data) {
+                    var tekst = $("#txtLog").val();
+                    tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + "\n\r";
+                    $("#txtLog").val(tekst);
+                });
             });
         });
     </script>

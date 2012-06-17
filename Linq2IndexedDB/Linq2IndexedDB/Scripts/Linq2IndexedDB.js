@@ -146,7 +146,7 @@ var enableLogging = true;
             queryBuilder.from = objectStoreName
             return {
                 where: function (propertyName, clause) {
-                    return where(queryBuilder, propertyName, clause);
+                    return where(queryBuilder, propertyName, true, false);
                 },
                 orderBy: function (propertyName) {
                     return orderBy(queryBuilder, propertyName, false);
@@ -175,54 +175,50 @@ var enableLogging = true;
             }
         }
 
-        function where(queryBuilder, propertyName/*, clause*/) {
-            //if (clause) {
-            //    if (clause.equals) {
-            //        return where(queryBuilder, propertyName).equals(clause.equals);
-            //    }
-            //    else if (clause.range) {
-            //        return where(queryBuilder, propertyName).Between(clause.range[0], clause.range[1], clause.range[2], clause.range[3]);
-            //    }
-            //    else if (clause.inArray) {
-            //        return where(queryBuilder, propertyName).inArray(clause.inArray);
-            //    }
-            //    else if (clause.like) {
-            //        return where(queryBuilder, propertyName).inArray(clause.like);
-            //    }
-            //    else {
-            //        return where(queryBuilder, propertyName);
-            //    }
-            //}
-            //else {
-                var whereClauses = {};
+        function where(queryBuilder, propertyName, isAndClause, isOrClause, isNotClause) {
+            var whereClauses = {};
 
-                // Builds up the where filter methodes
-                for (var filter in linq2indexedDB.prototype.linq.filters) {
-                    var validFilter = true;
+            if(typeof isNotClause === "undefined"){
+                whereClauses.not = function () {
+                    return where(queryBuilder, propertyName, isAndClause, isOrClause, true);
+                }
+            }
 
-                    if (typeof linq2indexedDB.prototype.linq.filters[filter].filter !== "function") {
-                        throw "Linq2IndexedDB: a filter methods needs to be provided for the filter '" + filter + "'";
-                        validFilter = false;
-                    }
-                    if (typeof linq2indexedDB.prototype.linq.filters[filter].name === "undefined") {
-                        throw "Linq2IndexedDB: a filter name needs to be provided for the filter '" + filter + "'";
-                        validFilter = false;
-                    }
+            // Builds up the where filter methodes
+            for (var filter in linq2indexedDB.prototype.linq.filters) {
+                var validFilter = true;
+                var filterMetaData = {
+                    propertyName: propertyName,
+                    isOrClause: isOrClause,
+                    isAndClause: isAndClause,
+                    isNotClause: (typeof isNotClause === "undefined" ? false : isNotClause)
+                };
 
-                    if (validFilter) {
-                        whereClauses[linq2indexedDB.prototype.linq.filters[filter].name] = linq2indexedDB.prototype.linq.filters[filter].filter(whereClause, queryBuilder, propertyName);
-                    }
+                if (typeof linq2indexedDB.prototype.linq.filters[filter].filter !== "function") {
+                    throw "Linq2IndexedDB: a filter methods needs to be provided for the filter '" + filter + "'";
+                    validFilter = false;
+                }
+                if (typeof linq2indexedDB.prototype.linq.filters[filter].name === "undefined") {
+                    throw "Linq2IndexedDB: a filter name needs to be provided for the filter '" + filter + "'";
+                    validFilter = false;
                 }
 
-                return whereClauses;
-            //}
+                if (validFilter) {
+                    whereClauses[linq2indexedDB.prototype.linq.filters[filter].name] = linq2indexedDB.prototype.linq.filters[filter].filter(whereClause, queryBuilder, filterMetaData);
+                }
+            }
+
+            return whereClauses;
         }
 
-        function whereClause(queryBuilder, clause) {
-            queryBuilder.where.push(clause)
+        function whereClause(queryBuilder, filterMetaData) {
+            queryBuilder.where.push(filterMetaData)
             return {
-                and: function (propertyName, clause) {
-                    return where(queryBuilder, propertyName, clause)
+                and: function (propertyName) {
+                    return where(queryBuilder, propertyName, true, false)
+                },
+                or: function(propertyName){
+                    return where(queryBuilder, propertyName, false, true)
                 },
                 orderBy: function (propertyName) {
                     return orderBy(queryBuilder, propertyName, false);
@@ -439,21 +435,24 @@ var enableLogging = true;
                     if (queryBuilder.where.length > 0) {
                         // Sorting the where clauses so the most restrictive ones are on top.
 
-                        whereClauses = queryBuilder.where.sort(function (valueX, valueY) {
-                            if (typeof valueX.filter.SortOrder === "undefined" && typeof valueY.filter.SortOrder === "undefined") {
-                                return 0;
-                            }
-                            if (typeof valueX.filter.SortOrder === "undefined" && typeof valueY.filter.SortOrder !== "undefined") {
-                                return -1;
-                            }
-                            if (typeof valueX.filter.SortOrder !== "undefined" && typeof valueY.filter.SortOrder === "undefined") {
-                                return 1;
-                            }
-                            return ((valueX.filter.SortOrder == valueY.filter.SortOrder) ? 0 : ((valueX.filter.SortOrder > valueY.filter.SortOrder) ? 1 : -1));
-                        });
+                        // For now use the order in which they are entered by the developer
+                        whereClauses = queryBuilder.where;
+                        //whereClauses = queryBuilder.where.sort(function (valueX, valueY) {
+                        //    if (typeof valueX.filter.SortOrder === "undefined" && typeof valueY.filter.SortOrder === "undefined") {
+                        //        return 0;
+                        //    }
+                        //    if (typeof valueX.filter.SortOrder === "undefined" && typeof valueY.filter.SortOrder !== "undefined") {
+                        //        return -1;
+                        //    }
+                        //    if (typeof valueX.filter.SortOrder !== "undefined" && typeof valueY.filter.SortOrder === "undefined") {
+                        //        return 1;
+                        //    }
+                        //    return ((valueX.filter.SortOrder == valueY.filter.SortOrder) ? 0 : ((valueX.filter.SortOrder > valueY.filter.SortOrder) ? 1 : -1));
+                        //});
                         // Only one condition can be passed to IndexedDB API
                         // Takes the first whereClause and removes it from the whereClause collection.
-                        if (whereClauses[0].filter.indexeddbFilter) {
+                        if ((whereClauses.length == 1 && whereClauses[0].filter.indexeddbFilter && !whereClauses[0].isNotClause)
+                            || whereClauses.length > 1 && !whereClauses[1].isOrClause) {
                             cursorPromis = determineCursorPromis(objPromise, whereClauses.shift());
                         }
                         else {
@@ -619,7 +618,7 @@ var enableLogging = true;
                 isValid: function (data, filter) {
                     return data[filter.propertyName] == filter.value;
                 },
-                filter: function (callback, queryBuilder, propertyName) {
+                filter: function (callback, queryBuilder, filterMetaData) {
                     /// <summary>Creates a function to retrieve values for the filter and adds the filter to the querybuilder.</summary>
                     /// <param name="callback" type="function">
                     ///     Callback method so the query expression can be builded.
@@ -627,8 +626,8 @@ var enableLogging = true;
                     /// <param name="queryBuilder" type="Object">
                     ///     The objects that builds up the query for the user.
                     /// </param>
-                    /// <param name="propertyName" type="string">
-                    ///     The propertyName of the property where the filters applies on.
+                    /// <param name="filterMetaData" type="string">
+                    ///     The metadata for the filter.
                     /// </param>
                     /// <returns type="function">
                     ///     returns a function to retrieve the necessary values for the filter
@@ -637,7 +636,10 @@ var enableLogging = true;
                         if (!value) {
                             throw "linq2indexedDB: value needs to be provided to the equal clause"
                         }
-                        return callback(queryBuilder, { filter: linq2indexedDB.prototype.linq.filters.equals, propertyName: propertyName, value: value });
+                        filterMetaData.filter = linq2indexedDB.prototype.linq.filters.equals;
+                        filterMetaData.value = value;
+
+                        return callback(queryBuilder, filterMetaData);
                     }
                 }
             },
@@ -649,7 +651,7 @@ var enableLogging = true;
                     return (data[filter.propertyName] > filter.minValue || (filter.minValueIncluded && data[filter.propertyName] == filter.minValue))
                         && (data[filter.propertyName] < filter.maxValue || (filter.maxValueIncluded && data[filter.propertyName] == filter.maxValue));
                 },
-                filter: function (callback, queryBuilder, propertyName) {
+                filter: function (callback, queryBuilder, filterMetaData) {
                     /// <summary>Creates a function to retrieve values for the filter and adds the filter to the querybuilder.</summary>
                     /// <param name="callback" type="function">
                     ///     Callback method so the query expression can be builded.
@@ -657,8 +659,8 @@ var enableLogging = true;
                     /// <param name="queryBuilder" type="Object">
                     ///     The objects that builds up the query for the user.
                     /// </param>
-                    /// <param name="propertyName" type="string">
-                    ///     The propertyName of the property where the filters applies on.
+                    /// <param name="filterMetaData" type="string">
+                    ///     The metadata for the filter.
                     /// </param>
                     /// <returns type="function">
                     ///     returns a function to retrieve the necessary values for the filter
@@ -672,7 +674,14 @@ var enableLogging = true;
                         if (!maxValue) {
                             throw "linq2indexedDB: maxValue needs to be provided to the between clause"
                         }
-                        return callback(queryBuilder, { filter: linq2indexedDB.prototype.linq.filters.between, propertyName: propertyName, minValue: minValue, maxValue: maxValue, minValueIncluded: isMinValueIncluded, maxValueIncluded: isMasValueIncluded });
+
+                        filterMetaData.filter = linq2indexedDB.prototype.linq.filters.between;
+                        filterMetaData.minValue = minValue;
+                        filterMetaData.maxValue = maxValue;
+                        filterMetaData.minValueIncluded = isMinValueIncluded;
+                        filterMetaData.maxValueIncluded = isMasValueIncluded;
+
+                        return callback(queryBuilder, filterMetaData);
                     }
                 }
             },
@@ -683,7 +692,7 @@ var enableLogging = true;
                 isValid: function (data, filter) {
                     return data[filter.propertyName] > filter.value || (filter.valueIncluded && data[filter.propertyName] == filter.value);
                 },
-                filter: function (callback, queryBuilder, propertyName) {
+                filter: function (callback, queryBuilder, filterMetaData) {
                     /// <summary>Creates a function to retrieve values for the filter and adds the filter to the querybuilder.</summary>
                     /// <param name="callback" type="function">
                     ///     Callback method so the query expression can be builded.
@@ -691,8 +700,8 @@ var enableLogging = true;
                     /// <param name="queryBuilder" type="Object">
                     ///     The objects that builds up the query for the user.
                     /// </param>
-                    /// <param name="propertyName" type="string">
-                    ///     The propertyName of the property where the filters applies on.
+                    /// <param name="filterMetaData" type="string">
+                    ///     The metadata for the filter.
                     /// </param>
                     /// <returns type="function">
                     ///     returns a function to retrieve the necessary values for the filter
@@ -702,7 +711,12 @@ var enableLogging = true;
                             throw "linq2indexedDB: value needs to be provided to the greatherThan clause"
                         }
                         var isValueIncluded = typeof (valueIncluded) === undefined ? false : valueIncluded;
-                        return callback(queryBuilder, { filter: linq2indexedDB.prototype.linq.filters.greaterThan, propertyName: propertyName, value: value, valueIncluded: isValueIncluded });
+                        
+                        filterMetaData.filter = linq2indexedDB.prototype.linq.filters.greaterThan;
+                        filterMetaData.value = value;
+                        filterMetaData.valueIncluded = isValueIncluded;
+
+                        return callback(queryBuilder, filterMetaData);
                     }
                 }
             },
@@ -713,7 +727,7 @@ var enableLogging = true;
                 isValid: function (data, filter) {
                     return data[filter.propertyName] < filter.value || (filter.valueIncluded && data[filter.propertyName] == filter.value);
                 },
-                filter: function (callback, queryBuilder, propertyName) {
+                filter: function (callback, queryBuilder, filterMetaData) {
                     /// <summary>Creates a function to retrieve values for the filter and adds the filter to the querybuilder.</summary>
                     /// <param name="callback" type="function">
                     ///     Callback method so the query expression can be builded.
@@ -721,8 +735,8 @@ var enableLogging = true;
                     /// <param name="queryBuilder" type="Object">
                     ///     The objects that builds up the query for the user.
                     /// </param>
-                    /// <param name="propertyName" type="string">
-                    ///     The propertyName of the property where the filters applies on.
+                    /// <param name="filterMetaData" type="string">
+                    ///     The metadata for the filter.
                     /// </param>
                     /// <returns type="function">
                     ///     returns a function to retrieve the necessary values for the filter
@@ -732,7 +746,12 @@ var enableLogging = true;
                             throw "linq2indexedDB: value needs to be provided to the smallerThan clause"
                         }
                         var isValueIncluded = typeof (valueIncluded) === undefined ? false : valueIncluded;
-                        return callback(queryBuilder, { filter: linq2indexedDB.prototype.linq.filters.smallerThan, propertyName: propertyName, value: value, valueIncluded: isValueIncluded });
+
+                        filterMetaData.filter = linq2indexedDB.prototype.linq.filters.smallerThan;
+                        filterMetaData.value = value;
+                        filterMetaData.valueIncluded = isValueIncluded;
+
+                        return callback(queryBuilder, filterMetaData);
                     }
                 }
             },
@@ -743,7 +762,7 @@ var enableLogging = true;
                 isValid: function (data, filter) {
                     return filter.value.indexOf(data[filter.propertyName]) >= 0;
                 },
-                filter: function (callback, queryBuilder, propertyName) {
+                filter: function (callback, queryBuilder, filterMetaData) {
                     /// <summary>Creates a function to retrieve values for the filter and adds the filter to the querybuilder.</summary>
                     /// <param name="callback" type="function">
                     ///     Callback method so the query expression can be builded.
@@ -751,8 +770,8 @@ var enableLogging = true;
                     /// <param name="queryBuilder" type="Object">
                     ///     The objects that builds up the query for the user.
                     /// </param>
-                    /// <param name="propertyName" type="string">
-                    ///     The propertyName of the property where the filters applies on.
+                    /// <param name="filterMetaData" type="string">
+                    ///     The metadata for the filter.
                     /// </param>
                     /// <returns type="function">
                     ///     returns a function to retrieve the necessary values for the filter
@@ -761,7 +780,11 @@ var enableLogging = true;
                         if (!array && typeof array !== "Array") {
                             throw "linq2indexedDB: array needs to be provided to the inArray clause"
                         }
-                        return callback(queryBuilder, { filter: linq2indexedDB.prototype.linq.filters.inArray, propertyName: propertyName, value: array });
+
+                        filterMetaData.filter = linq2indexedDB.prototype.linq.filters.inArray;
+                        filterMetaData.value = array;
+
+                        return callback(queryBuilder, filterMetaData);
                     }
                 }
             },
@@ -772,7 +795,7 @@ var enableLogging = true;
                 isValid: function (data, filter) {
                     return data[filter.propertyName].indexOf(filter.value) >= 0
                 },
-                filter: function (callback, queryBuilder, propertyName) {
+                filter: function (callback, queryBuilder, filterMetaData) {
                     /// <summary>Creates a function to retrieve values for the filter and adds the filter to the querybuilder.</summary>
                     /// <param name="callback" type="function">
                     ///     Callback method so the query expression can be builded.
@@ -780,8 +803,8 @@ var enableLogging = true;
                     /// <param name="queryBuilder" type="Object">
                     ///     The objects that builds up the query for the user.
                     /// </param>
-                    /// <param name="propertyName" type="string">
-                    ///     The propertyName of the property where the filters applies on.
+                    /// <param name="filterMetaData" type="string">
+                    ///     The metadata for the filter.
                     /// </param>
                     /// <returns type="function">
                     ///     returns a function to retrieve the necessary values for the filter
@@ -790,7 +813,11 @@ var enableLogging = true;
                         if (!value) {
                             throw "linq2indexedDB: value needs to be provided to the like clause"
                         }
-                        return callback(queryBuilder, { filter: linq2indexedDB.prototype.linq.filters.like, propertyName: propertyName, value: value });
+
+                        filterMetaData.filter = linq2indexedDB.prototype.linq.filters.like;
+                        filterMetaData.value = value;
+
+                        return callback(queryBuilder, filterMetaData);
                     }
                 }
             }
@@ -893,13 +920,21 @@ var enableLogging = true;
             return returnData;
         },
         isDataValid: function (data, filters) {
-            // For now only and is supported.
+            var isValid = true;
+
             for (var i = 0; i < filters.length; i++) {
-                if (!linq2indexedDB.prototype.linq.filters[filters[i].filter.name].isValid(data, filters[i])) {
-                    return false;
+                var filterValid = linq2indexedDB.prototype.linq.filters[filters[i].filter.name].isValid(data, filters[i]);
+                if (filters[i].isNotClause) {
+                    filterValid = !filterValid;
+                }
+                if (filters[i].isAndClause) {
+                    isValid = isValid && filterValid;
+                }
+                else if (filters[i].isOrClause) {
+                    isValid = isValid || filterValid;
                 }
             }
-            return true;
+            return isValid;
         },
         addToSortedArray: function (array, data, sortClauses) {
             var newArray = [];
@@ -936,7 +971,6 @@ var enableLogging = true;
                     newArray.push(data);
                 }
             }
-
             return newArray;
         }
     };
