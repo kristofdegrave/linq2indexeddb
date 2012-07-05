@@ -1,5 +1,4 @@
 /// <reference path="jquery-1.7.2.js" />
-/// <reference path="Sort.js" />
 /// <reference path="indexeddb.shim.js" />
 
 var linq2indexedDB;
@@ -15,10 +14,6 @@ var enableLogging = true;
         /// <param name="name" type="String">The name of the database</param>
         /// <param name="configuration" type="Object">
         ///     [Optional] provide comment
-        /// </param>
-        /// <param name="logging" type="Boolean">
-        ///     [Optional] A flag indicating whether connection logging is enabled to the browser
-        ///     console/log. Defaults to false.
         /// </param>
         /// <returns type="linq2indexedDB" />
 
@@ -145,31 +140,58 @@ var enableLogging = true;
         function from(queryBuilder, objectStoreName) {
             queryBuilder.from = objectStoreName
             return {
-                where: function (propertyName, clause) {
+                where: function (propertyName) {
+                        /// <summary>Filters the selected data.</summary>
+                        /// <param name="propertyName" type="String">The name of the property you want to filter on.</param>
                     return where(queryBuilder, propertyName, true, false);
                 },
                 orderBy: function (propertyName) {
+                        /// <summary>Sorts the selected data ascending.</summary>
+                        /// <param name="propertyName" type="String">The name of the property you want to sort on.</param>
                     return orderBy(queryBuilder, propertyName, false);
                 },
                 orderByDesc: function (propertyName) {
+                        /// <summary>Sorts the selected data descending.</summary>
+                        /// <param name="propertyName" type="String">The name of the property you want to sort on.</param>
                     return orderBy(queryBuilder, propertyName, true);
                 },
                 select: function (propertyNames) {
+                        /// <summary>Selects the data.</summary>
+                        /// <param name="propertyNames" type="Array">A list of the names of the properties you want to select.</param>
+                        /// <returns type="Array">A list with the selected objects.</returns>
                     return select(queryBuilder, propertyNames);
                 },
                 insert: function (data, key) {
+                        /// <summary>inserts data.</summary>
+                        /// <param name="data" type="Object">The object you want to insert.</param>
+                        /// <param name="key" type="Object">
+                        ///     [Optional] The key of the data you want to insert.
+                        /// </param>
+                        /// <returns type="Object">The object that was inserted.</returns>
                     return insert(queryBuilder, data, key);
                 },
                 update: function (data, key) {
+                        /// <summary>inserts data.</summary>
+                        /// <param name="data" type="Object">The object you want to update.</param>
+                        /// <param name="key" type="Object">
+                        ///     [Optional] The key of the data you want to update.
+                        /// </param>
+                        /// <returns type="Object">The object that was updated.</returns>
                     return update(queryBuilder, data, key);
                 },
                 remove: function (key) {
+                        /// <summary>Removes data from the objectstore by his key.</summary>
+                        /// <param name="key" type="Object">The key of the object you want to remove.</param>
                     return remove(queryBuilder, key);
                 },
                 clear: function () {
+                        /// <summary>Removes all data from the objectstore.</summary>
                     return clear(queryBuilder);
                 },
                 get: function (key) {
+                        /// <summary>Gets an object by his key.</summary>
+                        /// <param name="key" type="Object">The key of the object you want to retrieve.</param>
+                        /// <returns type="Object">The object that has the provided key.</returns>
                     return get(queryBuilder, key);
                 }
             }
