@@ -13,6 +13,15 @@
     <script src="../Scripts/Linq2IndexedDB.js" type="text/javascript"></script>
     <script type="text/javascript">
         $(function () {
+            linq2indexedDB.prototype.linq.addFilter("myFilter", function (data, filter) {
+                return data.Age > 3;
+            }
+            , function (callback, queryBuilder, filterMetaData) {
+                return function () {
+                    return callback(queryBuilder, filterMetaData);
+                }
+            });
+
             var db = $.linq2indexedDB("test", null, true);
             db.linq.from("person").clear().then(function () {
                 db.linq.from("person").insert({ Name: "test1", Firstname: "test1", Age: 1 });
@@ -58,7 +67,13 @@
                 //    $("#txtLog").val(tekst);
                 //});
 
-                db.linq.from("person").where("Name").equals("test1").or("Name").not().equals("test2").select(["Name", "Firstname"]).then(function () { }, function () { }, function (data) {
+                //db.linq.from("person").where("Name").equals("test1").or("Name").not().equals("test2").select(["Name", "Firstname"]).then(function () { }, function () { }, function (data) {
+                //    var tekst = $("#txtLog").val();
+                //    tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + "\n\r";
+                //    $("#txtLog").val(tekst);
+                //});
+
+                db.linq.from("person").where("Name").myFilter().select(["Name", "Firstname"]).then(function () { }, function () { }, function (data) {
                     var tekst = $("#txtLog").val();
                     tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + "\n\r";
                     $("#txtLog").val(tekst);

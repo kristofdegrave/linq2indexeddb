@@ -213,7 +213,8 @@ var enableLogging = true;
                     propertyName: propertyName,
                     isOrClause: isOrClause,
                     isAndClause: isAndClause,
-                    isNotClause: (typeof isNotClause === "undefined" ? false : isNotClause)
+                    isNotClause: (typeof isNotClause === "undefined" ? false : isNotClause),
+                    filter: linq2indexedDB.prototype.linq.filters[filter]
                 };
 
                 if (typeof linq2indexedDB.prototype.linq.filters[filter].filter !== "function") {
@@ -632,6 +633,39 @@ var enableLogging = true;
 // Namespace linq2indexedDB.prototype.linq
 (function () {
     linq2indexedDB.prototype.linq = {
+        addFilter: function (name, isValid, filterCallback) {
+            if (typeof name === 'undefined') {
+                throw "linq2IndexedDB: No name argument provided to the addFilter method.";
+            }
+            if (typeof name !== 'string') {
+                throw "linq2IndexedDB: The name argument provided to the addFilterObject method must be a string.";
+            }
+            if (typeof isValid === 'undefined') {
+                throw "linq2IndexedDB: No isValid argument provided to the addFilter method.";
+            }
+            if (typeof isValid !== 'function') {
+                throw "linq2IndexedDB: The isValid argument provided to the addFilterObject method must be a function.";
+            }
+            if (typeof filterCallback === 'undefined') {
+                throw "linq2IndexedDB: No filterCallback argument provided to the addFilter method.";
+            }
+            if (typeof filterCallback !== 'function') {
+                throw "linq2IndexedDB: The filterCallback argument provided to the addFilterObject method must be a function.";
+            }
+            if (typeof linq2indexedDB.prototype.linq.filters[name] !== 'undefined') {
+                throw "linq2IndexedDB: A filter with the name '" + name + "' already exists.";
+            }
+
+            var filter = {
+                name: name,
+                indexeddbFilter: false,
+                sortOrder: 99,
+                isValid: isValid,
+                filter: filterCallback
+            }
+
+            linq2indexedDB.prototype.linq.filters[filter.name] = filter;
+        },
         filters: {
             equals: {
                 name: "equals",
@@ -658,7 +692,6 @@ var enableLogging = true;
                         if (!value) {
                             throw "linq2indexedDB: value needs to be provided to the equal clause"
                         }
-                        filterMetaData.filter = linq2indexedDB.prototype.linq.filters.equals;
                         filterMetaData.value = value;
 
                         return callback(queryBuilder, filterMetaData);
@@ -697,7 +730,6 @@ var enableLogging = true;
                             throw "linq2indexedDB: maxValue needs to be provided to the between clause"
                         }
 
-                        filterMetaData.filter = linq2indexedDB.prototype.linq.filters.between;
                         filterMetaData.minValue = minValue;
                         filterMetaData.maxValue = maxValue;
                         filterMetaData.minValueIncluded = isMinValueIncluded;
@@ -734,7 +766,6 @@ var enableLogging = true;
                         }
                         var isValueIncluded = typeof (valueIncluded) === undefined ? false : valueIncluded;
                         
-                        filterMetaData.filter = linq2indexedDB.prototype.linq.filters.greaterThan;
                         filterMetaData.value = value;
                         filterMetaData.valueIncluded = isValueIncluded;
 
@@ -769,7 +800,6 @@ var enableLogging = true;
                         }
                         var isValueIncluded = typeof (valueIncluded) === undefined ? false : valueIncluded;
 
-                        filterMetaData.filter = linq2indexedDB.prototype.linq.filters.smallerThan;
                         filterMetaData.value = value;
                         filterMetaData.valueIncluded = isValueIncluded;
 
@@ -803,7 +833,6 @@ var enableLogging = true;
                             throw "linq2indexedDB: array needs to be provided to the inArray clause"
                         }
 
-                        filterMetaData.filter = linq2indexedDB.prototype.linq.filters.inArray;
                         filterMetaData.value = array;
 
                         return callback(queryBuilder, filterMetaData);
@@ -836,7 +865,6 @@ var enableLogging = true;
                             throw "linq2indexedDB: value needs to be provided to the like clause"
                         }
 
-                        filterMetaData.filter = linq2indexedDB.prototype.linq.filters.like;
                         filterMetaData.value = value;
 
                         return callback(queryBuilder, filterMetaData);
@@ -861,7 +889,15 @@ var enableLogging = true;
                         pw.complete(this, event.data)
                     };
                     worker.onerror = pw.error;
-                    worker.postMessage({ data: data, filters: window.JSON.stringify(filters), sortClauses: sortClauses });
+
+                    var filtersString = JSON.stringify(filters, function (key, value) {
+                        if (typeof value === 'function') {
+                            return value.toString();
+                        }
+                        return value;
+                    });
+
+                    worker.postMessage({ data: data, filters: filtersString, sortClauses: sortClauses });
                 }
                 else {
                     // Fallback when there are no webworkers present. Beware, this runs on the UI thread and can block the UI
@@ -945,7 +981,7 @@ var enableLogging = true;
             var isValid = true;
 
             for (var i = 0; i < filters.length; i++) {
-                var filterValid = linq2indexedDB.prototype.linq.filters[filters[i].filter.name].isValid(data, filters[i]);
+                var filterValid = filters[i].filter.isValid(data, filters[i]);
                 if (filters[i].isNotClause) {
                     filterValid = !filterValid;
                 }
@@ -2385,9 +2421,21 @@ else
     // Web Worker Thread
     onmessage = function (event) {
         var data = event.data.data;
-        var filters = event.data.filters || [];
+        var filtersString = event.data.filters || "[]";
         var sortClauses = event.data.sortClauses || [];
-        var returnData = linq2indexedDB.prototype.utilities.filterSort(data, JSON.parse(filters), sortClauses);
+        var filters = JSON.parse(filtersString, function (key, value) {
+            var type;
+            if (value && typeof value === "string" && value.substr(0,8) == "function") {
+                var startBody = value.indexOf('{') + 1;
+                var endBody = value.lastIndexOf('}');
+                var startArgs = value.indexOf('(') + 1;
+                var endArgs = value.indexOf(')');
+
+                return new Function(value.substring(startArgs, endArgs), value.substring(startBody, endBody));
+            }
+            return value;
+        });
+        var returnData = linq2indexedDB.prototype.utilities.filterSort(data, filters, sortClauses);
 
         postMessage(returnData);
         return;
