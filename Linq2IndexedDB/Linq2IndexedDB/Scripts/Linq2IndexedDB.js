@@ -140,10 +140,14 @@ var enableLogging = true;
         function from(queryBuilder, objectStoreName) {
             queryBuilder.from = objectStoreName
             return {
-                where: function (propertyName) {
+                where: function (filter) {
                         /// <summary>Filters the selected data.</summary>
-                        /// <param name="propertyName" type="String">The name of the property you want to filter on.</param>
-                    return where(queryBuilder, propertyName, true, false);
+                        /// <param name="filter">
+                        /// The filter argument can be a string (In this case the string represents the property name you want to filter on) or a function.
+                        /// (In this case the function will be used to filter the data. This callback function is called with 1 parameter: data
+                        /// ,this argument holds the data that has to be validated. The return type of the function must be a boolean.)
+                        ///</param>
+                    return where(queryBuilder, filter, true, false);
                 },
                 orderBy: function (propertyName) {
                         /// <summary>Sorts the selected data ascending.</summary>
@@ -197,59 +201,89 @@ var enableLogging = true;
             }
         }
 
-        function where(queryBuilder, propertyName, isAndClause, isOrClause, isNotClause) {
+        function where(queryBuilder, filter, isAndClause, isOrClause, isNotClause) {
             var whereClauses = {};
 
             if(typeof isNotClause === "undefined"){
                 whereClauses.not = function () {
-                    return where(queryBuilder, propertyName, isAndClause, isOrClause, true);
+                    return where(queryBuilder, filter, isAndClause, isOrClause, true);
                 }
             }
 
-            // Builds up the where filter methodes
-            for (var filter in linq2indexedDB.prototype.linq.filters) {
-                var validFilter = true;
+            if (typeof filter === "function") {
                 var filterMetaData = {
-                    propertyName: propertyName,
+                    propertyName: filter,
                     isOrClause: isOrClause,
                     isAndClause: isAndClause,
                     isNotClause: (typeof isNotClause === "undefined" ? false : isNotClause),
-                    filter: linq2indexedDB.prototype.linq.filters[filter]
+                    filter: linq2indexedDB.prototype.linq.createFilter("anonymous" + queryBuilder.where.length, filter, null)
                 };
 
-                if (typeof linq2indexedDB.prototype.linq.filters[filter].filter !== "function") {
-                    throw "Linq2IndexedDB: a filter methods needs to be provided for the filter '" + filter + "'";
-                    validFilter = false;
-                }
-                if (typeof linq2indexedDB.prototype.linq.filters[filter].name === "undefined") {
-                    throw "Linq2IndexedDB: a filter name needs to be provided for the filter '" + filter + "'";
-                    validFilter = false;
-                }
+                return whereClause(queryBuilder, filterMetaData);
+            }
+            else if (typeof filter === "string") {
+                    // Builds up the where filter methodes
+                for (var filterName in linq2indexedDB.prototype.linq.filters) {
+                    var validFilter = true;
+                    var filterMetaData = {
+                        propertyName: filter,
+                        isOrClause: isOrClause,
+                        isAndClause: isAndClause,
+                        isNotClause: (typeof isNotClause === "undefined" ? false : isNotClause),
+                        filter: linq2indexedDB.prototype.linq.filters[filterName]
+                    };
 
-                if (validFilter) {
-                    whereClauses[linq2indexedDB.prototype.linq.filters[filter].name] = linq2indexedDB.prototype.linq.filters[filter].filter(whereClause, queryBuilder, filterMetaData);
+                    if (typeof linq2indexedDB.prototype.linq.filters[filterName].filter !== "function") {
+                        throw "Linq2IndexedDB: a filter methods needs to be provided for the filter '" + filterName + "'";
+                        validFilter = false;
+                    }
+                    if (typeof linq2indexedDB.prototype.linq.filters[filterName].name === "undefined") {
+                        throw "Linq2IndexedDB: a filter name needs to be provided for the filter '" + filterName + "'";
+                        validFilter = false;
+                    }
+
+                    if (validFilter) {
+                        whereClauses[linq2indexedDB.prototype.linq.filters[filterName].name] = linq2indexedDB.prototype.linq.filters[filterName].filter(whereClause, queryBuilder, filterMetaData);
+                    }
                 }
             }
-
             return whereClauses;
         }
 
         function whereClause(queryBuilder, filterMetaData) {
             queryBuilder.where.push(filterMetaData)
             return {
-                and: function (propertyName) {
-                    return where(queryBuilder, propertyName, true, false)
+                and: function (filter) {
+                    /// <summary>Adds an extra filter.</summary>
+                    /// <param name="filter">
+                    /// The filter argument can be a string (In this case the string represents the property name you want to filter on) or a function.
+                    /// (In this case the function will be used to filter the data. This callback function is called with 1 parameter: data
+                    /// ,this argument holds the data that has to be validated. The return type of the function must be a boolean.)
+                    ///</param>
+                    return where(queryBuilder, filter, true, false)
                 },
-                or: function(propertyName){
-                    return where(queryBuilder, propertyName, false, true)
+                or: function (filter) {
+                    /// <summary>Adds an extra filter.</summary>
+                    /// <param name="filter">
+                    /// The filter argument can be a string (In this case the string represents the property name you want to filter on) or a function.
+                    /// (In this case the function will be used to filter the data. This callback function is called with 1 parameter: data
+                    /// ,this argument holds the data that has to be validated. The return type of the function must be a boolean.)
+                    ///</param>
+                    return where(queryBuilder, filter, false, true)
                 },
                 orderBy: function (propertyName) {
+                    /// <summary>Sorts the selected data ascending.</summary>
+                    /// <param name="propertyName" type="String">The name of the property you want to sort on.</param>
                     return orderBy(queryBuilder, propertyName, false);
                 },
                 orderByDesc: function (propertyName) {
+                    /// <summary>Sorts the selected data descending.</summary>
+                    /// <param name="propertyName" type="String">The name of the property you want to sort on.</param>
                     return orderBy(queryBuilder, propertyName, true);
                 },
                 select: function (propertyNames) {
+                    /// <summary>Selects the data.</summary>
+                    /// <param name="propertyNames" type="Array">A list of the names of the properties you want to select.</param>
                     return select(queryBuilder, propertyNames);
                 }
             }
@@ -259,12 +293,18 @@ var enableLogging = true;
             queryBuilder.sortClauses.push({ propertyName: propertyName, descending: descending });
             return {
                 orderBy: function (propertyName) {
+                    /// <summary>Sorts the selected data ascending.</summary>
+                    /// <param name="propertyName" type="String">The name of the property you want to sort on.</param>
                     return orderBy(queryBuilder, propertyName, false);
                 },
                 orderByDesc: function (propertyName) {
+                    /// <summary>Sorts the selected data descending.</summary>
+                    /// <param name="propertyName" type="String">The name of the property you want to sort on.</param>
                     return orderBy(queryBuilder, propertyName, true);
                 },
                 select: function (propertyNames) {
+                    /// <summary>Selects the data.</summary>
+                    /// <param name="propertyNames" type="Array">A list of the names of the properties you want to select.</param>
                     return select(queryBuilder, propertyNames);
                 }
             }
@@ -475,7 +515,7 @@ var enableLogging = true;
                         // Only one condition can be passed to IndexedDB API
                         // Takes the first whereClause and removes it from the whereClause collection.
                         if ((whereClauses.length == 1 && whereClauses[0].filter.indexeddbFilter && !whereClauses[0].isNotClause)
-                            || whereClauses.length > 1 && !whereClauses[1].isOrClause) {
+                            || whereClauses.length > 1 && whereClauses[0].filter.indexeddbFilter && !whereClauses[1].isOrClause) {
                             cursorPromis = determineCursorPromis(objPromise, whereClauses.shift());
                         }
                         else {
@@ -634,6 +674,13 @@ var enableLogging = true;
 (function () {
     linq2indexedDB.prototype.linq = {
         addFilter: function (name, isValid, filterCallback) {
+            if (typeof linq2indexedDB.prototype.linq.filters[name] !== 'undefined') {
+                throw "linq2IndexedDB: A filter with the name '" + name + "' already exists.";
+            }
+
+            linq2indexedDB.prototype.linq.filters[name] = linq2indexedDB.prototype.linq.createFilter(name, isValid, filterCallback);
+        },
+        createFilter: function (name, isValid, filterCallback) {
             if (typeof name === 'undefined') {
                 throw "linq2IndexedDB: No name argument provided to the addFilter method.";
             }
@@ -649,22 +696,17 @@ var enableLogging = true;
             if (typeof filterCallback === 'undefined') {
                 throw "linq2IndexedDB: No filterCallback argument provided to the addFilter method.";
             }
-            if (typeof filterCallback !== 'function') {
-                throw "linq2IndexedDB: The filterCallback argument provided to the addFilterObject method must be a function.";
-            }
-            if (typeof linq2indexedDB.prototype.linq.filters[name] !== 'undefined') {
-                throw "linq2IndexedDB: A filter with the name '" + name + "' already exists.";
-            }
+            //if (typeof filterCallback !== 'function') {
+            //    throw "linq2IndexedDB: The filterCallback argument provided to the addFilterObject method must be a function.";
+            //}
 
-            var filter = {
+            return {
                 name: name,
                 indexeddbFilter: false,
                 sortOrder: 99,
                 isValid: isValid,
                 filter: filterCallback
             }
-
-            linq2indexedDB.prototype.linq.filters[filter.name] = filter;
         },
         filters: {
             equals: {
@@ -896,7 +938,7 @@ var enableLogging = true;
                         }
                         return value;
                     });
-
+                    
                     worker.postMessage({ data: data, filters: filtersString, sortClauses: sortClauses });
                 }
                 else {
@@ -2424,7 +2466,6 @@ else
         var filtersString = event.data.filters || "[]";
         var sortClauses = event.data.sortClauses || [];
         var filters = JSON.parse(filtersString, function (key, value) {
-            var type;
             if (value && typeof value === "string" && value.substr(0,8) == "function") {
                 var startBody = value.indexOf('{') + 1;
                 var endBody = value.lastIndexOf('}');
