@@ -932,12 +932,7 @@ var enableLogging = true;
                     };
                     worker.onerror = pw.error;
 
-                    var filtersString = JSON.stringify(filters, function (key, value) {
-                        if (typeof value === 'function') {
-                            return value.toString();
-                        }
-                        return value;
-                    });
+                    var filtersString = JSON.stringify(filters, linq2indexedDB.prototype.utilities.serialize);
                     
                     worker.postMessage({ data: data, filters: filtersString, sortClauses: sortClauses });
                 }
@@ -1072,6 +1067,23 @@ var enableLogging = true;
                 }
             }
             return newArray;
+        },
+        serialize: function (key, value) {
+            if (typeof value === 'function') {
+                return value.toString();
+            }
+            return value;
+        },
+        deserialize: function (key, value) {
+            if (value && typeof value === "string" && value.substr(0, 8) == "function") {
+                var startBody = value.indexOf('{') + 1;
+                var endBody = value.lastIndexOf('}');
+                var startArgs = value.indexOf('(') + 1;
+                var endArgs = value.indexOf(')');
+
+                return new Function(value.substring(startArgs, endArgs), value.substring(startBody, endBody));
+            }
+            return value;
         }
     };
 
@@ -2465,17 +2477,7 @@ else
         var data = event.data.data;
         var filtersString = event.data.filters || "[]";
         var sortClauses = event.data.sortClauses || [];
-        var filters = JSON.parse(filtersString, function (key, value) {
-            if (value && typeof value === "string" && value.substr(0,8) == "function") {
-                var startBody = value.indexOf('{') + 1;
-                var endBody = value.lastIndexOf('}');
-                var startArgs = value.indexOf('(') + 1;
-                var endArgs = value.indexOf(')');
-
-                return new Function(value.substring(startArgs, endArgs), value.substring(startBody, endBody));
-            }
-            return value;
-        });
+        var filters = JSON.parse(filtersString, linq2indexedDB.prototype.utilities.deserialize);
         var returnData = linq2indexedDB.prototype.utilities.filterSort(data, filters, sortClauses);
 
         postMessage(returnData);
