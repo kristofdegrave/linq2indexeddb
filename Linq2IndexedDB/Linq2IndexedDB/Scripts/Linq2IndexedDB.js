@@ -27,18 +27,18 @@ var enableLogging = true;
 
         if (configuration) {
             if (configuration.version) {
-                dbConfig.version = configuration.version
+                dbConfig.version = configuration.version;
             }
             // From the moment the configuration is provided by the developper, autoGeneration isn't allowed.
             // If this would be allowed, the developper wouldn't be able to determine what to do for which version.
             if (configuration.schema) {
-                var version = dbConfig.version || -1;
+                var appVersion = dbConfig.version || -1;
                 for (key in configuration.schema) {
-                    version = version > key ? version : key;
+                    appVersion = version > key ? version : key;
                 }
                 if (version > -1) {
                     dbConfig.autoGenerateAllowed = false;
-                    dbConfig.version = version;
+                    dbConfig.version = appVersion;
                     dbConfig.schema = configuration.schema;
                 }
             }
@@ -56,12 +56,12 @@ var enableLogging = true;
             }
         }
 
-        var log = function () {
+        var log = function() {
             if (typeof enableLogging !== "undefined" && enableLogging) {
                 return linq2indexedDB.prototype.utilities.log;
             }
             return false;
-        }
+        };
 
         return {
             utilities: linq2indexedDB.prototype.utilities,
@@ -89,12 +89,12 @@ var enableLogging = true;
                             if (dbConfig.oninitializeversion || dbConfig.schema || dbConfig.definition) {
                                 for (var version = e.oldVersion + 1; version <= e.newVersion; version++) {
                                     if (dbConfig.schema) {
-                                        dbConfig.schema[version](txn)
+                                        dbConfig.schema[version](txn);
                                     }
                                     if (dbConfig.definition) {
-                                        var versionDefinition = getVersionDefinition(version, dbConfig.definition)
+                                        var versionDefinition = getVersionDefinition(version, dbConfig.definition);
                                         if (versionDefinition) {
-                                            InitializeVersion(txn, versionDefinition);
+                                            initializeVersion(txn, versionDefinition);
                                         }
                                     }
                                     else if (dbConfig.oninitializeversion) {
@@ -138,7 +138,7 @@ var enableLogging = true;
         };
 
         function from(queryBuilder, objectStoreName) {
-            queryBuilder.from = objectStoreName
+            queryBuilder.from = objectStoreName;
             return {
                 where: function (filter) {
                         /// <summary>Filters the selected data.</summary>
@@ -198,60 +198,54 @@ var enableLogging = true;
                         /// <returns type="Object">The object that has the provided key.</returns>
                     return get(queryBuilder, key);
                 }
-            }
+            };
         }
 
         function where(queryBuilder, filter, isAndClause, isOrClause, isNotClause) {
             var whereClauses = {};
+            var filterMetaData;
 
             if(typeof isNotClause === "undefined"){
                 whereClauses.not = function () {
                     return where(queryBuilder, filter, isAndClause, isOrClause, true);
-                }
+                };
             }
-
+            
             if (typeof filter === "function") {
-                var filterMetaData = {
+                filterMetaData = {
                     propertyName: filter,
                     isOrClause: isOrClause,
                     isAndClause: isAndClause,
                     isNotClause: (typeof isNotClause === "undefined" ? false : isNotClause),
                     filter: linq2indexedDB.prototype.linq.createFilter("anonymous" + queryBuilder.where.length, filter, null)
                 };
-
                 return whereClause(queryBuilder, filterMetaData);
             }
             else if (typeof filter === "string") {
                     // Builds up the where filter methodes
                 for (var filterName in linq2indexedDB.prototype.linq.filters) {
-                    var validFilter = true;
-                    var filterMetaData = {
+                    filterMetaData = {
                         propertyName: filter,
                         isOrClause: isOrClause,
                         isAndClause: isAndClause,
                         isNotClause: (typeof isNotClause === "undefined" ? false : isNotClause),
                         filter: linq2indexedDB.prototype.linq.filters[filterName]
                     };
-
                     if (typeof linq2indexedDB.prototype.linq.filters[filterName].filter !== "function") {
                         throw "Linq2IndexedDB: a filter methods needs to be provided for the filter '" + filterName + "'";
-                        validFilter = false;
                     }
                     if (typeof linq2indexedDB.prototype.linq.filters[filterName].name === "undefined") {
                         throw "Linq2IndexedDB: a filter name needs to be provided for the filter '" + filterName + "'";
-                        validFilter = false;
                     }
 
-                    if (validFilter) {
-                        whereClauses[linq2indexedDB.prototype.linq.filters[filterName].name] = linq2indexedDB.prototype.linq.filters[filterName].filter(whereClause, queryBuilder, filterMetaData);
-                    }
+                    whereClauses[linq2indexedDB.prototype.linq.filters[filterName].name] = linq2indexedDB.prototype.linq.filters[filterName].filter(whereClause, queryBuilder, filterMetaData);
                 }
             }
             return whereClauses;
         }
 
         function whereClause(queryBuilder, filterMetaData) {
-            queryBuilder.where.push(filterMetaData)
+            queryBuilder.where.push(filterMetaData);
             return {
                 and: function (filter) {
                     /// <summary>Adds an extra filter.</summary>
@@ -260,7 +254,7 @@ var enableLogging = true;
                     /// (In this case the function will be used to filter the data. This callback function is called with 1 parameter: data
                     /// ,this argument holds the data that has to be validated. The return type of the function must be a boolean.)
                     ///</param>
-                    return where(queryBuilder, filter, true, false)
+                    return where(queryBuilder, filter, true, false);
                 },
                 or: function (filter) {
                     /// <summary>Adds an extra filter.</summary>
@@ -269,7 +263,7 @@ var enableLogging = true;
                     /// (In this case the function will be used to filter the data. This callback function is called with 1 parameter: data
                     /// ,this argument holds the data that has to be validated. The return type of the function must be a boolean.)
                     ///</param>
-                    return where(queryBuilder, filter, false, true)
+                    return where(queryBuilder, filter, false, true);
                 },
                 orderBy: function (propertyName) {
                     /// <summary>Sorts the selected data ascending.</summary>
@@ -286,11 +280,11 @@ var enableLogging = true;
                     /// <param name="propertyNames" type="Array">A list of the names of the properties you want to select.</param>
                     return select(queryBuilder, propertyNames);
                 }
-            }
+            };
         }
 
-        function orderBy(queryBuilder, propertyName, descending) {
-            queryBuilder.sortClauses.push({ propertyName: propertyName, descending: descending });
+        function orderBy(queryBuilder, propName, descending) {
+            queryBuilder.sortClauses.push({ propertyName: propName, descending: descending });
             return {
                 orderBy: function (propertyName) {
                     /// <summary>Sorts the selected data ascending.</summary>
@@ -307,13 +301,13 @@ var enableLogging = true;
                     /// <param name="propertyNames" type="Array">A list of the names of the properties you want to select.</param>
                     return select(queryBuilder, propertyNames);
                 }
-            }
+            };
         }
 
         function select(queryBuilder, propertyNames) {
             if (propertyNames) {
                 if (!linq2indexedDB.prototype.utilities.isArray(propertyNames)) {
-                    propertyNames = [propertyNames]
+                    propertyNames = [propertyNames];
                 }
 
                 for (var i = 0; i < propertyNames.length; i++) {
@@ -381,11 +375,11 @@ var enableLogging = true;
                         if (dbConfig.oninitializeversion) {
                             for (var version = e.oldVersion + 1; version <= e.newVersion; version++) {
                                 if (dbConfig.schema) {
-                                    dbConfig.schema[version](txn)
+                                    dbConfig.schema[version](txn);
                                 }
                                 if (dbConfig.definition) {
-                                    var versionDefinition = getVersionDefinition(version, dbConfig.definition)
-                                    InitializeVersion(txn, versionDefinition);
+                                    var versionDefinition = getVersionDefinition(version, dbConfig.definition);
+                                    initializeVersion(txn, versionDefinition);
                                 }
                                 else if (dbConfig.oninitializeversion) {
                                     dbConfig.oninitializeversion(txn, version);
@@ -394,7 +388,7 @@ var enableLogging = true;
                         }
                     }
                 });
-            })
+            });
         }
 
         function executeGet(queryBuilder, pw, dbPromise) {
@@ -406,9 +400,8 @@ var enableLogging = true;
             },
             pw.error,
             function (args /* [transaction] */) {
-                var getPromis = linq2indexedDB.prototype.core.get(linq2indexedDB.prototype.core.objectStore(args[0], queryBuilder.from), queryBuilder.get[0].key);
-                getPromis.then(function (args /*data*/) {
-                    pw.complete(this, args[0] /*[data]*/);
+                linq2indexedDB.prototype.core.get(linq2indexedDB.prototype.core.objectStore(args[0], queryBuilder.from), queryBuilder.get[0].key).then(function (args1 /*data*/) {
+                    pw.complete(this, args1[0] /*[data]*/);
                 }
                 , pw.error);
             });
@@ -440,7 +433,7 @@ var enableLogging = true;
             },
             pw.error,
             function (args /* [transaction] */) {
-                var removePromis = linq2indexedDB.prototype.core.remove(linq2indexedDB.prototype.core.objectStore(args[0], queryBuilder.from), queryBuilder.remove[0].key)
+                var removePromis = linq2indexedDB.prototype.core.remove(linq2indexedDB.prototype.core.objectStore(args[0], queryBuilder.from), queryBuilder.remove[0].key);
                 removePromis.then(function () {
                     pw.complete(this, queryBuilder.remove[0].key /*[queryBuilder.remove[0].key]*/);
                 }
@@ -457,9 +450,8 @@ var enableLogging = true;
             },
             pw.error,
             function (args /* [transaction] */) {
-                var updatePromis = linq2indexedDB.prototype.core.update(linq2indexedDB.prototype.core.objectStore(args[0], queryBuilder.from), queryBuilder.update[0].data, queryBuilder.update[0].key);
-                updatePromis.then(function (args /*storedData, storedkey*/) {
-                    pw.complete(this, args[0] /*{object: args[0], key: args[1]}*/ /*[storedData, storedkey]*/);
+                linq2indexedDB.prototype.core.update(linq2indexedDB.prototype.core.objectStore(args[0], queryBuilder.from), queryBuilder.update[0].data, queryBuilder.update[0].key).then(function (args1 /*storedData, storedkey*/) {
+                    pw.complete(this, args1[0] /*{object: args[0], key: args[1]}*/ /*[storedData, storedkey]*/);
                 }
                 , pw.error);
             });
@@ -474,9 +466,9 @@ var enableLogging = true;
             },
             pw.error,
             function (args /* [transaction] */) {
-                var insertPromis = linq2indexedDB.prototype.core.insert(linq2indexedDB.prototype.core.objectStore(args[0], queryBuilder.from), queryBuilder.insert[0].data, queryBuilder.insert[0].key)
-                insertPromis.then(function (args /*storedData, storedkey*/) {
-                    pw.complete(this, args[0] /*{object: args[0], key: args[1]}*/ /*[storedData, storedkey]*/);
+                var insertPromis = linq2indexedDB.prototype.core.insert(linq2indexedDB.prototype.core.objectStore(args[0], queryBuilder.from), queryBuilder.insert[0].data, queryBuilder.insert[0].key);
+                insertPromis.then(function (args1 /*storedData, storedkey*/) {
+                    pw.complete(this, args1[0] /*{object: args[0], key: args[1]}*/ /*[storedData, storedkey]*/);
                 }
                 , pw.error);
             });
@@ -527,29 +519,29 @@ var enableLogging = true;
                     }
 
                     cursorPromis.then(
-                        function (args /*data*/) {
-                            var data = args[0];
+                        function (args1 /*data*/) {
+                            var data = args1[0];
 
                             linq2indexedDB.prototype.utilities.linq2indexedDBWorker(data, whereClauses, queryBuilder.sortClauses).then(function (d) {
                                 // No need to notify again if it allready happend in the onProgress method of the cursor.
                                 if (returnData.length == 0) {
                                     for (var j = 0; j < d.length; j++) {
-                                        var obj = SelectData(d[j], queryBuilder.select)
+                                        var obj = selectData(d[j], queryBuilder.select);
                                         returnData.push(obj);
                                         pw.progress(this, obj /*[obj]*/);
                                     }
                                 }
                                 pw.complete(this, returnData /*[returnData]*/);
-                            })
+                            });
                         },
                         pw.error,
-                        function (args /*data*/) {
-                            var data = args[0];
+                        function (args1 /*data*/) {
+                            var data = args1[0];
 
                             // When there are no more where clauses to fulfill and the collection doesn't need to be sorted, the data can be returned.
                             // In the other case let the complete handle it.
                             if (whereClauses.length == 0 && queryBuilder.sortClauses.length == 0) {
-                                var obj = SelectData(data, queryBuilder.select)
+                                var obj = selectData(data, queryBuilder.select);
                                 returnData.push(obj);
                                 pw.progress(this, obj /*[obj]*/);
                             }
@@ -592,7 +584,7 @@ var enableLogging = true;
             return cursorPromise;
         }
 
-        function SelectData(data, propertyNames) {
+        function selectData(data, propertyNames) {
             if (propertyNames && propertyNames.length > 0) {
                 if (!linq2indexedDB.prototype.utilities.isArray(propertyNames)) {
                     propertyNames = [propertyNames];
@@ -611,11 +603,11 @@ var enableLogging = true;
             from: function (objectStoreName) {
                 return from(new queryBuilderObj(objectStoreName), objectStoreName);
             }
-        }
+        };
     };
 
     function getVersionDefinition(version, definitions) {
-        var result;
+        var result = null;
         for (var i = 0; i < definitions.length; i++) {
             if (parseInt(definitions[i].version) == parseInt(version)) {
                 result = definitions[i];
@@ -624,7 +616,7 @@ var enableLogging = true;
         return result;
     }
 
-    function InitializeVersion(txn, definition) {
+    function initializeVersion(txn, definition) {
         try {
             if (definition.objectStores) {
                 for (var i = 0; i < definition.objectStores.length; i++) {
@@ -639,8 +631,8 @@ var enableLogging = true;
             }
 
             if (definition.indexes) {
-                for (var i = 0; i < definition.indexes.length; i++) {
-                    var indexDefinition = definition.indexes[i];
+                for (var j = 0; j < definition.indexes.length; j++) {
+                    var indexDefinition = definition.indexes[j];
                     if (indexDefinition.remove) {
                         linq2indexedDB.prototype.core.deleteIndex(linq2indexedDB.prototype.core.objectStore(txn, indexDefinition.objectStoreName), indexDefinition.propertyName);
                     }
@@ -651,8 +643,8 @@ var enableLogging = true;
             }
 
             if (definition.defaultData) {
-                for (var i = 0; i < definition.defaultData.length; i++) {
-                    var defaultDataDefinition = definition.defaultData[i];
+                for (var k = 0; k < definition.defaultData.length; k++) {
+                    var defaultDataDefinition = definition.defaultData[k];
                     if (defaultDataDefinition.remove) {
                         linq2indexedDB.prototype.core.remove(linq2indexedDB.prototype.core.objectStore(txn, defaultDataDefinition.objectStoreName), defaultDataDefinition.key);
                     }
@@ -706,7 +698,7 @@ var enableLogging = true;
                 sortOrder: 99,
                 isValid: isValid,
                 filter: filterCallback
-            }
+            };
         },
         filters: {
             equals: {
@@ -732,12 +724,12 @@ var enableLogging = true;
                     /// </returns>
                     return function (value) {
                         if (!value) {
-                            throw "linq2indexedDB: value needs to be provided to the equal clause"
+                            throw "linq2indexedDB: value needs to be provided to the equal clause";
                         }
                         filterMetaData.value = value;
 
                         return callback(queryBuilder, filterMetaData);
-                    }
+                    };
                 }
             },
             between: {
@@ -766,10 +758,10 @@ var enableLogging = true;
                         var isMinValueIncluded = typeof (minValueIncluded) === undefined ? false : minValueIncluded;
                         var isMasValueIncluded = typeof (maxValueIncluded) === undefined ? false : maxValueIncluded;
                         if (!minValue) {
-                            throw "linq2indexedDB: minValue needs to be provided to the between clause"
+                            throw "linq2indexedDB: minValue needs to be provided to the between clause";
                         }
                         if (!maxValue) {
-                            throw "linq2indexedDB: maxValue needs to be provided to the between clause"
+                            throw "linq2indexedDB: maxValue needs to be provided to the between clause";
                         }
 
                         filterMetaData.minValue = minValue;
@@ -778,7 +770,7 @@ var enableLogging = true;
                         filterMetaData.maxValueIncluded = isMasValueIncluded;
 
                         return callback(queryBuilder, filterMetaData);
-                    }
+                    };
                 }
             },
             greaterThan: {
@@ -804,7 +796,7 @@ var enableLogging = true;
                     /// </returns>
                     return function (value, valueIncluded) {
                         if (!value) {
-                            throw "linq2indexedDB: value needs to be provided to the greatherThan clause"
+                            throw "linq2indexedDB: value needs to be provided to the greatherThan clause";
                         }
                         var isValueIncluded = typeof (valueIncluded) === undefined ? false : valueIncluded;
                         
@@ -812,7 +804,7 @@ var enableLogging = true;
                         filterMetaData.valueIncluded = isValueIncluded;
 
                         return callback(queryBuilder, filterMetaData);
-                    }
+                    };
                 }
             },
             smallerThan: {
@@ -838,7 +830,7 @@ var enableLogging = true;
                     /// </returns>
                     return function (value, valueIncluded) {
                         if (!value) {
-                            throw "linq2indexedDB: value needs to be provided to the smallerThan clause"
+                            throw "linq2indexedDB: value needs to be provided to the smallerThan clause";
                         }
                         var isValueIncluded = typeof (valueIncluded) === undefined ? false : valueIncluded;
 
@@ -846,7 +838,7 @@ var enableLogging = true;
                         filterMetaData.valueIncluded = isValueIncluded;
 
                         return callback(queryBuilder, filterMetaData);
-                    }
+                    };
                 }
             },
             inArray: {
@@ -872,13 +864,13 @@ var enableLogging = true;
                     /// </returns>
                     return function (array) {
                         if (!array && typeof array !== "Array") {
-                            throw "linq2indexedDB: array needs to be provided to the inArray clause"
+                            throw "linq2indexedDB: array needs to be provided to the inArray clause";
                         }
 
                         filterMetaData.value = array;
 
                         return callback(queryBuilder, filterMetaData);
-                    }
+                    };
                 }
             },
             like: {
@@ -886,7 +878,7 @@ var enableLogging = true;
                 sortOrder: 4,
                 indexeddbFilter: false,
                 isValid: function (data, filter) {
-                    return data[filter.propertyName].indexOf(filter.value) >= 0
+                    return data[filter.propertyName].indexOf(filter.value) >= 0;
                 },
                 filter: function (callback, queryBuilder, filterMetaData) {
                     /// <summary>Creates a function to retrieve values for the filter and adds the filter to the querybuilder.</summary>
@@ -904,17 +896,17 @@ var enableLogging = true;
                     /// </returns>
                     return function (value) {
                         if (!value) {
-                            throw "linq2indexedDB: value needs to be provided to the like clause"
+                            throw "linq2indexedDB: value needs to be provided to the like clause";
                         }
 
                         filterMetaData.value = value;
 
                         return callback(queryBuilder, filterMetaData);
-                    }
+                    };
                 }
             }
         }
-    }
+    };
 })();
 
 // Namespace linq2indexedDB.prototype.utitlities
@@ -928,7 +920,7 @@ var enableLogging = true;
                 if (!!window.Worker) {
                     var worker = new Worker(utilities.linq2indexedDBWorkerFileLocation);
                     worker.onmessage = function (event) {
-                        pw.complete(this, event.data)
+                        pw.complete(this, event.data);
                     };
                     worker.onerror = pw.error;
 
@@ -940,7 +932,7 @@ var enableLogging = true;
                     // Fallback when there are no webworkers present. Beware, this runs on the UI thread and can block the UI
                     pw.complete(this, utilities.filterSort(data, filters, sortClauses));
                 }
-            })
+            });
         },
         isArray: function (array) {
             if (array instanceof Array) {
@@ -960,7 +952,7 @@ var enableLogging = true;
                         return ((valueX[propertyName] == valueY[propertyName]) ? 0 : ((valueX[propertyName] > valueY[propertyName]) ? 1 : -1));
                     }
                 }
-            }
+            };
         },
         promiseWrapper: function (promise) {
             if (typeof Windows !== "undefined") {
@@ -1033,13 +1025,12 @@ var enableLogging = true;
         },
         addToSortedArray: function (array, data, sortClauses) {
             var newArray = [];
-            var valueAdded = false;
             if (array.length == 0 || sortClauses.length == 0) {
                 newArray = array;
                 newArray.push(data);
-                valueAdded = true;
             }
             else {
+                var valueAdded = false;
                 for (var i = 0; i < array.length; i++) {
                     for (var j = 0; j < sortClauses.length; j++) {
                         var valueX = array[i];
@@ -1120,8 +1111,8 @@ if (typeof window !== "undefined") {
             READ_ONLY: "readonly",
             READ_WRITE: "readwrite",
             VERSION_CHANGE: "versionchange"
-        }
-        var implementation = initializeIndexedDB();
+        };
+        var implementation = initializeIndexedDb();
         var handlers = {
             IDBRequest: function (request) {
                 return deferredHandler(IDBRequestHandler, request);
@@ -1130,7 +1121,7 @@ if (typeof window !== "undefined") {
                 return deferredHandler(IDBBlockedRequestHandler, request);
             },
             IDBOpenDBRequest: function (request) {
-                return deferredHandler(IDBOpenDBRequestHandler, request);
+                return deferredHandler(IDBOpenDbRequestHandler, request);
             },
             IDBDatabase: function (database) {
                 return deferredHandler(IDBDatabaseHandler, database);
@@ -1168,10 +1159,10 @@ if (typeof window !== "undefined") {
 
                             // Handle the events on the database.
                             handlers.IDBDatabase(db).then(
-                                function (args1 /*result, event*/) {
+                                function (/*result, event*/) {
                                     // No done present.
                                 },
-                                function (args1/*error, event*/) {
+                                function (/*error, event*/) {
                                     // Database error or abort
                                     linq2indexedDB.prototype.core.closeDatabaseConnection(db);
                                     // When an error occures the result will already be resolved. This way calling the reject won't case a thing
@@ -1210,7 +1201,7 @@ if (typeof window !== "undefined") {
 
                                         pw.progress(context, [txn, upgardeEvent]);
 
-                                        handlers.IDBTransaction(txn).then(function (args2 /*trans, args*/) {
+                                        handlers.IDBTransaction(txn).then(function (/*trans, args*/) {
                                             // When the new version is completed, close the db connection, and make a new connection.
                                             linq2indexedDB.prototype.core.closeDatabaseConnection(txn.db);
                                             linq2indexedDB.prototype.core.db(name).then(function (args3 /*dbConnection, ev*/) {
@@ -1282,7 +1273,7 @@ if (typeof window !== "undefined") {
                     // When non-existing object stores are found and the autoGenerateAllowed is true.
                     // Then create these object stores
                     if (nonExistingObjectStores.length > 0 && autoGenerateAllowed) {
-                        var version = internal.getDatabaseVersion(db) + 1
+                        var version = internal.getDatabaseVersion(db) + 1;
                         var dbName = db.name;
                         log("Transaction database upgrade needed: ", db);
                         // Closing the current connections so it won't block the upgrade.
@@ -1307,13 +1298,13 @@ if (typeof window !== "undefined") {
                             var txn = args[0].transaction(objectStoreNames, transactionType);
 
                             // Handle transaction events
-                            handlers.IDBTransaction(txn).then(function (args /*result, event*/) {
+                            handlers.IDBTransaction(txn).then(function (args1 /*result, event*/) {
                                 // txn completed
-                                pw.complete(this, args);
+                                pw.complete(this, args1);
                             },
-                            function (args /*err, event*/) {
+                            function (args1 /*err, event*/) {
                                 // txn error or abort
-                                pw.error(this, args);
+                                pw.error(this, args1);
                             });
 
                             // txn created
@@ -1337,10 +1328,10 @@ if (typeof window !== "undefined") {
                     }
                     else {
                         // If no non-existing object stores are found, create the transaction.
-                        var txn = db.transaction(objectStoreNames, transactionType);
+                        var transaction = db.transaction(objectStoreNames, transactionType);
 
                         // Handle transaction events
-                        handlers.IDBTransaction(txn).then(function (args /*result, event*/) {
+                        handlers.IDBTransaction(transaction).then(function (args /*result, event*/) {
                             // txn completed
                             pw.complete(this, args);
                         },
@@ -1350,8 +1341,8 @@ if (typeof window !== "undefined") {
                         });
 
                         // txn created
-                        log("Transaction transaction created.", txn);
-                        pw.progress(txn, [txn]);
+                        log("Transaction transaction created.", transaction);
+                        pw.progress(transaction, [transaction]);
                     }
                 }
                 catch (ex) {
@@ -1436,7 +1427,7 @@ if (typeof window !== "undefined") {
                 try {
                     if (transaction.db.objectStoreNames.contains(objectStoreName)) {
                         // store found, delete it
-                        transaction.db.deleteObjectStore(objectStoreName)
+                        transaction.db.deleteObjectStore(objectStoreName);
                         log("ObjectStore Deleted", objectStoreName);
                         log("deleteObjectStore completed", objectStoreName);
                         pw.complete(this, [transaction, objectStoreName]);
@@ -1455,17 +1446,17 @@ if (typeof window !== "undefined") {
                 }
             },
             index: function (pw, objectStore, propertyName, autoGenerateAllowed) {
-                log("Index started", objectStore, propertyName, autoGenerateAllowed)
+                log("Index started", objectStore, propertyName, autoGenerateAllowed);
                 try {
                     var indexName = propertyName;
                     if (implementation == implementations.SHIM) {
                         if (propertyName.indexOf("IIndex") == -1) {
-                            indexName = indexName + "IIndex"
+                            indexName = indexName + "IIndex";
                         }
                     }
                     else {
                         if (propertyName.indexOf("-index") == -1) {
-                            indexName = indexName + "-index"
+                            indexName = indexName + "-index";
                         }
                     }
 
@@ -1477,10 +1468,10 @@ if (typeof window !== "undefined") {
                     }
                     else if (autoGenerateAllowed) {
                             // If index doesn't exists, create it if autoGenerateAllowed
-                        var version = internal.getDatabaseVersion(objectStore.transaction.db) + 1
+                        var version = internal.getDatabaseVersion(objectStore.transaction.db) + 1;
                         var dbName = objectStore.transaction.db.name;
                         var transactionType = objectStore.transaction.mode;
-                        var objectStoreNames = [objectStore.name] //transaction.objectStoreNames;
+                        var objectStoreNames = [objectStore.name]; //transaction.objectStoreNames;
                         var objectStoreName = objectStore.name;
                         // Close the currenct database connections so it won't block
                         linq2indexedDB.prototype.core.closeDatabaseConnection(objectStore.transaction.db);
@@ -1516,7 +1507,7 @@ if (typeof window !== "undefined") {
 
                             // When an upgradeneeded event is thrown, create the non-existing object stores
                             if (event.type == "upgradeneeded") {
-                                linq2indexedDB.prototype.core.createIndex(linq2indexedDB.prototype.core.objectStore(trans, objectStore.name), propertyName).then(function (args1 /*index, store, transaction*/) {
+                                linq2indexedDB.prototype.core.createIndex(linq2indexedDB.prototype.core.objectStore(trans, objectStore.name), propertyName).then(function (/*index, store, transaction*/) {
                                     // index created
                                 },
                                 function (args1 /*error, ev*/) {
@@ -1535,17 +1526,17 @@ if (typeof window !== "undefined") {
                 }
             },
             createIndex: function (pw, objectStore, propertyName, indexOptions) {
-                log("createIndex started", objectStore, propertyName, indexOptions)
+                log("createIndex started", objectStore, propertyName, indexOptions);
                 try {
                     var indexName = propertyName;
                     if (implementation == implementations.SHIM) {
                         if (propertyName.indexOf("IIndex") == -1) {
-                            indexName = indexName + "IIndex"
+                            indexName = indexName + "IIndex";
                         }
                     }
                     else {
                         if (propertyName.indexOf("-index") == -1) {
-                            indexName = indexName + "-index"
+                            indexName = indexName + "-index";
                         }
                     }
 
@@ -1558,7 +1549,7 @@ if (typeof window !== "undefined") {
                         // if the index exists retrieve it
                         linq2indexedDB.prototype.core.index(objectStore, propertyName, false).then(function (args) {
                             pw.complete(this, args);
-                        })
+                        });
                     }
                 }
                 catch (ex) {
@@ -1568,17 +1559,17 @@ if (typeof window !== "undefined") {
                 }
             },
             deleteIndex: function (pw, objectStore, propertyName) {
-                log("deleteIndex started", objectStore, propertyName)
+                log("deleteIndex started", objectStore, propertyName);
                 try {
                     var indexName = propertyName;
                     if (implementation == implementations.SHIM) {
                         if (propertyName.indexOf("IIndex") == -1) {
-                            indexName = indexName + "IIndex"
+                            indexName = indexName + "IIndex";
                         }
                     }
                     else {
                         if (propertyName.indexOf("-index") == -1) {
-                            indexName = indexName + "-index"
+                            indexName = indexName + "-index";
                         }
                     }
 
@@ -1622,12 +1613,11 @@ if (typeof window !== "undefined") {
                     }
 
                     request.then(function (args1 /*result, e*/) {
-                        var result = args1[0];
                         var e = args1[1];
-                        var txn = source.transaction || source.objectStore.transaction;
+                        var transaction = source.transaction || source.objectStore.transaction;
 
-                        log("Cursor completed", returnData, txn, e);
-                        pw.complete(this, [returnData, txn, e]);
+                        log("Cursor completed", returnData, transaction, e);
+                        pw.complete(this, [returnData, transaction, e]);
                     },
                     function (args /*error, e*/) {
                         log("Cursor error", args);
@@ -1662,19 +1652,18 @@ if (typeof window !== "undefined") {
                     var keyRange = range;
 
                     if (!keyRange) {
-                        keyRange = IDBKeyRange.lowerBound(0)
+                        keyRange = IDBKeyRange.lowerBound(0);
                     }
 
                     // direction can not be null when passed.
                     if (direction) {
-                        request = handlers.IDBCursorRequest(source.openKeyCursor(keyRange, direction))
+                        request = handlers.IDBCursorRequest(source.openKeyCursor(keyRange, direction));
                     }
                     else {
-                        request = handlers.IDBCursorRequest(source.openKeyCursor(keyRange))
+                        request = handlers.IDBCursorRequest(source.openKeyCursor(keyRange));
                     }
 
                     request.then(function (args /*result, e*/) {
-                        var result = args[0];
                         var e = args[1];
 
                         log("keyCursor completed", returnData, index.objectStore.transaction, e);
@@ -1690,7 +1679,7 @@ if (typeof window !== "undefined") {
 
                         log("keyCursor progress", result, e);
                         if (result.value) {
-                            pw.progress(this, [result.value, e, txn]);
+                            pw.progress(this, [result.value, e, index.objectStore.transaction]);
                             returnData.push(result.value);
                         }
                         result["continue"]();
@@ -1710,10 +1699,10 @@ if (typeof window !== "undefined") {
                     handlers.IDBRequest(source.get(key)).then(function (args /*result, e*/) {
                         var result = args[0];
                         var e = args[1];
-                        var txn = source.transaction || source.objectStore.transaction;
+                        var transaction = source.transaction || source.objectStore.transaction;
 
-                        log("Get completed", result, txn, e);
-                        pw.complete(this, [result, txn, e]);
+                        log("Get completed", result, transaction, e);
+                        pw.complete(this, [result, transaction, e]);
                     }, function (args /*error, e*/) {
                         log("Get error", args);
                         pw.error(this, args);
@@ -1903,7 +1892,7 @@ if (typeof window !== "undefined") {
                             pw.error(this, args /*[error, e]*/);
                         },
                         function (args /*dbConnection, event*/) {
-                            var dbConnecetion = args[0];
+                            var dbConnection = args[0];
                             var event = args[1];
 
                             // When an upgradeneeded event is thrown, create the non-existing object stores
@@ -1924,10 +1913,10 @@ if (typeof window !== "undefined") {
             getDatabaseVersion: function (db) {
                 var dbVersion = parseInt(db.version);
                 if (isNaN(dbVersion) || dbVersion < 0) {
-                    return 0
+                    return 0;
                 }
                 else {
-                    return dbVersion
+                    return dbVersion;
                 }
             },
             indexOf: function (array, value, propertyName) {
@@ -1964,7 +1953,7 @@ if (typeof window !== "undefined") {
                             pw.error(this, args);
                         },
                         function (args /**/) {
-                            pw.progress(this, args)
+                            pw.progress(this, args);
                         });
                     }
                     else {
@@ -1990,7 +1979,7 @@ if (typeof window !== "undefined") {
                     else {
                         internal.objectStore(pw, transaction, objectStoreName);
                     }
-                })
+                });
             },
             createObjectStore: function (transaction, objectStoreName, objectStoreOptions) {
                 return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
@@ -2010,7 +1999,7 @@ if (typeof window !== "undefined") {
                     else {
                         internal.createObjectStore(pw, transaction, objectStoreName, objectStoreOptions);
                     }
-                })
+                });
             },
             deleteObjectStore: function (transaction, objectStoreName) {
                 return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
@@ -2029,7 +2018,7 @@ if (typeof window !== "undefined") {
                     else {
                         internal.deleteObjectStore(pw, transaction, objectStoreName);
                     }
-                })
+                });
             },
             index: function (objectStore, propertyName, autoGenerateAllowed) {
                 return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
@@ -2044,7 +2033,7 @@ if (typeof window !== "undefined") {
                     else {
                         internal.index(pw, objectStore, propertyName, autoGenerateAllowed);
                     }
-                })
+                });
             },
             createIndex: function (objectStore, propertyName, indexOptions) {
                 return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
@@ -2059,7 +2048,7 @@ if (typeof window !== "undefined") {
                     else {
                         internal.createIndex(pw, objectStore, propertyName, indexOptions);
                     }
-                })
+                });
             },
             deleteIndex: function (objectStore, propertyName) {
                 return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
@@ -2074,7 +2063,7 @@ if (typeof window !== "undefined") {
                     else {
                         internal.deleteIndex(pw, objectStore, propertyName);
                     }
-                })
+                });
             },
             cursor: function (source, range, direction) {
                 return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
@@ -2089,7 +2078,7 @@ if (typeof window !== "undefined") {
                     else {
                         internal.cursor(pw, source, range, direction);
                     }
-                })
+                });
             },
             keyCursor: function (index, range, direction) {
                 return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
@@ -2104,7 +2093,7 @@ if (typeof window !== "undefined") {
                     else {
                         internal.keyCursor(pw, index, range, direction);
                     }
-                })
+                });
             },
             get: function (source, key) {
                 return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
@@ -2119,7 +2108,7 @@ if (typeof window !== "undefined") {
                     else {
                         internal.get(pw, source, key);
                     }
-                })
+                });
             },
             getKey: function (index, key) {
                 return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
@@ -2134,7 +2123,7 @@ if (typeof window !== "undefined") {
                     else {
                         internal.getKey(pw, index, key);
                     }
-                })
+                });
             },
             insert: function (objectStore, data, key) {
                 return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
@@ -2149,7 +2138,7 @@ if (typeof window !== "undefined") {
                     else {
                         internal.insert(pw, objectStore, data, key);
                     }
-                })
+                });
             },
             update: function (objectStore, data, key) {
                 return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
@@ -2164,7 +2153,7 @@ if (typeof window !== "undefined") {
                     else {
                         internal.update(pw, objectStore, data, key);
                     }
-                })
+                });
             },
             remove: function (objectStore, key) {
                 return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
@@ -2179,7 +2168,7 @@ if (typeof window !== "undefined") {
                     else {
                         internal.remove(pw, objectStore, key);
                     }
-                })
+                });
             },
             clear: function (objectStore) {
                 return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
@@ -2194,7 +2183,7 @@ if (typeof window !== "undefined") {
                     else {
                         internal.clear(pw, objectStore);
                     }
-                })
+                });
             },
             deleteDb: function (name) {
                 return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
@@ -2217,7 +2206,7 @@ if (typeof window !== "undefined") {
         };
 
         // Region Functions
-        function initializeIndexedDB() {
+        function initializeIndexedDb() {
             if (window === 'undefined') {
                 return implementations.NONE;
             }
@@ -2246,17 +2235,15 @@ if (typeof window !== "undefined") {
                     // Initialising the window.indexedDB Object for Chrome
                 else if (window.webkitIndexedDB) {
                     if (!window.indexedDB) window.indexedDB = window.webkitIndexedDB;
-                    if (!window.IDBCursor) window.IDBCursor = window.webkitIDBCursor
-                    if (!window.IDBDatabase) window.IDBDatabase = window.webkitIDBDatabase
-                    //if (!window.IDBDatabaseError) window.IDBDatabaseError = window.webkitIDBDatabaseError
-                    if (!window.IDBDatabaseException) window.IDBDatabaseException = window.webkitIDBDatabaseException
-                    if (!window.IDBFactory) window.IDBFactory = window.webkitIDBFactory
-                    if (!window.IDBIndex) window.IDBIndex = window.webkitIDBIndex
-                    if (!window.IDBKeyRange) window.IDBKeyRange = window.webkitIDBKeyRange
-                    if (!window.IDBObjectStore) window.IDBObjectStore = window.webkitIDBObjectStore
-                    if (!window.IDBRequest) window.IDBRequest = window.webkitIDBRequest
-                    if (!window.IDBTransaction) window.IDBTransaction = window.webkitIDBTransaction
-
+                    if (!window.IDBCursor) window.IDBCursor = window.webkitIDBCursor;
+                    if (!window.IDBDatabase) window.IDBDatabase = window.webkitIDBDatabase; //if (!window.IDBDatabaseError) window.IDBDatabaseError = window.webkitIDBDatabaseError
+                    if (!window.IDBDatabaseException) window.IDBDatabaseException = window.webkitIDBDatabaseException;
+                    if (!window.IDBFactory) window.IDBFactory = window.webkitIDBFactory;
+                    if (!window.IDBIndex) window.IDBIndex = window.webkitIDBIndex;
+                    if (!window.IDBKeyRange) window.IDBKeyRange = window.webkitIDBKeyRange;
+                    if (!window.IDBObjectStore) window.IDBObjectStore = window.webkitIDBObjectStore;
+                    if (!window.IDBRequest) window.IDBRequest = window.webkitIDBRequest;
+                    if (!window.IDBTransaction) window.IDBTransaction = window.webkitIDBTransaction;
                     if (typeof window.IDBTransaction.READ_ONLY === "number"
                         && typeof window.IDBTransaction.READ_WRITE === "number"
                         && typeof window.IDBTransaction.VERSION_CHANGE === "number") {
@@ -2417,7 +2404,7 @@ if (typeof window !== "undefined") {
         function IDBCompleteHandler(pw, request) {
             request.oncomplete = function (e) {
                 pw.complete(request, [request, e]);
-            }
+            };
         };
 
         function IDBRequestHandler(pw, request) {
@@ -2444,7 +2431,7 @@ if (typeof window !== "undefined") {
             };
         }
 
-        function IDBOpenDBRequestHandler(pw, request) {
+        function IDBOpenDbRequestHandler(pw, request) {
             IDBBlockedRequestHandler(pw, request);
             request.onupgradeneeded = function (e) {
                 pw.progress(request, [request.transaction, e]);
@@ -2463,8 +2450,7 @@ if (typeof window !== "undefined") {
             IDBErrorHandler(pw, txn);
         };
 
-    })(window, typeof Windows !== "undefined")
-
+    })(window, typeof Windows !== "undefined");
     window.linq2indexedDB = linq2indexedDB;
     if (typeof window.jQuery !== "undefined") {
         $.linq2indexedDB = linq2indexedDB;
@@ -2487,5 +2473,5 @@ else
 
 // Extend array for Opera
 Array.prototype.contains = function (obj) {
-    return this.indexOf(obj) > -1
-}
+    return this.indexOf(obj) > -1;
+};
