@@ -67,6 +67,7 @@ var enableLogging = true;
             utilities: linq2indexedDB.prototype.utilities,
             core: linq2indexedDB.prototype.core,
             linq: linq(dbConfig),
+            viewer: viewer(dbConfig),
             initialize: function () {
                 log("Initialize Started");
                 return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
@@ -604,7 +605,80 @@ var enableLogging = true;
                 return from(new queryBuilderObj(objectStoreName), objectStoreName);
             }
         };
-    };
+    }
+    
+    function viewer(dbConfig) {
+        var dbView = {};
+        
+        dbView.Configuration = {
+            name: dbConfig.name,
+            version: dbConfig.version,
+            autoGenerateAllowed: dbConfig.autoGenerateAllowed,
+            schema: dbConfig.schema,
+            definition: dbConfig.definition,
+            onupgradeneeded: dbConfig.onupgradeneeded,
+            oninitializeversion: dbConfig.oninitializeversion
+        };
+
+        linq2indexedDB.prototype.core.db(dbConfig.name).then(function () {
+            var connection = arguments[0][0];
+            dbView.name = connection.name;
+            dbView.version = connection.version;
+            dbView.ObjectStores = [];
+
+            var objectStoreNames = [];
+            for (var k = 0; k < connection.objectStoreNames.length; k++) {
+                objectStoreNames.push(connection.objectStoreNames[k]);
+            }
+
+            linq2indexedDB.prototype.core.transaction(connection, objectStoreNames, linq2indexedDB.prototype.core.transactionTypes.READ_ONLY, false).then(null, null, function () {
+                var transaction = arguments[0][0];
+
+                for (var i = 0; i < connection.objectStoreNames.length; i++) {
+                    linq2indexedDB.prototype.core.objectStore(transaction, connection.objectStoreNames[i]).then(function() {
+                        var objectStore = arguments[0][1];
+                        var indexes = [];
+                        var objectStoreData = [];
+
+                        for (var j = 0; j < objectStore.indexNames.length; j++) {
+                            linq2indexedDB.prototype.core.index(objectStore, objectStore.indexNames[j], false).then(function () {
+                                var index = arguments[0][1];
+                                var indexData = [];
+                                
+                                linq2indexedDB.prototype.core.cursor(index).then(null, null,function () {
+                                    var data = arguments[0][0];
+                                    var key = arguments[0][1].primaryKey;
+                                    indexData.push({key: key, data: data});
+                                });
+
+                                indexes.push({
+                                    name: index.name,
+                                    keyPath: index.keyPath,
+                                    multiEntry: index.multiEntry,
+                                    data: indexData
+                                });
+                            });
+                        }
+
+                        linq2indexedDB.prototype.core.cursor(objectStore).then(null, null, function () {
+                            var data = arguments[0][0];
+                            var key = arguments[0][1].primaryKey;
+                            objectStoreData.push({ key: key, data: data });
+                        });
+
+                        dbView.ObjectStores.push({
+                            name: objectStore.name,
+                            keyPath: objectStore.keyPath,
+                            autoIncrement: objectStore.autoIncrement,
+                            indexes: indexes,
+                            data: objectStoreData
+                        });
+                    });
+                }
+            });
+        });
+        return dbView;
+    }
 
     function getVersionDefinition(version, definitions) {
         var result = null;

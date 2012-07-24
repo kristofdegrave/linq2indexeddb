@@ -20,7 +20,7 @@ var databaseDefinition = [{
 }];
 
 var dbConfig = new Object();
-dbConfig.version = applicationVersion
+dbConfig.version = applicationVersion;
 //dbConfig.objectStoreConfiguration = ObjStores;
 dbConfig.definition = databaseDefinition;
 
@@ -93,7 +93,7 @@ $(function () {
     });
 
     cboTypeConsumption.change(function (e) {
-        ConsumptionChanged(cboTypeConsumption.val())
+        ConsumptionChanged(cboTypeConsumption.val());
     });
 });
 
