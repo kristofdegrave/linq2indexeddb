@@ -11,12 +11,12 @@
         <script type = "text/javascript">
             var sample = {
             	obj: function(){
-            		return {
-            			"String": "Sample " + new Date(),
-            			"Int": this.integer(),
-            			"Float": Math.random(),
-            			"Boolean": true
-            		}
+            	    return {
+            	        "String": "Sample " + new Date(),
+            	        "Int": this.integer(),
+            	        "Float": Math.random(),
+            	        "Boolean": true
+            	    };
             	},
             	integer: function(arg){
             		return parseInt(Math.random() * (arg || 100));

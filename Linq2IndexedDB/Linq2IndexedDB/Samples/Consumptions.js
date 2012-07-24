@@ -35,7 +35,7 @@ $(function () {
 
     //db.deleteDatabase().then(function(){
         db.initialize().then(function () {
-            db.linq.from(CONSUMPTIONTYPE).select().then(function (data) { }, handleError, function (data) {
+            db.linq.from(CONSUMPTIONTYPE).select().then(function () { }, handleError, function (data) {
                 InitializeConsumptionType(data);
             });
         }, handleError);
@@ -65,7 +65,7 @@ $(function () {
                     var id = parseInt(txtId.val());
                     var consumption = {};
                     if (id != 0) {
-                        consumption.Id = id
+                        consumption.Id = id;
                     }
 
                     if (Modernizr.inputtypes.date) {
@@ -92,7 +92,7 @@ $(function () {
         }
     });
 
-    cboTypeConsumption.change(function (e) {
+    cboTypeConsumption.change(function () {
         ConsumptionChanged(cboTypeConsumption.val());
     });
 });
@@ -157,10 +157,10 @@ function InitializeConsumptionType(consumptionType) {
     }
     tr.append('<th>Actions</th>');
 
-    var tbody = $('<tbody id="consumptions-data-' + consumptionType.Description + '"></tbody>')
+    var tbody = $('<tbody id="consumptions-data-' + consumptionType.Description + '"></tbody>');
     table.append(tbody);
 
-    var button = $('<button id="AddConsumption' + consumptionType.Description + '" value="' + consumptionType.Id + '">Add consumption</button>')
+    var button = $('<button id="AddConsumption' + consumptionType.Description + '" value="' + consumptionType.Id + '">Add consumption</button>');
     button.button()
     .click(function () {
         InitializeInput($(this).val());
@@ -234,7 +234,7 @@ function ConsumptionChanged(id) {
 }
 
 function showConsumption(data, consumptionType) {
-    var row = $('#consumptionId-' + data.Id)
+    var row = $('#consumptionId-' + data.Id);
     if(row.length > 0){
         row.empty();
     }

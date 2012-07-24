@@ -984,7 +984,7 @@ var enableLogging = true;
 })();
 
 // Namespace linq2indexedDB.prototype.utitlities
-(function () {
+(function (isMetroApp) {
     "use strict";
 
     var utilities = {
@@ -1029,7 +1029,7 @@ var enableLogging = true;
             };
         },
         promiseWrapper: function (promise) {
-            if (typeof Windows !== "undefined") {
+            if (isMetroApp) {
                 return new WinJS.Promise(function (completed, error, progress) {
                     promise({
                         complete: function (context, args) {
@@ -1153,7 +1153,7 @@ var enableLogging = true;
     };
 
     linq2indexedDB.prototype.utilities = utilities;
-})();
+    })(typeof Windows !== "undefined");
 
 if (typeof window !== "undefined") {
     // UI Thread 

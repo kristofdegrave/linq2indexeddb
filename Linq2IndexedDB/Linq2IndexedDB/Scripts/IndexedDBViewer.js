@@ -61,15 +61,15 @@ $(function () {
                 var store = args[1];
 
                 objectStoreDefinition(tableObjectStores, store);
-                for (var i = 0; i < store.indexNames.length; i++) {
-                    $("#tabs").tabs("add", '#tab-' + store.indexNames[i], store.indexNames[i]);
-                    linq2indexedDB.prototype.core.index(store, store.indexNames[i], false).then(function (args1) {
+                for (var j = 0; j < store.indexNames.length; j++) {
+                    $("#tabs").tabs("add", '#tab-' + store.indexNames[j], store.indexNames[j]);
+                    linq2indexedDB.prototype.core.index(store, store.indexNames[j], false).then(function (args1) {
                         indexDefinitions(tableIndexes, args1[1]);
 
-                        linq2indexedDB.prototype.core.cursor(args1[1]).then(function (args2) {
+                        linq2indexedDB.prototype.core.cursor(args1[1]).then(function () {
 
                         }
-                        , function (args2) { }
+                        , function () { }
                         , function (args2) {
                             var storeTab = $('#tab-' + args2[1].source.name);
                             var tableData = $('<table></table>');
@@ -80,15 +80,15 @@ $(function () {
                             tableData.append(rowData);
                             storeTab.append(tableData);
 
-                            indexData(tableData, args2)
+                            indexData(tableData, args2);
                         });
                     });
                 }
 
-                linq2indexedDB.prototype.core.cursor(store).then(function (args1) {
+                linq2indexedDB.prototype.core.cursor(store).then(function () {
 
                 }
-                , function (args1) { }
+                , function () { }
                 , function (args1) {
                     var storeTab = $('#tab-' + args1[1].source.name);
                     var tableData = $('<table></table>');
@@ -98,7 +98,7 @@ $(function () {
                     tableData.append(rowData);
                     storeTab.append(tableData);
 
-                    storeData(tableData, args1)
+                    storeData(tableData, args1);
                 });
             });
         }
@@ -113,7 +113,7 @@ $(function () {
     }
 
     function indexDefinitions(table, index) {
-        var multiEntry = index.multiEntry || index.multiRow
+        var multiEntry = index.multiEntry || index.multiRow;
         var row = $('<tr></tr>');
         row.append('<td>' + index.name + '</td>');
         row.append('<td>' + index.keyPath + '</td>');
