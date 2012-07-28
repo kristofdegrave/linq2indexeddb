@@ -9,7 +9,7 @@ var enableLogging = true;
     /// <param name="$" type="jQuery" />
     "use strict";
 
-    linq2indexedDB = function (name, configuration) {
+    linq2indexedDB = function (name, configuration, enableDebugging) {
         /// <summary>Creates a new or opens an existing database for the given name</summary>
         /// <param name="name" type="String">The name of the database</param>
         /// <param name="configuration" type="Object">
@@ -55,19 +55,11 @@ var enableLogging = true;
                 dbConfig.oninitializeversion = configuration.oninitializeversion;
             }
         }
-
-        var log = function() {
-            if (typeof enableLogging !== "undefined" && enableLogging) {
-                return linq2indexedDB.prototype.utilities.log;
-            }
-            return false;
-        };
-
-        return {
+        
+        var returnObject = {
             utilities: linq2indexedDB.prototype.utilities,
             core: linq2indexedDB.prototype.core,
             linq: linq(dbConfig),
-            viewer: viewer(dbConfig),
             initialize: function () {
                 log("Initialize Started");
                 return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
@@ -116,6 +108,12 @@ var enableLogging = true;
                 });
             }
         };
+
+        if (enableDebugging) {
+            returnObject.viewer = viewer(dbConfig);
+        }
+
+        return returnObject;
     };
 
     function linq(dbConfig) {
@@ -142,61 +140,61 @@ var enableLogging = true;
             queryBuilder.from = objectStoreName;
             return {
                 where: function (filter) {
-                        /// <summary>Filters the selected data.</summary>
-                        /// <param name="filter">
-                        /// The filter argument can be a string (In this case the string represents the property name you want to filter on) or a function.
-                        /// (In this case the function will be used to filter the data. This callback function is called with 1 parameter: data
-                        /// ,this argument holds the data that has to be validated. The return type of the function must be a boolean.)
-                        ///</param>
+                    /// <summary>Filters the selected data.</summary>
+                    /// <param name="filter">
+                    /// The filter argument can be a string (In this case the string represents the property name you want to filter on) or a function.
+                    /// (In this case the function will be used to filter the data. This callback function is called with 1 parameter: data
+                    /// ,this argument holds the data that has to be validated. The return type of the function must be a boolean.)
+                    ///</param>
                     return where(queryBuilder, filter, true, false);
                 },
                 orderBy: function (propertyName) {
-                        /// <summary>Sorts the selected data ascending.</summary>
-                        /// <param name="propertyName" type="String">The name of the property you want to sort on.</param>
+                    /// <summary>Sorts the selected data ascending.</summary>
+                    /// <param name="propertyName" type="String">The name of the property you want to sort on.</param>
                     return orderBy(queryBuilder, propertyName, false);
                 },
                 orderByDesc: function (propertyName) {
-                        /// <summary>Sorts the selected data descending.</summary>
-                        /// <param name="propertyName" type="String">The name of the property you want to sort on.</param>
+                    /// <summary>Sorts the selected data descending.</summary>
+                    /// <param name="propertyName" type="String">The name of the property you want to sort on.</param>
                     return orderBy(queryBuilder, propertyName, true);
                 },
                 select: function (propertyNames) {
-                        /// <summary>Selects the data.</summary>
-                        /// <param name="propertyNames" type="Array">A list of the names of the properties you want to select.</param>
-                        /// <returns type="Array">A list with the selected objects.</returns>
+                    /// <summary>Selects the data.</summary>
+                    /// <param name="propertyNames" type="Array">A list of the names of the properties you want to select.</param>
+                    /// <returns type="Array">A list with the selected objects.</returns>
                     return select(queryBuilder, propertyNames);
                 },
                 insert: function (data, key) {
-                        /// <summary>inserts data.</summary>
-                        /// <param name="data" type="Object">The object you want to insert.</param>
-                        /// <param name="key" type="Object">
-                        ///     [Optional] The key of the data you want to insert.
-                        /// </param>
-                        /// <returns type="Object">The object that was inserted.</returns>
+                    /// <summary>inserts data.</summary>
+                    /// <param name="data" type="Object">The object you want to insert.</param>
+                    /// <param name="key" type="Object">
+                    ///     [Optional] The key of the data you want to insert.
+                    /// </param>
+                    /// <returns type="Object">The object that was inserted.</returns>
                     return insert(queryBuilder, data, key);
                 },
                 update: function (data, key) {
-                        /// <summary>inserts data.</summary>
-                        /// <param name="data" type="Object">The object you want to update.</param>
-                        /// <param name="key" type="Object">
-                        ///     [Optional] The key of the data you want to update.
-                        /// </param>
-                        /// <returns type="Object">The object that was updated.</returns>
+                    /// <summary>inserts data.</summary>
+                    /// <param name="data" type="Object">The object you want to update.</param>
+                    /// <param name="key" type="Object">
+                    ///     [Optional] The key of the data you want to update.
+                    /// </param>
+                    /// <returns type="Object">The object that was updated.</returns>
                     return update(queryBuilder, data, key);
                 },
                 remove: function (key) {
-                        /// <summary>Removes data from the objectstore by his key.</summary>
-                        /// <param name="key" type="Object">The key of the object you want to remove.</param>
+                    /// <summary>Removes data from the objectstore by his key.</summary>
+                    /// <param name="key" type="Object">The key of the object you want to remove.</param>
                     return remove(queryBuilder, key);
                 },
                 clear: function () {
-                        /// <summary>Removes all data from the objectstore.</summary>
+                    /// <summary>Removes all data from the objectstore.</summary>
                     return clear(queryBuilder);
                 },
                 get: function (key) {
-                        /// <summary>Gets an object by his key.</summary>
-                        /// <param name="key" type="Object">The key of the object you want to retrieve.</param>
-                        /// <returns type="Object">The object that has the provided key.</returns>
+                    /// <summary>Gets an object by his key.</summary>
+                    /// <param name="key" type="Object">The key of the object you want to retrieve.</param>
+                    /// <returns type="Object">The object that has the provided key.</returns>
                     return get(queryBuilder, key);
                 }
             };
@@ -206,12 +204,12 @@ var enableLogging = true;
             var whereClauses = {};
             var filterMetaData;
 
-            if(typeof isNotClause === "undefined"){
+            if (typeof isNotClause === "undefined") {
                 whereClauses.not = function () {
                     return where(queryBuilder, filter, isAndClause, isOrClause, true);
                 };
             }
-            
+
             if (typeof filter === "function") {
                 filterMetaData = {
                     propertyName: filter,
@@ -606,10 +604,10 @@ var enableLogging = true;
             }
         };
     }
-    
+
     function viewer(dbConfig) {
         var dbView = {};
-        
+
         dbView.Configuration = {
             name: dbConfig.name,
             version: dbConfig.version,
@@ -620,64 +618,93 @@ var enableLogging = true;
             oninitializeversion: dbConfig.oninitializeversion
         };
 
+        getDbInformation(dbView, dbConfig);
+
+        linq2indexedDB.prototype.core.dbStructureChanged.addListener(linq2indexedDB.prototype.core.databaseEvents.objectStoreCreated, function () {
+            getDbInformation(dbView, dbConfig);
+        });
+        linq2indexedDB.prototype.core.dbStructureChanged.addListener(linq2indexedDB.prototype.core.databaseEvents.objectStoreRemoved, function () {
+            getDbInformation(dbView, dbConfig);
+        });
+        linq2indexedDB.prototype.core.dbStructureChanged.addListener(linq2indexedDB.prototype.core.databaseEvents.indexCreated, function () {
+            getDbInformation(dbView, dbConfig);
+        });
+        linq2indexedDB.prototype.core.dbStructureChanged.addListener(linq2indexedDB.prototype.core.databaseEvents.indexCreated, function () {
+            getDbInformation(dbView, dbConfig);
+        });
+        linq2indexedDB.prototype.core.dbStructureChanged.addListener(linq2indexedDB.prototype.core.databaseEvents.databaseRemoved, function () {
+            dbView.name = null;
+            dbView.version = null;
+            dbView.ObjectStores = [];
+        });
+
+        return dbView;
+    }
+
+    function getDbInformation(dbView, dbConfig) {
         linq2indexedDB.prototype.core.db(dbConfig.name).then(function () {
             var connection = arguments[0][0];
             dbView.name = connection.name;
             dbView.version = connection.version;
             dbView.ObjectStores = [];
 
+            linq2indexedDB.prototype.core.dbStructureChanged.addListener(linq2indexedDB.prototype.core.databaseEvents.databaseBlocked, function () {
+                connection.close();
+            });
+
             var objectStoreNames = [];
             for (var k = 0; k < connection.objectStoreNames.length; k++) {
                 objectStoreNames.push(connection.objectStoreNames[k]);
             }
 
-            linq2indexedDB.prototype.core.transaction(connection, objectStoreNames, linq2indexedDB.prototype.core.transactionTypes.READ_ONLY, false).then(null, null, function () {
-                var transaction = arguments[0][0];
+            if (objectStoreNames.length > 0) {
+                linq2indexedDB.prototype.core.transaction(connection, objectStoreNames, linq2indexedDB.prototype.core.transactionTypes.READ_ONLY, false).then(null, null, function () {
+                    var transaction = arguments[0][0];
 
-                for (var i = 0; i < connection.objectStoreNames.length; i++) {
-                    linq2indexedDB.prototype.core.objectStore(transaction, connection.objectStoreNames[i]).then(function() {
-                        var objectStore = arguments[0][1];
-                        var indexes = [];
-                        var objectStoreData = [];
+                    for (var i = 0; i < connection.objectStoreNames.length; i++) {
+                        linq2indexedDB.prototype.core.objectStore(transaction, connection.objectStoreNames[i]).then(function () {
+                            var objectStore = arguments[0][1];
+                            var indexes = [];
+                            var objectStoreData = [];
 
-                        for (var j = 0; j < objectStore.indexNames.length; j++) {
-                            linq2indexedDB.prototype.core.index(objectStore, objectStore.indexNames[j], false).then(function () {
-                                var index = arguments[0][1];
-                                var indexData = [];
-                                
-                                linq2indexedDB.prototype.core.cursor(index).then(null, null,function () {
-                                    var data = arguments[0][0];
-                                    var key = arguments[0][1].primaryKey;
-                                    indexData.push({key: key, data: data});
+                            for (var j = 0; j < objectStore.indexNames.length; j++) {
+                                linq2indexedDB.prototype.core.index(objectStore, objectStore.indexNames[j], false).then(function () {
+                                    var index = arguments[0][1];
+                                    var indexData = [];
+
+                                    linq2indexedDB.prototype.core.cursor(index).then(null, null, function () {
+                                        var data = arguments[0][0];
+                                        var key = arguments[0][1].primaryKey;
+                                        indexData.push({ key: key, data: data });
+                                    });
+
+                                    indexes.push({
+                                        name: index.name,
+                                        keyPath: index.keyPath,
+                                        multiEntry: index.multiEntry,
+                                        data: indexData
+                                    });
                                 });
+                            }
 
-                                indexes.push({
-                                    name: index.name,
-                                    keyPath: index.keyPath,
-                                    multiEntry: index.multiEntry,
-                                    data: indexData
-                                });
+                            linq2indexedDB.prototype.core.cursor(objectStore).then(null, null, function () {
+                                var data = arguments[0][0];
+                                var key = arguments[0][1].primaryKey;
+                                objectStoreData.push({ key: key, data: data });
                             });
-                        }
 
-                        linq2indexedDB.prototype.core.cursor(objectStore).then(null, null, function () {
-                            var data = arguments[0][0];
-                            var key = arguments[0][1].primaryKey;
-                            objectStoreData.push({ key: key, data: data });
+                            dbView.ObjectStores.push({
+                                name: objectStore.name,
+                                keyPath: objectStore.keyPath,
+                                autoIncrement: objectStore.autoIncrement,
+                                indexes: indexes,
+                                data: objectStoreData
+                            });
                         });
-
-                        dbView.ObjectStores.push({
-                            name: objectStore.name,
-                            keyPath: objectStore.keyPath,
-                            autoIncrement: objectStore.autoIncrement,
-                            indexes: indexes,
-                            data: objectStoreData
-                        });
-                    });
-                }
-            });
+                    }
+                });
+            }
         });
-        return dbView;
     }
 
     function getVersionDefinition(version, definitions) {
@@ -873,7 +900,7 @@ var enableLogging = true;
                             throw "linq2indexedDB: value needs to be provided to the greatherThan clause";
                         }
                         var isValueIncluded = typeof (valueIncluded) === undefined ? false : valueIncluded;
-                        
+
                         filterMetaData.value = value;
                         filterMetaData.valueIncluded = isValueIncluded;
 
@@ -999,7 +1026,7 @@ var enableLogging = true;
                     worker.onerror = pw.error;
 
                     var filtersString = JSON.stringify(filters, linq2indexedDB.prototype.utilities.serialize);
-                    
+
                     worker.postMessage({ data: data, filters: filtersString, sortClauses: sortClauses });
                 }
                 else {
@@ -1153,7 +1180,7 @@ var enableLogging = true;
     };
 
     linq2indexedDB.prototype.utilities = utilities;
-    })(typeof Windows !== "undefined");
+})(typeof Windows !== "undefined");
 
 if (typeof window !== "undefined") {
     // UI Thread 
@@ -1207,6 +1234,87 @@ if (typeof window !== "undefined") {
                 return deferredHandler(IDBCursorRequestHandler, request);
             }
         };
+
+        //Copyright (c) 2010 Nicholas C. Zakas. All rights reserved.
+        //MIT License
+        function eventTarget() {
+            this._listeners = {};
+        }
+
+        eventTarget.prototype = {
+
+            constructor: eventTarget,
+
+            addListener: function (type, listener) {
+                if (!linq2indexedDB.prototype.utilities.isArray(type)) {
+                    type = [type];
+                }
+
+                for (var i = 0; i < type.length; i++) {
+                    if (typeof this._listeners[type[i]] == "undefined") {
+                        this._listeners[type[i]] = [];
+                    }
+
+                    this._listeners[type[i]].push(listener);
+                }
+            },
+
+            fire: function (event) {
+                if (typeof event == "string") {
+                    event = { type: event };
+                }
+                if (!event.target) {
+                    event.target = this;
+                }
+
+                if (!event.type) {  //falsy
+                    throw new Error("Event object missing 'type' property.");
+                }
+
+                if (this._listeners[event.type] instanceof Array) {
+                    var listeners = this._listeners[event.type];
+                    for (var i = 0, len = listeners.length; i < len; i++) {
+                        listeners[i].call(this, event);
+                    }
+                }
+            },
+
+            removeListener: function (type, listener) {
+                if (!linq2indexedDB.prototype.utilities.isArray(type)) {
+                    type = [type];
+                }
+
+                for (var j = 0; j < type[j].length; j++) {
+                    if (this._listeners[type[j]] instanceof Array) {
+                        var listeners = this._listeners[type[j]];
+                        for (var i = 0, len = listeners.length; i < len; i++) {
+                            if (listeners[i] === listener) {
+                                listeners.splice(i, 1);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        // End copyright
+
+        var dbEvents = {
+            objectStoreCreated: "Object store created",
+            objectStoreRemoved: "Object store removed",
+            indexCreated: "Index created",
+            indexRemoved: "Index removed",
+            databaseRemoved: "Database removed",
+            databaseBlocked: "Database blocked"
+        };
+
+        var dataEvents = {
+            dataInserted: "Data inserted",
+            dataUpdated: "Data updated",
+            dataRemoved: "Data removed",
+            objectStoreCleared: "Object store cleared"
+        };
+
         var internal = {
             db: function (pw, name, version) {
                 try {
@@ -1273,6 +1381,7 @@ if (typeof window !== "undefined") {
                                         upgardeEvent.oldVersion = currentVersion;
                                         upgardeEvent.originalEvent = event;
 
+                                        linq2indexedDB.prototype.core.dbStructureChanged({ type: dbEvents.databaseUpgrade, data: upgardeEvent });
                                         pw.progress(context, [txn, upgardeEvent]);
 
                                         handlers.IDBTransaction(txn).then(function (/*trans, args*/) {
@@ -1302,6 +1411,7 @@ if (typeof window !== "undefined") {
                                     },
                                     function (args1 /*result, event*/) {
                                         // txn blocked
+                                        linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.databaseBlocked, data: args });
                                         pw.progress(this, args1);
                                     });
                             }
@@ -1318,6 +1428,9 @@ if (typeof window !== "undefined") {
                         },
                         function (args /*result, e*/) {
                             // Database upgrade + db blocked
+                            if (args[0] == "blocked") {
+                                linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.databaseBlocked, data: args });
+                            }
                             pw.progress(this, args);
                         }
                     );
@@ -1473,6 +1586,7 @@ if (typeof window !== "undefined") {
                         var store = transaction.db.createObjectStore(objectStoreName, options, options.autoIncrement);
 
                         log("ObjectStore Created", transaction, store);
+                        linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.objectStoreCreated, data: store });
                         pw.complete(store, [transaction, store]);
                     }
                     else {
@@ -1504,6 +1618,7 @@ if (typeof window !== "undefined") {
                         transaction.db.deleteObjectStore(objectStoreName);
                         log("ObjectStore Deleted", objectStoreName);
                         log("deleteObjectStore completed", objectStoreName);
+                        linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.objectStoreRemoved, data: objectStoreName });
                         pw.complete(this, [transaction, objectStoreName]);
                     }
                     else {
@@ -1617,6 +1732,7 @@ if (typeof window !== "undefined") {
                     if (!objectStore.indexNames.contains(indexName)) {
                         var index = objectStore.createIndex(indexName, propertyName, { unique: indexOptions ? indexOptions.unique : false/*, multirow: indexOptions ? indexOptions.multirow : false*/ });
                         log("createIndex compelted", objectStore.transaction, index, objectStore);
+                        linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.indexCreated, data: index });
                         pw.complete(this, [objectStore.transaction, index, objectStore]);
                     }
                     else {
@@ -1648,7 +1764,7 @@ if (typeof window !== "undefined") {
                     }
 
                     objectStore.deleteIndex(indexName);
-
+                    linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.indexRemoved, data: indexName });
                     log("deleteIndex completed", objectStore.transaction, propertyName, objectStore);
                     pw.complete(this, [objectStore.transaction, propertyName, objectStore]);
                 }
@@ -1834,6 +1950,7 @@ if (typeof window !== "undefined") {
                             data[objectStore.keyPath] = result;
                         }
 
+                        linq2indexedDB.prototype.core.dbDataChanged.fire({ type: dataEvents.dataInserted, data: data, objectStore: objectStore });
                         log("Insert completed", data, result, objectStore.transaction, e);
                         pw.complete(this, [data, result, objectStore.transaction, e]);
                     }, function (args /*error, e*/) {
@@ -1863,6 +1980,7 @@ if (typeof window !== "undefined") {
                         var result = args[0];
                         var e = args[1];
 
+                        linq2indexedDB.prototype.core.dbDataChanged.fire({ type: dataEvents.dataUpdated, data: data, objectStore: objectStore });
                         log("Update completed", data, result, objectStore.transaction, e);
                         pw.complete(this, [data, result, objectStore.transaction, e]);
                     }, function (args /*error, e*/) {
@@ -1884,6 +2002,7 @@ if (typeof window !== "undefined") {
                         var result = args[0];
                         var e = args[1];
 
+                        linq2indexedDB.prototype.core.dbDataChanged.fire({ type: dataEvents.dataRemoved, data: key, objectStore: objectStore });
                         log("Remove completed", result, objectStore.transaction, e);
                         pw.complete(this, [result, objectStore.transaction, e]);
                     },
@@ -1905,6 +2024,7 @@ if (typeof window !== "undefined") {
                         var result = args[0];
                         var e = args[1];
 
+                        linq2indexedDB.prototype.core.dbDataChanged.fire({ type: dataEvents.objectStoreCleared, objectStore: objectStore });
                         log("Clear completed", result, objectStore.transaction, e);
                         pw.complete(this, [result, objectStore.transaction, e]);
                     },
@@ -1927,6 +2047,7 @@ if (typeof window !== "undefined") {
                             var result = args[0];
                             var e = args[1];
 
+                            linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.databaseRemoved });
                             log("Delete Database Promise completed", result, e, name);
                             pw.complete(this, [result, e, name]);
                         }, function (args /*error, e*/) {
@@ -1935,10 +2056,12 @@ if (typeof window !== "undefined") {
 
                             // added for FF, If a db gets deleted that doesn't exist an errorCode 6 ('NOT_ALLOWED_ERR') is given
                             if (e.currentTarget && e.currentTarget.errorCode == 6) {
+                                linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.databaseRemoved });
                                 pw.complete(this, [error, e, name]);
                             }
                             else if (implementation == implementations.SHIM
                                 && e.message == "Database does not exist") {
+                                linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.databaseRemoved });
                                 pw.complete(this, [error, e, name]);
                             }
                             else {
@@ -1946,7 +2069,9 @@ if (typeof window !== "undefined") {
                                 pw.error(this, [error, e]);
                             }
                         }, function (args /*result, e*/) {
-
+                            if (args[0] == "blocked") {
+                                linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.databaseBlocked });
+                            }
                             log("Delete Database Promise blocked", args /*result*/);
                             pw.progress(this, args /*[result, e]*/);
                         });
@@ -1959,6 +2084,7 @@ if (typeof window !== "undefined") {
                             var result = args[0];
                             var e = args[1];
 
+                            linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.databaseRemoved });
                             pw.complete(this, [result, e, name]);
                         },
                         function (args /*error, e*/) {
@@ -2276,7 +2402,11 @@ if (typeof window !== "undefined") {
                     linq2indexedDB.prototype.core.closeDatabaseConnection(transaction.db);
                 }
             },
-            transactionTypes: transactionTypes
+            transactionTypes: transactionTypes,
+            dbStructureChanged: new eventTarget(),
+            dbDataChanged: new eventTarget(),
+            databaseEvents: dbEvents,
+            dataEvents: dataEvents
         };
 
         // Region Functions
@@ -2530,8 +2660,7 @@ if (typeof window !== "undefined") {
         $.linq2indexedDB = linq2indexedDB;
     }
 }
-else
-{
+else {
     // Web Worker Thread
     onmessage = function (event) {
         var data = event.data.data;

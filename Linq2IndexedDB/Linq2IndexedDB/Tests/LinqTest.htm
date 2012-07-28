@@ -13,7 +13,7 @@
                 test("insert primitive value (1), no key - non existing object store", function () {
                     expect(1);
                     stop();
-                    var db = $.linq2indexedDB("Insert Tests", null,true);
+                    var db = $.linq2indexedDB("Insert Tests");
                     db.deleteDatabase().then(function () {
                         db.linq.from("test").insert(1).then(function () { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                     });
@@ -21,7 +21,7 @@
                 test("insert JSON value ({name: 'test'}), no key - non existing object store", function () {
                     expect(1);
                     stop();
-                    var db = $.linq2indexedDB("Insert Tests", null, true);
+                    var db = $.linq2indexedDB("Insert Tests");
                     db.deleteDatabase().then(function () {
                         db.linq.from("test").insert({ name: "test" }).then(function () { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
                     });
@@ -118,7 +118,7 @@
 
                     stop();
 
-                    var db = $.linq2indexedDB("Insert Tests", dbConfiguration, true);
+                    var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
                     db.deleteDatabase().then(function () {
                         db.initialize().then(function () {
                             db.linq.from("test").insert(1, 1).then(function () {  ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
@@ -139,7 +139,7 @@
 
                     stop();
 
-                    var db = $.linq2indexedDB("Insert Tests", dbConfiguration, true);
+                    var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
                     db.deleteDatabase().then(function () {
                         db.initialize().then(function () {
                             db.linq.from("test").insert({ name: "test" }, 1).then(function () { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
