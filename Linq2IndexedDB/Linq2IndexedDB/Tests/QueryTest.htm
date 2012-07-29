@@ -4,144 +4,144 @@
         <title>Tests</title>
         <link href="qunit.css" rel="stylesheet" type="text/css" />
 
-        <script type="text/javascript" src="../Scripts/jquery-1.7.2.js"></script>
-        <script src="qunit.js" type="text/javascript"></script>
-    <script type="text/javascript" src="../Scripts/indexeddb.shim.js"></script>
-        <script src="../Scripts/Linq2IndexedDB.js" type="text/javascript"></script>
+        <script type="text/javascript" src="../Scripts/jquery-1.7.2.js"> </script>
+        <script src="qunit.js" type="text/javascript"> </script>
+        <script type="text/javascript" src="../Scripts/indexeddb.shim.js"> </script>
+        <script src="../Scripts/Linq2IndexedDB.js" type="text/javascript"> </script>
         <script type = "text/javascript">
             var sample = {
-            	obj: function(){
-            	    return {
-            	        "String": "Sample " + new Date(),
-            	        "Int": this.integer(),
-            	        "Float": Math.random(),
-            	        "Boolean": true
-            	    };
-            	},
-            	integer: function(arg){
-            		return parseInt(Math.random() * (arg || 100));
-            	}
+                obj: function() {
+                    return {
+                        "String": "Sample " + new Date(),
+                        "Int": this.integer(),
+                        "Float": Math.random(),
+                        "Boolean": true
+                    };
+                },
+                integer: function(arg) {
+                    return parseInt(Math.random() * (arg || 100));
+                }
             };
         </script>
         <script type="text/javascript">
-            $(document).ready(function(){
-            	module("Where Clauses");
-            	
-            	asyncTest("Intial Insert", function(){
-            		var db = $.linq2indexedDB("QueryTest");
-            		db.linq.from("test").insert(sample.obj()).then(function(){
-            			ok(true, "Data Added to table successfully ");
-            			start();
-            		}, function(){
-            			ok(false, "Could not add data ");
-            			start();
-            		});
-            	});
-            	
-            	asyncTest("Simple select", function(){
-            		var db = $.linq2indexedDB("QueryTest");
-            		db.linq.from("test").select().then(function(data){
-            			ok(true, "Selected " + data.length + " items");
-            			start();
-            		}, function(){
-            			ok(false, "");
-            			start();
-            		});
-            	});
-            	
-            	asyncTest("Where Clause", function(){
-            		var db = $.linq2indexedDB("QueryTest");
-            		db.linq.from("test").where("Int").equals(1).select().then(function(data){
-            			for (var i = 0; i < data.length; i++) {
-            				if (data[i]["Int"] !== 1) {
-            					ok(false, "Value is not 1");
-            				}
-            			}
-            			ok(true, "Looked at " + data.length + " items, and all match condition");
-            			start();
-            		}, function(){
-            			start();
-            		});
-            	});
-            
-            	asyncTest("Where Clause with Boolean condition", function(){
-            		var db = $.linq2indexedDB("QueryTest");
-            		db.linq.from("test").where("Boolean").equals(true).select().then(function(data){
-            			if (data.length === 0) {
-            				ok(false, "No items are true, this is incorrect");
-            			} else {
-            				ok(true, "All true values selected " + data.length);
-            			}
-            			start();
-            		}, function(){
-            			ok(false, "Could not select data");
-            			start();
-            		});
-            	});
-            	
-            	asyncTest("Simple sorting", function(){
-            		var db = $.linq2indexedDB("QueryTest");
-            		db.linq.from("test").orderBy("Int").select().then(function (data) {
-            		    // Math.max() == -Infinity
-            			var min = Math.max();
-            			for (var i = 0; i < data.length; i++) {
-            				if (data[i]["Int"] < min) {
-            					ok(false, "Data is not sorted");
-            				}
-            				min = data[i]["Int"];
-            			}
-            			ok(true, "All " + data.length + " values are sorted");
-            			start();
-            		}, function(){
-            			ok(false, "Could not sort data");
-            			start();
-            		});
-            	});
-            	
-            	asyncTest("Simple Reverse sorting", function(){
-            		var db = $.linq2indexedDB("QueryTest");
-            		db.linq.from("test").orderByDesc("Float").select().then(function (data) {
-            		    // Math.min() == Infinity
-            			var max = Math.min();
-            			for (var i = 0; i < data.length; i++) {
-            				if (data[i]["Float"] > max) {
-            					ok(false, "Data is not sorted");
-            				}
-            				max = data[i]["Float"];
-            			}
-            			ok(true, "All " + data.length + " values are sorted");
-            			start();
-            		}, function(){
-            			ok(false, "Could not sort data");
-            			start();
-            		});
-            	});
-            	
-            	
-            	asyncTest("Sorting with range, same property", function(){
-            		var db = $.linq2indexedDB("QueryTest");
-            		db.linq.from("test").where("Int").greaterThan(20).orderByDesc("Float").select().then(function(data){
-            		    // Math.min() == Infinity
-            		    var max = Math.min();
-            			if (data.length === 0) {
-            				ok(false, "Could not find any records");
-            			}
-            			for (var i = 0; i < data.length; i++) {
-            				if (data[i]["Float"] > max) {
-            					ok(false, "Data is not sorted");
-            				}
-            				if (data[i]["Int"] < 20) {
-            					ok(false, "Where clause not satisfied");
-            				}
-            				max = data[i]["Float"];
-            			}
-            			ok(true, "All " + data.length + " values are sorted");
-            			start();
-            		}, function(){
-            			ok(false, "Could not sort data");
-            			start();
-            		});
-            	});
+            $(document).ready(function() {
+                module("Where Clauses");
+
+                asyncTest("Intial Insert", function() {
+                    var db = $.linq2indexedDB("QueryTest");
+                    db.linq.from("test").insert(sample.obj()).then(function() {
+                        ok(true, "Data Added to table successfully ");
+                        start();
+                    }, function() {
+                        ok(false, "Could not add data ");
+                        start();
+                    });
+                });
+
+                asyncTest("Simple select", function() {
+                    var db = $.linq2indexedDB("QueryTest");
+                    db.linq.from("test").select().then(function(data) {
+                        ok(true, "Selected " + data.length + " items");
+                        start();
+                    }, function() {
+                        ok(false, "");
+                        start();
+                    });
+                });
+
+                asyncTest("Where Clause", function() {
+                    var db = $.linq2indexedDB("QueryTest");
+                    db.linq.from("test").where("Int").equals(1).select().then(function(data) {
+                        for (var i = 0; i < data.length; i++) {
+                            if (data[i]["Int"] !== 1) {
+                                ok(false, "Value is not 1");
+                            }
+                        }
+                        ok(true, "Looked at " + data.length + " items, and all match condition");
+                        start();
+                    }, function() {
+                        start();
+                    });
+                });
+
+                asyncTest("Where Clause with Boolean condition", function() {
+                    var db = $.linq2indexedDB("QueryTest");
+                    db.linq.from("test").where("Boolean").equals(true).select().then(function(data) {
+                        if (data.length === 0) {
+                            ok(false, "No items are true, this is incorrect");
+                        } else {
+                            ok(true, "All true values selected " + data.length);
+                        }
+                        start();
+                    }, function() {
+                        ok(false, "Could not select data");
+                        start();
+                    });
+                });
+
+                asyncTest("Simple sorting", function() {
+                    var db = $.linq2indexedDB("QueryTest");
+                    db.linq.from("test").orderBy("Int").select().then(function(data) {
+                        // Math.max() == -Infinity
+                        var min = Math.max();
+                        for (var i = 0; i < data.length; i++) {
+                            if (data[i]["Int"] < min) {
+                                ok(false, "Data is not sorted");
+                            }
+                            min = data[i]["Int"];
+                        }
+                        ok(true, "All " + data.length + " values are sorted");
+                        start();
+                    }, function() {
+                        ok(false, "Could not sort data");
+                        start();
+                    });
+                });
+
+                asyncTest("Simple Reverse sorting", function() {
+                    var db = $.linq2indexedDB("QueryTest");
+                    db.linq.from("test").orderByDesc("Float").select().then(function(data) {
+                        // Math.min() == Infinity
+                        var max = Math.min();
+                        for (var i = 0; i < data.length; i++) {
+                            if (data[i]["Float"] > max) {
+                                ok(false, "Data is not sorted");
+                            }
+                            max = data[i]["Float"];
+                        }
+                        ok(true, "All " + data.length + " values are sorted");
+                        start();
+                    }, function() {
+                        ok(false, "Could not sort data");
+                        start();
+                    });
+                });
+
+
+                asyncTest("Sorting with range, same property", function() {
+                    var db = $.linq2indexedDB("QueryTest");
+                    db.linq.from("test").where("Int").greaterThan(20).orderByDesc("Float").select().then(function(data) {
+                        // Math.min() == Infinity
+                        var max = Math.min();
+                        if (data.length === 0) {
+                            ok(false, "Could not find any records");
+                        }
+                        for (var i = 0; i < data.length; i++) {
+                            if (data[i]["Float"] > max) {
+                                ok(false, "Data is not sorted");
+                            }
+                            if (data[i]["Int"] < 20) {
+                                ok(false, "Where clause not satisfied");
+                            }
+                            max = data[i]["Float"];
+                        }
+                        ok(true, "All " + data.length + " values are sorted");
+                        start();
+                    }, function() {
+                        ok(false, "Could not sort data");
+                        start();
+                    });
+                });
             });
         </script>
     </head>

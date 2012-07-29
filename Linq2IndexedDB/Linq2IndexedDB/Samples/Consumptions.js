@@ -12,11 +12,11 @@ var CONSUMPTION = "Consumption";
 var databaseDefinition = [{
     version: 1,
     objectStores: [{ name: CONSUMPTIONTYPE, objectStoreOptions: { autoIncrement: false, keyPath: "Id" } },
-                   { name: CONSUMPTION, objectStoreOptions: { autoIncrement: true, keyPath: "Id" } }],
+        { name: CONSUMPTION, objectStoreOptions: { autoIncrement: true, keyPath: "Id" } }],
     indexes: [{ objectStoreName: CONSUMPTION, propertyName: "ConsumptionTypeId", indexOptions: { unique: false, multirow: false } }],
     defaultData: [{ objectStoreName: CONSUMPTIONTYPE, data: { Id: 1, Description: "Electricity", HasDay: true, hasNight: true }, remove: false },
-                  { objectStoreName: CONSUMPTIONTYPE, data: { Id: 2, Description: "Gas", HasDay: true, hasNight: false }, remove: false },
-                  { objectStoreName: CONSUMPTIONTYPE, data: { Id: 3, Description: "Water", HasDay: true, hasNight: false }, remove: false }]
+        { objectStoreName: CONSUMPTIONTYPE, data: { Id: 2, Description: "Gas", HasDay: true, hasNight: false }, remove: false },
+        { objectStoreName: CONSUMPTIONTYPE, data: { Id: 3, Description: "Water", HasDay: true, hasNight: false }, remove: false }]
 }];
 
 var dbConfig = new Object();
@@ -24,9 +24,9 @@ dbConfig.version = applicationVersion;
 //dbConfig.objectStoreConfiguration = ObjStores;
 dbConfig.definition = databaseDefinition;
 
-var db = window.linq2indexedDB(indexedDBName, dbConfig,true);
+var db = window.linq2indexedDB(indexedDBName, dbConfig, true);
 
-$(function () {
+$(function() {
     $("#tabs").tabs({
         tabTemplate: "<li><a href='#{href}'>#{label}</a></li>"
     });
@@ -34,11 +34,12 @@ $(function () {
     $('#cboTypeConsumption').empty();
 
     //db.deleteDatabase().then(function(){
-        db.initialize().then(function () {
-            db.linq.from(CONSUMPTIONTYPE).select().then(function () { }, handleError, function (data) {
-                InitializeConsumptionType(data);
-            });
-        }, handleError);
+    db.initialize().then(function() {
+        db.linq.from(CONSUMPTIONTYPE).select().then(function() {
+        }, handleError, function(data) {
+            InitializeConsumptionType(data);
+        });
+    }, handleError);
     //});
 
     if (!Modernizr.inputtypes.date) {
@@ -57,21 +58,20 @@ $(function () {
         width: 350,
         modal: true,
         buttons: {
-            "Save": function () {
+            "Save": function() {
                 var bValid = true;
                 //allFields.removeClass("ui-state-error");
 
                 if (bValid) {
                     var id = parseInt(txtId.val());
-                    var consumption = {};
+                    var consumption = { };
                     if (id != 0) {
                         consumption.Id = id;
                     }
 
                     if (Modernizr.inputtypes.date) {
                         consumption.Date = new Date(dtpDate.val());
-                    }
-                    else {
+                    } else {
                         consumption.Date = dtpDate.datepicker("getDate");
                     }
                     consumption.ConsumptionTypeId = parseInt(cboTypeConsumption.val());
@@ -84,15 +84,15 @@ $(function () {
                     $(this).dialog("close");
                 }
             },
-            Cancel: function () {
+            Cancel: function() {
                 $(this).dialog("close");
             }
         },
-        close: function () {
+        close: function() {
         }
     });
 
-    cboTypeConsumption.change(function () {
+    cboTypeConsumption.change(function() {
         ConsumptionChanged(cboTypeConsumption.val());
     });
 });
@@ -101,20 +101,20 @@ function loadConsumptionType(id) {
     var consumptionType = GetConsumptionType(id);
     $('#consumptions-data-' + consumptionType.Description).empty();
 
-    db.linq.from(CONSUMPTION).where("ConsumptionTypeId").equals(id).orderByDesc("Date").select().then(function () { }, handleError, function(data){
+    db.linq.from(CONSUMPTION).where("ConsumptionTypeId").equals(id).orderByDesc("Date").select().then(function() {
+    }, handleError, function(data) {
         showConsumption(data, consumptionType);
     });
 }
 
 function saveConsumption(consumption) {
     if (consumption.Id && consumption.Id != 0) {
-        db.linq.from(CONSUMPTION).update(consumption).then(function (data) {
+        db.linq.from(CONSUMPTION).update(consumption).then(function(data) {
             //loadConsumptionType(consumption.ConsumptionTypeId);
             showConsumption(data, GetConsumptionType(data.ConsumptionTypeId));
         }, handleError);
-    }
-    else {
-        db.linq.from(CONSUMPTION).insert(consumption).then(function (data) {
+    } else {
+        db.linq.from(CONSUMPTION).insert(consumption).then(function(data) {
             //loadConsumptionType(consumption.ConsumptionTypeId);
             showConsumption(data, GetConsumptionType(data.ConsumptionTypeId));
         }, handleError);
@@ -122,7 +122,7 @@ function saveConsumption(consumption) {
 }
 
 function deleteConsumption(id) {
-    db.linq.from(CONSUMPTION).remove(id).then(function () {
+    db.linq.from(CONSUMPTION).remove(id).then(function() {
         //loadConsumptionType(consumptionTypeId);
         $('#consumptionId-' + id).remove();
     }, handleError);
@@ -162,9 +162,9 @@ function InitializeConsumptionType(consumptionType) {
 
     var button = $('<button id="AddConsumption' + consumptionType.Description + '" value="' + consumptionType.Id + '">Add consumption</button>');
     button.button()
-    .click(function () {
-        InitializeInput($(this).val());
-    });
+        .click(function() {
+            InitializeInput($(this).val());
+        });
 
     content.append(button);
 
@@ -217,8 +217,7 @@ function ConsumptionChanged(id) {
     if (consumptionType.HasDay) {
         txtDayValue.removeClass('invisible');
         lblDayValue.removeClass('invisible');
-    }
-    else {
+    } else {
         txtDayValue.addClass('invisible');
         lblDayValue.addClass('invisible');
     }
@@ -226,8 +225,7 @@ function ConsumptionChanged(id) {
     if (consumptionType.hasNight) {
         txtNightValue.removeClass('invisible');
         lblNightValue.removeClass('invisible');
-    }
-    else {
+    } else {
         txtNightValue.addClass('invisible');
         lblNightValue.addClass('invisible');
     }
@@ -235,10 +233,9 @@ function ConsumptionChanged(id) {
 
 function showConsumption(data, consumptionType) {
     var row = $('#consumptionId-' + data.Id);
-    if(row.length > 0){
+    if (row.length > 0) {
         row.empty();
-    }
-    else{
+    } else {
         row = $('<tr id="consumptionId-' + data.Id + '">');
     }
     row.append('<td>' + data.Date.toLocaleString() + '</td>');
@@ -251,15 +248,15 @@ function showConsumption(data, consumptionType) {
 
     var upd = $('<button type="button" value="' + data.Id + '">Update</button>');
     upd.button()
-	    .click(function () {
-	        getConsumption(parseInt($(this).val()));
-	    });
-	        
+        .click(function() {
+            getConsumption(parseInt($(this).val()));
+        });
+
     var del = $('<button type="button" value="' + data.Id + '">Delete</button>');
     del.button()
-	    .click(function () {
-	        deleteConsumption(parseInt($(this).val()));
-	    });
+        .click(function() {
+            deleteConsumption(parseInt($(this).val()));
+        });
     var col = $('<td></td>');
     col.append(upd);
     col.append(del);

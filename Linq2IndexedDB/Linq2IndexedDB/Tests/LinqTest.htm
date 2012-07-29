@@ -3,46 +3,70 @@
     <head> 
         <title>Tests</title> 
         <link href="qunit.css" rel="stylesheet" type="text/css" />  
-        <script type="text/javascript" src="../Scripts/jquery-1.7.2.js"></script>
-        <script src="qunit.js" type="text/javascript"></script> 
-        <script type="text/javascript" src="../Scripts/indexeddb.shim.js"></script>
-        <script src="../Scripts/Linq2IndexedDB.js" type="text/javascript"></script>
+        <script type="text/javascript" src="../Scripts/jquery-1.7.2.js"> </script>
+        <script src="qunit.js" type="text/javascript"> </script> 
+        <script type="text/javascript" src="../Scripts/indexeddb.shim.js"> </script>
+        <script src="../Scripts/Linq2IndexedDB.js" type="text/javascript"> </script>
         <script type="text/javascript">
-            $(document).ready(function () {
+            $(document).ready(function() {
                 module("Insert Tests");
-                test("insert primitive value (1), no key - non existing object store", function () {
+                test("insert primitive value (1), no key - non existing object store", function() {
                     expect(1);
                     stop();
                     var db = $.linq2indexedDB("Insert Tests");
-                    db.deleteDatabase().then(function () {
-                        db.linq.from("test").insert(1).then(function () { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.linq.from("test").insert(1).then(function() {
+                            ok(true, "insert successfull");
+                            start();
+                        }, function() {
+                            ok(false, "insert error");
+                            start();
+                        });
                     });
                 });
-                test("insert JSON value ({name: 'test'}), no key - non existing object store", function () {
+                test("insert JSON value ({name: 'test'}), no key - non existing object store", function() {
                     expect(1);
                     stop();
                     var db = $.linq2indexedDB("Insert Tests");
-                    db.deleteDatabase().then(function () {
-                        db.linq.from("test").insert({ name: "test" }).then(function () { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.linq.from("test").insert({ name: "test" }).then(function() {
+                            ok(true, "insert successfull");
+                            start();
+                        }, function() {
+                            ok(false, "insert error");
+                            start();
+                        });
                     });
                 });
-                test("insert primitive value (1), key (1) - non existing object store", function () {
+                test("insert primitive value (1), key (1) - non existing object store", function() {
                     expect(1);
                     stop();
                     var db = $.linq2indexedDB("Insert Tests");
-                    db.deleteDatabase().then(function () {
-                        db.linq.from("test").insert(1, 1).then(function () { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.linq.from("test").insert(1, 1).then(function() {
+                            ok(true, "insert successfull");
+                            start();
+                        }, function() {
+                            ok(false, "insert error");
+                            start();
+                        });
                     });
                 });
-                test("insert JSON value ({name: 'test'}), key (1) - non existing object store", function () {
+                test("insert JSON value ({name: 'test'}), key (1) - non existing object store", function() {
                     expect(1);
                     stop();
                     var db = $.linq2indexedDB("Insert Tests");
-                    db.deleteDatabase().then(function () {
-                        db.linq.from("test").insert({ name: "test" }, 1).then(function () { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.linq.from("test").insert({ name: "test" }, 1).then(function() {
+                            ok(true, "insert successfull");
+                            start();
+                        }, function() {
+                            ok(false, "insert error");
+                            start();
+                        });
                     });
                 });
-                test("insert primitive value (1), no key - existing object store (KeyPathId: 'id', autoincrement: true)", function () {
+                test("insert primitive value (1), no key - existing object store (KeyPathId: 'id', autoincrement: true)", function() {
                     expect(1);
                     stop();
 
@@ -56,34 +80,19 @@
                     dbConfiguration.definition = databaseDefinition;
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert(1).then(function () { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert(1).then(function() {
+                                ok(false, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(true, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert JSON value ({name: 'test'}), no key - existing object store (KeyPathId: 'id', autoincrement: true)", function () {
-                    expect(1);
-
-                    var databaseDefinition = [{
-                        version: 1,
-                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: true, keyPath: "Id" } }]
-                    }];
-
-                    var dbConfiguration = new Object();
-                    dbConfiguration.version = 1;
-                    dbConfiguration.definition = databaseDefinition;
-
-                    stop();
-
-                    var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert({ name: "test" }).then(function () { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
-                        });
-                    });
-                });
-                test("insert JSON value ({name: 'test', id: 1}), no key - existing object store (KeyPathId: 'id', autoincrement: true)", function () {
+                test("insert JSON value ({name: 'test'}), no key - existing object store (KeyPathId: 'id', autoincrement: true)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -98,13 +107,19 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert({ name: "test", id: 1 }).then(function () { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert({ name: "test" }).then(function() {
+                                ok(true, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(false, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert primitive value (1), key (1) - existing object store (KeyPathId: 'id', autoincrement: true)", function () {
+                test("insert JSON value ({name: 'test', id: 1}), no key - existing object store (KeyPathId: 'id', autoincrement: true)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -119,13 +134,19 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert(1, 1).then(function () {  ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert({ name: "test", id: 1 }).then(function() {
+                                ok(true, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(false, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert JSON value ({name: 'test'}), key (1) - existing object store (KeyPathId: 'id', autoincrement: true)", function () {
+                test("insert primitive value (1), key (1) - existing object store (KeyPathId: 'id', autoincrement: true)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -140,13 +161,19 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert({ name: "test" }, 1).then(function () { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert(1, 1).then(function() {
+                                ok(false, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(true, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert JSON value ({name: 'test', id: 1}), key (1) - existing object store (KeyPathId: 'id', autoincrement: true)", function () {
+                test("insert JSON value ({name: 'test'}), key (1) - existing object store (KeyPathId: 'id', autoincrement: true)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -161,13 +188,46 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert({ name: "test", id: 1 }, 1).then(function () { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert({ name: "test" }, 1).then(function() {
+                                ok(false, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(true, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert primitive value (1), no key - existing object store (KeyPathId: 'id', autoincrement: false)", function () {
+                test("insert JSON value ({name: 'test', id: 1}), key (1) - existing object store (KeyPathId: 'id', autoincrement: true)", function() {
+                    expect(1);
+
+                    var databaseDefinition = [{
+                        version: 1,
+                        objectStores: [{ name: "test", objectStoreOptions: { autoIncrement: true, keyPath: "Id" } }]
+                    }];
+
+                    var dbConfiguration = new Object();
+                    dbConfiguration.version = 1;
+                    dbConfiguration.definition = databaseDefinition;
+
+                    stop();
+
+                    var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert({ name: "test", id: 1 }, 1).then(function() {
+                                ok(false, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(true, "insert error");
+                                start();
+                            });
+                        });
+                    });
+                });
+                test("insert primitive value (1), no key - existing object store (KeyPathId: 'id', autoincrement: false)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -182,13 +242,19 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert(1).then(function () { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert(1).then(function() {
+                                ok(false, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(true, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert JSON value ({name: 'test'}), no key - existing object store (KeyPathId: 'id', autoincrement: false)", function () {
+                test("insert JSON value ({name: 'test'}), no key - existing object store (KeyPathId: 'id', autoincrement: false)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -203,13 +269,19 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert({ name: "test" }).then(function () { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert({ name: "test" }).then(function() {
+                                ok(false, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(true, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert JSON value ({name: 'test', id: 1}), no key - existing object store (KeyPathId: 'id', autoincrement: false)", function () {
+                test("insert JSON value ({name: 'test', id: 1}), no key - existing object store (KeyPathId: 'id', autoincrement: false)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -224,13 +296,19 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert({ name: "test", id: 1 }).then(function () { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert({ name: "test", id: 1 }).then(function() {
+                                ok(true, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(false, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert primitive value (1), key (1) - existing object store (KeyPathId: 'id', autoincrement: false)", function () {
+                test("insert primitive value (1), key (1) - existing object store (KeyPathId: 'id', autoincrement: false)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -245,13 +323,19 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert(1, 1).then(function () { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert(1, 1).then(function() {
+                                ok(false, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(true, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert JSON value ({name: 'test'}), key (1) - existing object store (KeyPathId: 'id', autoincrement: false)", function () {
+                test("insert JSON value ({name: 'test'}), key (1) - existing object store (KeyPathId: 'id', autoincrement: false)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -266,13 +350,19 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert({ name: "test" }, 1).then(function () { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert({ name: "test" }, 1).then(function() {
+                                ok(false, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(true, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert JSON value ({name: 'test', id: 1}), key (1) - existing object store (KeyPathId: 'id', autoincrement: false)", function () {
+                test("insert JSON value ({name: 'test', id: 1}), key (1) - existing object store (KeyPathId: 'id', autoincrement: false)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -287,13 +377,19 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert({ name: "test", id: 1 }, 1).then(function () { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert({ name: "test", id: 1 }, 1).then(function() {
+                                ok(false, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(true, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert primitive value (1), no key - existing object store (KeyPathId: none, autoincrement: true)", function () {
+                test("insert primitive value (1), no key - existing object store (KeyPathId: none, autoincrement: true)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -308,13 +404,19 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert(1).then(function () { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert(1).then(function() {
+                                ok(true, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(false, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert JSON value ({name: 'test'}), no key - existing object store (KeyPathId: none, autoincrement: true)", function () {
+                test("insert JSON value ({name: 'test'}), no key - existing object store (KeyPathId: none, autoincrement: true)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -329,13 +431,19 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert({ name: "test" }).then(function () { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert({ name: "test" }).then(function() {
+                                ok(true, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(false, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert JSON value ({name: 'test', id: 1}), no key - existing object store (KeyPathId: none, autoincrement: true)", function () {
+                test("insert JSON value ({name: 'test', id: 1}), no key - existing object store (KeyPathId: none, autoincrement: true)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -350,13 +458,19 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert({ name: "test", id: 1 }).then(function () { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert({ name: "test", id: 1 }).then(function() {
+                                ok(true, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(false, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert primitive value (1), key (1) - existing object store (KeyPathId: none, autoincrement: true)", function () {
+                test("insert primitive value (1), key (1) - existing object store (KeyPathId: none, autoincrement: true)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -371,13 +485,19 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert(1, 1).then(function () { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert(1, 1).then(function() {
+                                ok(true, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(false, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert JSON value ({name: 'test'}), key (1) - existing object store (KeyPathId: none, autoincrement: true)", function () {
+                test("insert JSON value ({name: 'test'}), key (1) - existing object store (KeyPathId: none, autoincrement: true)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -392,13 +512,19 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert({ name: "test" }, 1).then(function () { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert({ name: "test" }, 1).then(function() {
+                                ok(true, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(false, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert JSON value ({name: 'test', id: 1}), key (1) - existing object store (KeyPathId: none, autoincrement: true)", function () {
+                test("insert JSON value ({name: 'test', id: 1}), key (1) - existing object store (KeyPathId: none, autoincrement: true)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -413,13 +539,19 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert({ name: "test", id: 1 }, 1).then(function () { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert({ name: "test", id: 1 }, 1).then(function() {
+                                ok(true, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(false, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert primitive value (1), no key - existing object store (KeyPathId: none, autoincrement: false)", function () {
+                test("insert primitive value (1), no key - existing object store (KeyPathId: none, autoincrement: false)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -434,13 +566,19 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert(1).then(function () { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert(1).then(function() {
+                                ok(false, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(true, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert JSON value ({name: 'test'}), no key - existing object store (KeyPathId: none, autoincrement: false)", function () {
+                test("insert JSON value ({name: 'test'}), no key - existing object store (KeyPathId: none, autoincrement: false)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -455,13 +593,19 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert({ name: "test" }).then(function () { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert({ name: "test" }).then(function() {
+                                ok(false, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(true, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert JSON value ({name: 'test', id: 1}), no key - existing object store (KeyPathId: none, autoincrement: false)", function () {
+                test("insert JSON value ({name: 'test', id: 1}), no key - existing object store (KeyPathId: none, autoincrement: false)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -476,13 +620,19 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert({ name: "test", id: 1 }).then(function () { ok(false, "insert successfull"); start(); }, function () { ok(true, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert({ name: "test", id: 1 }).then(function() {
+                                ok(false, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(true, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert primitive value (1), key (1) - existing object store (KeyPathId: none, autoincrement: false)", function () {
+                test("insert primitive value (1), key (1) - existing object store (KeyPathId: none, autoincrement: false)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -497,13 +647,19 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert(1, 1).then(function () { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert(1, 1).then(function() {
+                                ok(true, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(false, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert JSON value ({name: 'test'}), key (1) - existing object store (KeyPathId: none, autoincrement: false)", function () {
+                test("insert JSON value ({name: 'test'}), key (1) - existing object store (KeyPathId: none, autoincrement: false)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -518,13 +674,19 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert({ name: "test" }, 1).then(function () { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert({ name: "test" }, 1).then(function() {
+                                ok(true, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(false, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-                test("insert JSON value ({name: 'test', id: 1}), key (1) - existing object store (KeyPathId: none, autoincrement: false)", function () {
+                test("insert JSON value ({name: 'test', id: 1}), key (1) - existing object store (KeyPathId: none, autoincrement: false)", function() {
                     expect(1);
 
                     var databaseDefinition = [{
@@ -539,13 +701,19 @@
                     stop();
 
                     var db = $.linq2indexedDB("Insert Tests", dbConfiguration);
-                    db.deleteDatabase().then(function () {
-                        db.initialize().then(function () {
-                            db.linq.from("test").insert({ name: "test", id: 1 }, 1).then(function () { ok(true, "insert successfull"); start(); }, function () { ok(false, "insert error"); start(); });
+                    db.deleteDatabase().then(function() {
+                        db.initialize().then(function() {
+                            db.linq.from("test").insert({ name: "test", id: 1 }, 1).then(function() {
+                                ok(true, "insert successfull");
+                                start();
+                            }, function() {
+                                ok(false, "insert error");
+                                start();
+                            });
                         });
                     });
                 });
-            }); 
+            });
         </script>  
     </head>  
     <body>  
@@ -555,4 +723,4 @@
         <ol id="qunit-tests">  
         </ol>  
     </body>  
-</html>  
+</html>

@@ -2,17 +2,17 @@
 /// <reference path="jquery-ui-1.8.20.js" />
 /// <reference path="Linq2IndexedDB.js" />
 
-$(function () {
-     $('#tabs').hide();
+$(function() {
+    $('#tabs').hide();
 
     $('#tabs').tabs({
         tabTemplate: "<li><a href='#{href}'>#{label}</a></li>"
     });
 
-    $('#btnViewDatabase').click(function(){
+    $('#btnViewDatabase').click(function() {
         viewDatabase($('#txtDatabaseName').val());
     });
-   
+
     function viewDatabase(dbName) {
         $('#tabs').show();
 
@@ -20,15 +20,15 @@ $(function () {
             $('#tabs').tabs("remove", i);
         }
 
-        linq2indexedDB.prototype.core.db(dbName).then(function (args) {
+        linq2indexedDB.prototype.core.db(dbName).then(function(args) {
             // Definitions
             $("#tabs").tabs("add", '#tab-Definition', 'Definition');
             var definitionTab = $('#tab-Definition');
             viewDefinition(definitionTab, args[0]);
         },
-        function () {
-            // TODO implement error
-        });              
+            function() {
+                // TODO implement error
+            });
     }
 
     function viewDefinition(view, connection) {
@@ -53,24 +53,23 @@ $(function () {
         tableIndexes.append(rowIndexes);
         view.append(tableIndexes);
 
-        for (var i = 0; i < connection.objectStoreNames.length ; i++) {
+        for (var i = 0; i < connection.objectStoreNames.length; i++) {
             var storeName = connection.objectStoreNames[i];
             $("#tabs").tabs("add", '#tab-' + storeName, storeName);
 
-            linq2indexedDB.prototype.core.objectStore(linq2indexedDB.prototype.core.transaction(connection, storeName, linq2indexedDB.prototype.core.transactionTypes.READ_ONLY, false), storeName).then(function (args) {
+            linq2indexedDB.prototype.core.objectStore(linq2indexedDB.prototype.core.transaction(connection, storeName, linq2indexedDB.prototype.core.transactionTypes.READ_ONLY, false), storeName).then(function(args) {
                 var store = args[1];
 
                 objectStoreDefinition(tableObjectStores, store);
                 for (var j = 0; j < store.indexNames.length; j++) {
                     $("#tabs").tabs("add", '#tab-' + store.indexNames[j], store.indexNames[j]);
-                    linq2indexedDB.prototype.core.index(store, store.indexNames[j], false).then(function (args1) {
+                    linq2indexedDB.prototype.core.index(store, store.indexNames[j], false).then(function(args1) {
                         indexDefinitions(tableIndexes, args1[1]);
 
-                        linq2indexedDB.prototype.core.cursor(args1[1]).then(function () {
+                        linq2indexedDB.prototype.core.cursor(args1[1]).then(function() {
 
-                        }
-                        , function () { }
-                        , function (args2) {
+                        }, function() {
+                        }, function(args2) {
                             var storeTab = $('#tab-' + args2[1].source.name);
                             var tableData = $('<table></table>');
                             var rowData = $('<tr></tr>');
@@ -85,11 +84,10 @@ $(function () {
                     });
                 }
 
-                linq2indexedDB.prototype.core.cursor(store).then(function () {
+                linq2indexedDB.prototype.core.cursor(store).then(function() {
 
-                }
-                , function () { }
-                , function (args1) {
+                }, function() {
+                }, function(args1) {
                     var storeTab = $('#tab-' + args1[1].source.name);
                     var tableData = $('<table></table>');
                     var rowData = $('<tr></tr>');
@@ -128,20 +126,19 @@ $(function () {
         row.append('<td>' + data[1].key + '</td>');
         if (typeof data[0] == "object") {
             row.append('<td>' + JSON.stringify(data[0]) + '</td>');
-        }
-        else {
+        } else {
             row.append('<td>' + data[0] + '</td>');
         }
         table.append(row);
     }
+
     function indexData(table, data) {
         var row = $('<tr></tr>');
         row.append('<td>' + data[1].key + '</td>');
         row.append('<td>' + data[1].primaryKey + '</td>');
         if (typeof data[0] == "object") {
             row.append('<td>' + JSON.stringify(data[0]) + '</td>');
-        }
-        else {
+        } else {
             row.append('<td>' + data[0] + '</td>');
         }
         table.append(row);
