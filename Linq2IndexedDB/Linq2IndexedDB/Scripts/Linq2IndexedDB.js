@@ -61,14 +61,14 @@ var enableLogging = true;
             core: linq2indexedDB.prototype.core,
             linq: linq(dbConfig),
             initialize: function () {
-                log("Initialize Started");
+                linq2indexedDB.prototype.utilities.log("Initialize Started");
                 return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
                     linq2indexedDB.prototype.core.db(dbConfig.name, dbConfig.version).then(function (args /*db*/) {
                         var db = args[0];
 
-                        log("Close dbconnection");
+                        linq2indexedDB.prototype.utilities.log("Close dbconnection");
                         db.close();
-                        log("Initialize Succesfull");
+                        linq2indexedDB.prototype.utilities.log("Initialize Succesfull");
                         pw.complete();
                     }
                     , pw.error
@@ -76,25 +76,7 @@ var enableLogging = true;
                         var txn = args[0];
                         var e = args[1];
                         if (e.type == "upgradeneeded") {
-                            if (dbConfig.onupgradeneeded) {
-                                dbConfig.onupgradeneeded(txn, e.oldVersion, e.newVersion);
-                            }
-                            if (dbConfig.oninitializeversion || dbConfig.schema || dbConfig.definition) {
-                                for (var version = e.oldVersion + 1; version <= e.newVersion; version++) {
-                                    if (dbConfig.schema) {
-                                        dbConfig.schema[version](txn);
-                                    }
-                                    if (dbConfig.definition) {
-                                        var versionDefinition = getVersionDefinition(version, dbConfig.definition);
-                                        if (versionDefinition) {
-                                            initializeVersion(txn, versionDefinition);
-                                        }
-                                    }
-                                    else if (dbConfig.oninitializeversion) {
-                                        dbConfig.oninitializeversion(txn, version);
-                                    }
-                                }
-                            }
+                            upgradeDatabase(dbConfig, e.oldVersion, e.newVersion, txn);
                         }
                     });
                 });
@@ -368,23 +350,7 @@ var enableLogging = true;
                     var e = args[1];
 
                     if (e.type == "upgradeneeded") {
-                        if (dbConfig.onupgradeneeded) {
-                            dbConfig.onupgradeneeded(txn, e.oldVersion, e.newVersion);
-                        }
-                        if (dbConfig.oninitializeversion) {
-                            for (var version = e.oldVersion + 1; version <= e.newVersion; version++) {
-                                if (dbConfig.schema) {
-                                    dbConfig.schema[version](txn);
-                                }
-                                if (dbConfig.definition) {
-                                    var versionDefinition = getVersionDefinition(version, dbConfig.definition);
-                                    initializeVersion(txn, versionDefinition);
-                                }
-                                else if (dbConfig.oninitializeversion) {
-                                    dbConfig.oninitializeversion(txn, version);
-                                }
-                            }
-                        }
+                        upgradeDatabase(dbConfig, e.oldVersion, e.newVersion, txn);
                     }
                 });
             });
@@ -607,6 +573,7 @@ var enableLogging = true;
 
     function viewer(dbConfig) {
         var dbView = {};
+        var refresh = true;
 
         dbView.Configuration = {
             name: dbConfig.name,
@@ -618,19 +585,14 @@ var enableLogging = true;
             oninitializeversion: dbConfig.oninitializeversion
         };
 
-        getDbInformation(dbView, dbConfig);
-
-        linq2indexedDB.prototype.core.dbStructureChanged.addListener(linq2indexedDB.prototype.core.databaseEvents.objectStoreCreated, function () {
-            getDbInformation(dbView, dbConfig);
+        linq2indexedDB.prototype.core.dbStructureChanged.addListener(linq2indexedDB.prototype.core.databaseEvents.databaseUpgrade, function () {
+            refresh = true;
         });
-        linq2indexedDB.prototype.core.dbStructureChanged.addListener(linq2indexedDB.prototype.core.databaseEvents.objectStoreRemoved, function () {
-            getDbInformation(dbView, dbConfig);
-        });
-        linq2indexedDB.prototype.core.dbStructureChanged.addListener(linq2indexedDB.prototype.core.databaseEvents.indexCreated, function () {
-            getDbInformation(dbView, dbConfig);
-        });
-        linq2indexedDB.prototype.core.dbStructureChanged.addListener(linq2indexedDB.prototype.core.databaseEvents.indexCreated, function () {
-            getDbInformation(dbView, dbConfig);
+        linq2indexedDB.prototype.core.dbStructureChanged.addListener(linq2indexedDB.prototype.core.databaseEvents.databaseOpened, function () {
+            if (refresh) {
+                refresh = false;
+                getDbInformation(dbView, dbConfig);
+            }
         });
         linq2indexedDB.prototype.core.dbStructureChanged.addListener(linq2indexedDB.prototype.core.databaseEvents.databaseRemoved, function () {
             dbView.name = null;
@@ -758,6 +720,28 @@ var enableLogging = true;
         catch (ex) {
             linq2indexedDB.prototype.utilities.log("initialize version exception: ", ex);
             linq2indexedDB.prototype.core.abortTransaction(txn);
+        }
+    }
+    
+    function upgradeDatabase(dbConfig, oldVersion, newVersion, txn) {
+        if (dbConfig.onupgradeneeded) {
+            dbConfig.onupgradeneeded(txn, oldVersion, newVersion);
+        }
+        if (dbConfig.oninitializeversion || dbConfig.schema || dbConfig.definition) {
+            for (var version = oldVersion + 1; version <= newVersion; version++) {
+                if (dbConfig.schema) {
+                    dbConfig.schema[version](txn);
+                }
+                if (dbConfig.definition) {
+                    var versionDefinition = getVersionDefinition(version, dbConfig.definition);
+                    if (versionDefinition) {
+                        initializeVersion(txn, versionDefinition);
+                    }
+                }
+                else if (dbConfig.oninitializeversion) {
+                    dbConfig.oninitializeversion(txn, version);
+                }
+            }
         }
     }
 
@@ -1305,7 +1289,9 @@ if (typeof window !== "undefined") {
             indexCreated: "Index created",
             indexRemoved: "Index removed",
             databaseRemoved: "Database removed",
-            databaseBlocked: "Database blocked"
+            databaseBlocked: "Database blocked",
+            databaseUpgrade: "Database upgrade",
+            databaseOpened: "Database opened"
         };
 
         var dataEvents = {
@@ -1381,7 +1367,7 @@ if (typeof window !== "undefined") {
                                         upgardeEvent.oldVersion = currentVersion;
                                         upgardeEvent.originalEvent = event;
 
-                                        linq2indexedDB.prototype.core.dbStructureChanged({ type: dbEvents.databaseUpgrade, data: upgardeEvent });
+                                        linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.databaseUpgrade, data: upgardeEvent });
                                         pw.progress(context, [txn, upgardeEvent]);
 
                                         handlers.IDBTransaction(txn).then(function (/*trans, args*/) {
@@ -1417,6 +1403,7 @@ if (typeof window !== "undefined") {
                             }
                             else {
                                 // Database Connection resolved.
+                                linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.databaseOpened, data: db });
                                 log("DB Promise resolved", db, e);
                                 pw.complete(this, [db, e]);
                             }
@@ -1428,8 +1415,12 @@ if (typeof window !== "undefined") {
                         },
                         function (args /*result, e*/) {
                             // Database upgrade + db blocked
-                            if (args[0] == "blocked") {
+                            if (args[1].type == "blocked"){
                                 linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.databaseBlocked, data: args });
+                            }
+                            else if (args[1].type == "upgradeneeded")
+                            {
+                                linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.databaseUpgrade, data: args });
                             }
                             pw.progress(this, args);
                         }
@@ -1730,7 +1721,7 @@ if (typeof window !== "undefined") {
                     }
 
                     if (!objectStore.indexNames.contains(indexName)) {
-                        var index = objectStore.createIndex(indexName, propertyName, { unique: indexOptions ? indexOptions.unique : false/*, multirow: indexOptions ? indexOptions.multirow : false*/ });
+                        var index = objectStore.createIndex(indexName, propertyName, { unique: indexOptions ? indexOptions.unique : false, /*multiRow: indexOptions ? indexOptions.multiEntry : false*/ });
                         log("createIndex compelted", objectStore.transaction, index, objectStore);
                         linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.indexCreated, data: index });
                         pw.complete(this, [objectStore.transaction, index, objectStore]);
