@@ -431,102 +431,96 @@ var enableLogging = true;
             },
                 pw.error,
                 function(args /* [txn] */) {
-                    try {
-                        var objPromise = linq2indexedDB.prototype.core.objectStore(args[0], queryBuilder.from);
-                        var cursorPromis;
-                        var whereClauses = [];
-                        var returnData = [];
 
-                        if (queryBuilder.where.length > 0) {
-                            // Sorting the where clauses so the most restrictive ones are on top.
+                    linq2indexedDB.prototype.core.objectStore(args[0], queryBuilder.from).then(function(objArgs) {
+                        try {
+                            var objectStore = objArgs[1];
+                            var whereClauses = queryBuilder.where || [];
+                            var returnData = [];
+                            var cursorPromise = determineCursor(objectStore, whereClauses);
 
-                            // For now use the order in which they are entered by the developer
-                            whereClauses = queryBuilder.where;
-                            //whereClauses = queryBuilder.where.sort(function (valueX, valueY) {
-                            //    if (typeof valueX.filter.SortOrder === "undefined" && typeof valueY.filter.SortOrder === "undefined") {
-                            //        return 0;
-                            //    }
-                            //    if (typeof valueX.filter.SortOrder === "undefined" && typeof valueY.filter.SortOrder !== "undefined") {
-                            //        return -1;
-                            //    }
-                            //    if (typeof valueX.filter.SortOrder !== "undefined" && typeof valueY.filter.SortOrder === "undefined") {
-                            //        return 1;
-                            //    }
-                            //    return ((valueX.filter.SortOrder == valueY.filter.SortOrder) ? 0 : ((valueX.filter.SortOrder > valueY.filter.SortOrder) ? 1 : -1));
-                            //});
-                            // Only one condition can be passed to IndexedDB API
-                            // Takes the first whereClause and removes it from the whereClause collection.
-                            if ((whereClauses.length == 1 && whereClauses[0].filter.indexeddbFilter && !whereClauses[0].isNotClause)
-                                || whereClauses.length > 1 && whereClauses[0].filter.indexeddbFilter && !whereClauses[1].isOrClause) {
-                                cursorPromis = determineCursorPromis(objPromise, whereClauses.shift());
-                            } else {
-                                cursorPromis = determineCursorPromis(objPromise);
-                            }
-                        } else {
-                            cursorPromis = determineCursorPromis(objPromise);
-                        }
+                            cursorPromise.then(
+                                function(args1 /*data*/) {
+                                    var data = args1[0];
 
-                        cursorPromis.then(
-                            function(args1 /*data*/) {
-                                var data = args1[0];
-
-                                linq2indexedDB.prototype.utilities.linq2indexedDBWorker(data, whereClauses, queryBuilder.sortClauses).then(function(d) {
-                                    // No need to notify again if it allready happend in the onProgress method of the cursor.
-                                    if (returnData.length == 0) {
-                                        for (var j = 0; j < d.length; j++) {
-                                            var obj = selectData(d[j], queryBuilder.select);
-                                            returnData.push(obj);
-                                            pw.progress(this, obj /*[obj]*/);
+                                    linq2indexedDB.prototype.utilities.linq2indexedDBWorker(data, whereClauses, queryBuilder.sortClauses).then(function(d) {
+                                        // No need to notify again if it allready happend in the onProgress method of the cursor.
+                                        if (returnData.length == 0) {
+                                            for (var j = 0; j < d.length; j++) {
+                                                var obj = selectData(d[j], queryBuilder.select);
+                                                returnData.push(obj);
+                                                pw.progress(this, obj /*[obj]*/);
+                                            }
                                         }
-                                    }
-                                    pw.complete(this, returnData /*[returnData]*/);
-                                });
-                            },
-                            pw.error,
-                            function(args1 /*data*/) {
-                                var data = args1[0];
+                                        pw.complete(this, returnData /*[returnData]*/);
+                                    });
+                                },
+                                pw.error,
+                                function(args1 /*data*/) {
+                                    var data = args1[0];
 
-                                // When there are no more where clauses to fulfill and the collection doesn't need to be sorted, the data can be returned.
-                                // In the other case let the complete handle it.
-                                if (whereClauses.length == 0 && queryBuilder.sortClauses.length == 0) {
-                                    var obj = selectData(data, queryBuilder.select);
-                                    returnData.push(obj);
-                                    pw.progress(this, obj /*[obj]*/);
+                                    // When there are no more where clauses to fulfill and the collection doesn't need to be sorted, the data can be returned.
+                                    // In the other case let the complete handle it.
+                                    if (whereClauses.length == 0 && queryBuilder.sortClauses.length == 0) {
+                                        var obj = selectData(data, queryBuilder.select);
+                                        returnData.push(obj);
+                                        pw.progress(this, obj /*[obj]*/);
+                                    }
                                 }
-                            }
-                        );
-                    } catch(ex) {
-                        // Handle errors like an invalid keyRange.
-                        linq2indexedDB.prototype.core.abortTransaction(args[0]);
-                        pw.error(this, [ex.message, ex]);
-                    }
+                            );
+                        } catch(ex) {
+                            // Handle errors like an invalid keyRange.
+                            linq2indexedDB.prototype.core.abortTransaction(args[0]);
+                            pw.error(this, [ex.message, ex]);
+                        }
+                    }, pw.error);
                 });
         }
-
-        function determineCursorPromis(objPromise, clause) {
+        
+        function determineCursor(objectStore, whereClauses) {
             var cursorPromise;
-            if (clause) {
-                switch (clause.filter) {
-                case linq2indexedDB.prototype.linq.filters.equals:
-                    cursorPromise = linq2indexedDB.prototype.core.cursor(linq2indexedDB.prototype.core.index(objPromise, clause.propertyName, dbConfig.autoGenerateAllowed), IDBKeyRange.only(clause.value));
-                    break;
-                case linq2indexedDB.prototype.linq.filters.between:
-                    cursorPromise = linq2indexedDB.prototype.core.cursor(linq2indexedDB.prototype.core.index(objPromise, clause.propertyName, dbConfig.autoGenerateAllowed), IDBKeyRange.bound(clause.minValue, clause.maxValue, clause.minValueIncluded, clause.maxValueIncluded));
-                    break;
-                case linq2indexedDB.prototype.linq.filters.greaterThan:
-                    cursorPromise = linq2indexedDB.prototype.core.cursor(linq2indexedDB.prototype.core.index(objPromise, clause.propertyName, dbConfig.autoGenerateAllowed), IDBKeyRange.lowerBound(clause.value, clause.valueIncluded));
-                    break;
-                case linq2indexedDB.prototype.linq.filters.smallerThan:
-                    cursorPromise = linq2indexedDB.prototype.core.cursor(linq2indexedDB.prototype.core.index(objPromise, clause.propertyName, dbConfig.autoGenerateAllowed), IDBKeyRange.upperBound(clause.value, clause.valueIncluded));
-                    break;
-                default:
-                    cursorPromise = linq2indexedDB.prototype.core.cursor(objPromise);
-                    break;
+
+            // Checks if an indexeddb filter can be used
+            if (whereClauses.length > 0
+                && !whereClauses[0].isNotClause
+                && whereClauses[0].filter.indexeddbFilter
+                && (whereClauses.length == 1 || (whereClauses.length > 1 && !whereClauses[1].isOrClause))) {
+                var source = objectStore;
+                var indexPossible = dbConfig.autoGenerateAllowed || objectStore.indexNames.contains(whereClauses[0].propertyName + linq2indexedDB.prototype.core.indexSuffix);
+                // Checks if we can use an index
+                if (whereClauses[0].propertyName != objectStore.keyPath && indexPossible){
+                    source = linq2indexedDB.prototype.core.index(objectStore, whereClauses[0].propertyName, dbConfig.autoGenerateAllowed);
+                }
+                // Checks if we can use indexeddb filter
+                if (whereClauses[0].propertyName == objectStore.keyPath
+                    || indexPossible) {
+                    // Gets the where clause + removes it from the collection
+                    var clause = whereClauses.shift();
+                    switch (clause.filter) {
+                        case linq2indexedDB.prototype.linq.filters.equals:
+                            cursorPromise = linq2indexedDB.prototype.core.cursor(source, IDBKeyRange.only(clause.value));
+                            break;
+                        case linq2indexedDB.prototype.linq.filters.between:
+                            cursorPromise = linq2indexedDB.prototype.core.cursor(source, IDBKeyRange.bound(clause.minValue, clause.maxValue, clause.minValueIncluded, clause.maxValueIncluded));
+                            break;
+                        case linq2indexedDB.prototype.linq.filters.greaterThan:
+                            cursorPromise = linq2indexedDB.prototype.core.cursor(source, IDBKeyRange.lowerBound(clause.value, clause.valueIncluded));
+                            break;
+                        case linq2indexedDB.prototype.linq.filters.smallerThan:
+                            cursorPromise = linq2indexedDB.prototype.core.cursor(source, IDBKeyRange.upperBound(clause.value, clause.valueIncluded));
+                            break;
+                        default:
+                            cursorPromise = linq2indexedDB.prototype.core.cursor(source);
+                            break;
+                    }
+                } else {
+                    // Get everything if the index can't be used
+                    cursorPromise = linq2indexedDB.prototype.core.cursor(source);
                 }
             } else {
-                cursorPromise = linq2indexedDB.prototype.core.cursor(objPromise);
+                // Get's everything, manually filter data
+                cursorPromise = linq2indexedDB.prototype.core.cursor(objectStore);
             }
-
             return cursorPromise;
         }
 
@@ -556,6 +550,13 @@ var enableLogging = true;
         var dbView = { };
         var refresh = true;
 
+        function refreshInternal() {
+            if (refresh) {
+                refresh = false;
+                getDbInformation(dbView, dbConfig);
+            }
+        }
+
         dbView.Configuration = {
             name: dbConfig.name,
             version: dbConfig.version,
@@ -566,19 +567,24 @@ var enableLogging = true;
             oninitializeversion: dbConfig.oninitializeversion
         };
 
+        dbView.refresh = function() {
+            refresh = true;
+            refreshInternal();
+        };
+
         linq2indexedDB.prototype.core.dbStructureChanged.addListener(linq2indexedDB.prototype.core.databaseEvents.databaseUpgrade, function() {
             refresh = true;
         });
         linq2indexedDB.prototype.core.dbStructureChanged.addListener(linq2indexedDB.prototype.core.databaseEvents.databaseOpened, function() {
-            if (refresh) {
-                refresh = false;
-                getDbInformation(dbView, dbConfig);
-            }
+            refreshInternal();
         });
         linq2indexedDB.prototype.core.dbStructureChanged.addListener(linq2indexedDB.prototype.core.databaseEvents.databaseRemoved, function() {
             dbView.name = null;
             dbView.version = null;
             dbView.ObjectStores = [];
+        });
+        linq2indexedDB.prototype.core.dbDataChanged.addListener([linq2indexedDB.prototype.core.dataEvents.dataInserted, linq2indexedDB.prototype.core.dataEvents.dataRemoved, linq2indexedDB.prototype.core.dataEvents.dataUpdated, linq2indexedDB.prototype.core.dataEvents.objectStoreCleared], function() {
+            dbView.refresh();
         });
 
         return dbView;
@@ -646,6 +652,10 @@ var enableLogging = true;
                         });
                     }
                 });
+            }
+        }, null, function(args) {
+            if (args[1].type == "upgradeneeded") {
+                args[0].abort();
             }
         });
     }
@@ -1584,14 +1594,8 @@ if (typeof window !== "undefined") {
                 log("Index started", objectStore, propertyName, autoGenerateAllowed);
                 try {
                     var indexName = propertyName;
-                    if (implementation == implementations.SHIM) {
-                        if (propertyName.indexOf("IIndex") == -1) {
-                            indexName = indexName + "IIndex";
-                        }
-                    } else {
-                        if (propertyName.indexOf("-index") == -1) {
-                            indexName = indexName + "-index";
-                        }
+                    if (propertyName.indexOf(linq2indexedDB.prototype.core.indexSuffix) == -1) {
+                        indexName = indexName + linq2indexedDB.prototype.core.indexSuffix;
                     }
 
                     if (objectStore.indexNames.contains(indexName)) {
@@ -1612,7 +1616,7 @@ if (typeof window !== "undefined") {
                         // Open a new connection with the new version
                         linq2indexedDB.prototype.core.db(dbName, version).then(function(args /*dbConnection, event*/) {
                             // When the upgrade is completed, the index can be resolved.
-                            linq2indexedDB.prototype.core.transaction(args[0], objectStoreNames, transactionType, autoGenerateAllowed).then(function(args1 /*transaction, ev*/) {
+                            linq2indexedDB.prototype.core.transaction(args[0], objectStoreNames, transactionType, autoGenerateAllowed).then(function(/*transaction, ev*/) {
                                 // txn completed
                                 // TODO: what to do in this case
                             },
@@ -1661,19 +1665,13 @@ if (typeof window !== "undefined") {
                 log("createIndex started", objectStore, propertyName, indexOptions);
                 try {
                     var indexName = propertyName;
-                    if (implementation == implementations.SHIM) {
-                        if (propertyName.indexOf("IIndex") == -1) {
-                            indexName = indexName + "IIndex";
-                        }
-                    } else {
-                        if (propertyName.indexOf("-index") == -1) {
-                            indexName = indexName + "-index";
-                        }
+                    if (propertyName.indexOf(linq2indexedDB.prototype.core.indexSuffix) == -1) {
+                        indexName = indexName + linq2indexedDB.prototype.core.indexSuffix;
                     }
 
                     if (!objectStore.indexNames.contains(indexName)) {
                         var index = objectStore.createIndex(indexName, propertyName, { unique: indexOptions ? indexOptions.unique : false, /*multiRow: indexOptions ? indexOptions.multiEntry : false*/ });
-                        log("createIndex compelted", objectStore.transaction, index, objectStore);
+                        log("createIndex completed", objectStore.transaction, index, objectStore);
                         linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.indexCreated, data: index });
                         pw.complete(this, [objectStore.transaction, index, objectStore]);
                     } else {
@@ -1692,14 +1690,8 @@ if (typeof window !== "undefined") {
                 log("deleteIndex started", objectStore, propertyName);
                 try {
                     var indexName = propertyName;
-                    if (implementation == implementations.SHIM) {
-                        if (propertyName.indexOf("IIndex") == -1) {
-                            indexName = indexName + "IIndex";
-                        }
-                    } else {
-                        if (propertyName.indexOf("-index") == -1) {
-                            indexName = indexName + "-index";
-                        }
+                    if (propertyName.indexOf(linq2indexedDB.prototype.core.indexSuffix) == -1) {
+                        indexName = indexName + linq2indexedDB.prototype.core.indexSuffix;
                     }
 
                     objectStore.deleteIndex(indexName);
@@ -2084,7 +2076,7 @@ if (typeof window !== "undefined") {
             objectStore: function(transaction, objectStoreName) {
                 return linq2indexedDB.prototype.utilities.promiseWrapper(function(pw) {
                     if (transaction.then) {
-                        transaction.then(function(args /*txn, e*/) {
+                        transaction.then(function(/*txn, e*/) {
                             // transaction completed
                             // TODO: what todo in this case?
                         }, function(args /*error, e*/) {
@@ -2100,7 +2092,7 @@ if (typeof window !== "undefined") {
             createObjectStore: function(transaction, objectStoreName, objectStoreOptions) {
                 return linq2indexedDB.prototype.utilities.promiseWrapper(function(pw) {
                     if (transaction.then) {
-                        transaction.then(function(args/*txn, e*/) {
+                        transaction.then(function(/*txn, e*/) {
                             // txn completed
                             // TODO: what todo in this case?
                         },
@@ -2119,7 +2111,7 @@ if (typeof window !== "undefined") {
             deleteObjectStore: function(transaction, objectStoreName) {
                 return linq2indexedDB.prototype.utilities.promiseWrapper(function(pw) {
                     if (transaction.then) {
-                        transaction.then(function(args /*txn, e*/) {
+                        transaction.then(function(/*txn, e*/) {
                             // txn completed
                             // TODO: what todo in this case?
                         }, function(args /*error, e*/) {
@@ -2311,6 +2303,13 @@ if (typeof window !== "undefined") {
             databaseEvents: dbEvents,
             dataEvents: dataEvents
         };
+        
+        if (implementation == implementations.SHIM) {
+            linq2indexedDB.prototype.core.indexSuffix = "IIndex";
+        } else {
+
+            linq2indexedDB.prototype.core.indexSuffix = "-Index";
+        }
 
         // Region Functions
 
@@ -2468,9 +2467,7 @@ if (typeof window !== "undefined") {
                     return implementations.NONE;
                 }
             }
-        }
-
-        ;
+        };
 
         function deferredHandler(handler, request) {
             return linq2indexedDB.prototype.utilities.promiseWrapper(function(pw) {
@@ -2481,56 +2478,42 @@ if (typeof window !== "undefined") {
                     pw.error(request, [e.message, e]);
                 }
             });
-        }
-
-        ;
+        };
 
         function IDBSuccessHandler(pw, request) {
             request.onsuccess = function(e) {
                 pw.complete(request, [request.result, e]);
             };
-        }
-
-        ;
+        };
 
         function IDBErrorHandler(pw, request) {
             request.onerror = function(e) {
                 pw.error(request, [request.errorCode, e]);
             };
-        }
-
-        ;
+        };
 
         function IDBAbortHandler(pw, request) {
             request.onabort = function(e) {
                 pw.error(request, [request.errorCode, e]);
             };
-        }
-
-        ;
+        };
 
         function IDBVersionChangeHandler(pw, request) {
             request.onversionchange = function(e) {
                 pw.progress(request, [request.result, e]);
             };
-        }
-
-        ;
+        };
 
         function IDBCompleteHandler(pw, request) {
             request.oncomplete = function(e) {
                 pw.complete(request, [request, e]);
             };
-        }
-
-        ;
+        };
 
         function IDBRequestHandler(pw, request) {
             IDBSuccessHandler(pw, request);
             IDBErrorHandler(pw, request);
-        }
-
-        ;
+        };
 
         function IDBCursorRequestHandler(pw, request) {
             request.onsuccess = function(e) {
@@ -2541,41 +2524,33 @@ if (typeof window !== "undefined") {
                 }
             };
             IDBErrorHandler(pw, request);
-        }
-
-        ;
+        };
 
         function IDBBlockedRequestHandler(pw, request) {
             IDBRequestHandler(pw, request);
-            request.onblocked = function(e) {
+            request.onblocked = function (e) {
                 pw.progress(request, ["blocked", e]);
             };
-        }
+        };
 
         function IDBOpenDbRequestHandler(pw, request) {
             IDBBlockedRequestHandler(pw, request);
             request.onupgradeneeded = function(e) {
                 pw.progress(request, [request.transaction, e]);
             };
-        }
-
-        ;
+        };
 
         function IDBDatabaseHandler(pw, database) {
             IDBAbortHandler(pw, database);
             IDBErrorHandler(pw, database);
             IDBVersionChangeHandler(pw, database);
-        }
-
-        ;
+        };
 
         function IDBTransactionHandler(pw, txn) {
             IDBCompleteHandler(pw, txn);
             IDBAbortHandler(pw, txn);
             IDBErrorHandler(pw, txn);
-        }
-
-        ;
+        };
 
     })(window, typeof Windows !== "undefined");
     window.linq2indexedDB = linq2indexedDB;
