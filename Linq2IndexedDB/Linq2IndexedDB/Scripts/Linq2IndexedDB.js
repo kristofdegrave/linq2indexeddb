@@ -104,6 +104,7 @@ var enableLogging = true;
             this.sortClauses = [];
             this.get = [];
             this.insert = [];
+            this.merge = [];
             this.update = [];
             this.remove = [];
             this.clear = false;
@@ -153,13 +154,22 @@ var enableLogging = true;
                     return insert(queryBuilder, data, key);
                 },
                 update: function(data, key) {
-                    /// <summary>inserts data.</summary>
+                    /// <summary>updates data.</summary>
                     /// <param name="data" type="Object">The object you want to update.</param>
                     /// <param name="key" type="Object">
                     ///     [Optional] The key of the data you want to update.
                     /// </param>
                     /// <returns type="Object">The object that was updated.</returns>
                     return update(queryBuilder, data, key);
+                },
+                merge : function (data, key) {
+                    /// <summary>merges data.</summary>
+                    /// <param name="data" type="Object">The data you want to merge.</param>
+                    /// <param name="key" type="Object">
+                    ///     [Optional] The key of the data you want to update.
+                    /// </param>
+                    /// <returns type="Object">The object that was updated.</returns>
+                    return merge(queryBuilder, data, key);
                 },
                 remove: function(key) {
                     /// <summary>Removes data from the objectstore by his key.</summary>
@@ -304,6 +314,11 @@ var enableLogging = true;
             return executeQuery(queryBuilder);
         }
 
+        function merge(queryBuilder, data, key) {
+            queryBuilder.merge.push({ data: data, key: key });
+            return executeQuery(queryBuilder);
+        }
+
         function remove(queryBuilder, key) {
             queryBuilder.remove.push({ key: key });
             return executeQuery(queryBuilder);
@@ -326,6 +341,8 @@ var enableLogging = true;
                         executeInsert(queryBuilder, pw, args[0]);
                     } else if (queryBuilder.update.length > 0) {
                         executeUpdate(queryBuilder, pw, args[0]);
+                    } else if (queryBuilder.merge.length > 0) {
+                        executeMerge(queryBuilder, pw, args[0]);
                     } else if (queryBuilder.remove.length > 0) {
                         executeRemove(queryBuilder, pw, args[0]);
                     } else if (queryBuilder.clear) {
@@ -404,6 +421,32 @@ var enableLogging = true;
                 function(args /* [transaction] */) {
                     linq2indexedDB.prototype.core.update(linq2indexedDB.prototype.core.objectStore(args[0], queryBuilder.from), queryBuilder.update[0].data, queryBuilder.update[0].key).then(function(args1 /*storedData, storedkey*/) {
                         pw.complete(this, args1[0] /*{object: args[0], key: args[1]}*/ /*[storedData, storedkey]*/);
+                    }, pw.error);
+                });
+        }
+
+        function executeMerge(queryBuilder, pw, dbPromise) {
+            var transactionPromise = linq2indexedDB.prototype.core.transaction(dbPromise, queryBuilder.from, linq2indexedDB.prototype.core.transactionTypes.READ_WRITE, dbConfig.autoGenerateAllowed);
+
+            transactionPromise.then(function (args /* [transaction] */) {
+                var txn = args[0];
+                txn.db.close();
+            },
+                pw.error,
+                function (args /* [transaction] */) {
+                    var objectStore = linq2indexedDB.prototype.core.objectStore(args[0], queryBuilder.from);
+                    var obj = null;
+                    linq2indexedDB.prototype.core.cursor(objectStore, IDBKeyRange.only(queryBuilder.merge[0].key)).then(function () {
+                        //pw.complete(this, obj);
+                    }, null, function (args1 /*data*/) {
+                        obj = args1[0];
+                        for (var prop in queryBuilder.merge[0].data) {
+                            obj[prop] = queryBuilder.merge[0].data[prop];
+                        }
+
+                        args1[1].update(obj);
+                        pw.complete(this, obj);
+                        //pw.progress(this, obj /*[data]*/);
                     }, pw.error);
                 });
         }
