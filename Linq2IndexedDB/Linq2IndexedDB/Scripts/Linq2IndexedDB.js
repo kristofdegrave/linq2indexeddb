@@ -1028,7 +1028,7 @@ var enableLogging = true;
     "use strict";
 
     var utilities = {
-        linq2indexedDBWorkerFileLocation: "../Scripts/Linq2indexedDB.js",
+        linq2indexedDBWorkerFileLocation: "/Scripts/Linq2IndexedDB.js",
         linq2indexedDBWorker: function(data, filters, sortClauses) {
             return utilities.promiseWrapper(function(pw) {
                 if (!!window.Worker) {

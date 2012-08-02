@@ -1,0 +1,101 @@
+﻿<!DOCTYPE html>  
+<html>  
+    <head> 
+        <title>Tests</title> 
+        <link href="qunit.css" rel="stylesheet" type="text/css" />  
+        <script type="text/javascript" src="../Scripts/jquery-1.7.2.js"> </script>
+        <script src="qunit.js" type="text/javascript"> </script> 
+        <script type="text/javascript" src="../Scripts/indexeddb.shim.js"> </script>
+        <script src="../Scripts/Linq2IndexedDB.js" type="text/javascript"> </script>
+        <script type="text/javascript">
+            $(document).ready(function() {
+                var dbName = "TestDatabase";
+
+                function initieleSituatie() {
+                    linq2indexedDB.prototype.core.deleteDb(dbName).then(function () {
+                    }, function () {
+                        ok(false, "Creating initial situation failed");
+                        start();
+                    });
+                }
+
+                module("Database");
+                test("Opening/Creating Database", 3, function () {
+                    stop();
+                    initieleSituatie();
+
+                    linq2indexedDB.prototype.core.db(dbName).then(function (args) {
+                        equal(dbName, args[0].name, "Database opened/created");
+                        equal(1, args[0].version, "Database opened/created");
+                        args[0].close();
+                        start();
+                    }, function (args) {
+                        ok(false, "Creating database failed: " + args[0]);
+                        start();
+                    }, function (args) {
+                        equal("upgradeneeded", args[1].type, "Upgrading database");
+                    });
+                });
+                asyncTest("Opening/Creating Database with version", 3, function () {
+                    var version = 2;
+                    initieleSituatie();
+
+                    linq2indexedDB.prototype.core.db(dbName, version).then(function (args) {
+                        equal(dbName, args[0].name, "Database opened/created");
+                        equal(version, args[0].version, "Database opened/created");
+                        args[0].close();
+                        start();
+                    }, function (args) {
+                        ok(false, "Creating/Opening database failed: " + args[0]);
+                        start();
+                    }, function (args) {
+                        equal("upgradeneeded", args[1].type, "Upgrading database");
+                    });
+                    
+                });
+                asyncTest("Deleting Database", 1, function () {
+                    // Delete database if existing
+                    linq2indexedDB.prototype.core.db(dbName).then(function (args) {
+                        args[0].close();
+                        linq2indexedDB.prototype.core.deleteDb(dbName).then(function () {
+                            ok(true, "Database removed");
+                            start();
+                        }, function (errorArgs) {
+                            ok(false, "Deleting database failed: " + errorArgs[0]);
+                            start();
+                        });
+                    }, function () {
+                        ok(false, "Creating initial situation failed");
+                        start();
+                    });
+                });
+
+                module("ObjectStores");
+                asyncTest("Creating ObjectStore", 3, function () {
+                    // Delete database if existing
+                    linq2indexedDB.prototype.core.deleteDb(dbName).then(function () {
+                        linq2indexedDB.prototype.core.db(dbName).then(function (args) {
+                            equal(dbName, args[0].name, "Database opened/created");
+                            equal(1, args[0].version, "Database opened/created");
+                            args[0].close();
+                            start();
+                        }, function () {
+                            ok(false, "Creating initial situation failed");
+                            start();
+                        });
+                    }, function () {
+                        ok(false, "Creating initial situation failed");
+                        start();
+                    });
+                });
+            });
+        </script>  
+    </head>  
+    <body>  
+        <h1 id="qunit-header">Linq Test</h1>  
+        <h2 id="qunit-banner"></h2>  
+        <h2 id="qunit-userAgent"></h2>  
+        <ol id="qunit-tests">  
+        </ol>  
+    </body>  
+</html>
