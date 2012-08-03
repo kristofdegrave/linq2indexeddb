@@ -820,7 +820,7 @@ var enableLogging = true;
                 indexeddbFilter: true,
                 sortOrder: 0,
                 isValid: function(data, filter) {
-                    return data[filter.propertyName] == filter.value;
+                    return linq2indexedDB.prototype.utilities.getPropertyValue(data, filter.propertyName) == filter.value;
                 },
                 filter: function(callback, queryBuilder, filterMetaData) {
                     /// <summary>Creates a function to retrieve values for the filter and adds the filter to the querybuilder.</summary>
@@ -850,9 +850,10 @@ var enableLogging = true;
                 name: "between",
                 sortOrder: 1,
                 indexeddbFilter: true,
-                isValid: function(data, filter) {
-                    return (data[filter.propertyName] > filter.minValue || (filter.minValueIncluded && data[filter.propertyName] == filter.minValue))
-                        && (data[filter.propertyName] < filter.maxValue || (filter.maxValueIncluded && data[filter.propertyName] == filter.maxValue));
+                isValid: function (data, filter) {
+                    var value = linq2indexedDB.prototype.utilities.getPropertyValue(data, filter.propertyName);
+                    return (value > filter.minValue || (filter.minValueIncluded && value == filter.minValue))
+                        && (value < filter.maxValue || (filter.maxValueIncluded && value == filter.maxValue));
                 },
                 filter: function(callback, queryBuilder, filterMetaData) {
                     /// <summary>Creates a function to retrieve values for the filter and adds the filter to the querybuilder.</summary>
@@ -891,8 +892,9 @@ var enableLogging = true;
                 name: "greaterThan",
                 sortOrder: 2,
                 indexeddbFilter: true,
-                isValid: function(data, filter) {
-                    return data[filter.propertyName] > filter.value || (filter.valueIncluded && data[filter.propertyName] == filter.value);
+                isValid: function (data, filter) {
+                    var value = linq2indexedDB.prototype.utilities.getPropertyValue(data, filter.propertyName);
+                    return value > filter.value || (filter.valueIncluded && value == filter.value);
                 },
                 filter: function(callback, queryBuilder, filterMetaData) {
                     /// <summary>Creates a function to retrieve values for the filter and adds the filter to the querybuilder.</summary>
@@ -925,8 +927,9 @@ var enableLogging = true;
                 name: "smallerThan",
                 sortOrder: 2,
                 indexeddbFilter: true,
-                isValid: function(data, filter) {
-                    return data[filter.propertyName] < filter.value || (filter.valueIncluded && data[filter.propertyName] == filter.value);
+                isValid: function (data, filter) {
+                    var value = linq2indexedDB.prototype.utilities.getPropertyValue(data, filter.propertyName);
+                    return value < filter.value || (filter.valueIncluded && value == filter.value);
                 },
                 filter: function(callback, queryBuilder, filterMetaData) {
                     /// <summary>Creates a function to retrieve values for the filter and adds the filter to the querybuilder.</summary>
@@ -960,7 +963,13 @@ var enableLogging = true;
                 sortOrder: 3,
                 indexeddbFilter: false,
                 isValid: function(data, filter) {
-                    return filter.value.indexOf(data[filter.propertyName]) >= 0;
+                    var value = linq2indexedDB.prototype.utilities.getPropertyValue(data, filter.propertyName);
+                    if (value) {
+                        return filter.value.indexOf(value) >= 0;
+                    }
+                    else {
+                        return false;
+                    }
                 },
                 filter: function(callback, queryBuilder, filterMetaData) {
                     /// <summary>Creates a function to retrieve values for the filter and adds the filter to the querybuilder.</summary>
@@ -991,8 +1000,14 @@ var enableLogging = true;
                 name: "like",
                 sortOrder: 4,
                 indexeddbFilter: false,
-                isValid: function(data, filter) {
-                    return data[filter.propertyName].indexOf(filter.value) >= 0;
+                isValid: function (data, filter) {
+                    var value = linq2indexedDB.prototype.utilities.getPropertyValue(data, filter.propertyName);
+                    if (value) {
+                        return value.indexOf(filter.value) >= 0;
+                    }
+                    else {
+                        return false;
+                    }
                 },
                 filter: function(callback, queryBuilder, filterMetaData) {
                     /// <summary>Creates a function to retrieve values for the filter and adds the filter to the querybuilder.</summary>
@@ -1179,6 +1194,16 @@ var enableLogging = true;
                 var endArgs = value.indexOf(')');
 
                 return new Function(value.substring(startArgs, endArgs), value.substring(startBody, endBody));
+            }
+            return value;
+        },
+        getPropertyValue: function(data, propertyName){
+            var structure = propertyName.split(".");
+            var value = data;
+            for (var i = 0; i < structure.length; i++) {
+                if (value) {
+                    value = value[structure[i]];
+                }
             }
             return value;
         }

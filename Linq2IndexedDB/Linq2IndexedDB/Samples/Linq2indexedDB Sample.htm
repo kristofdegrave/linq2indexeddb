@@ -23,17 +23,28 @@
 
                 var db = $.linq2indexedDB("test", null, true);
                 db.deleteDatabase().then(function() {
-                    db.linq.from("person").insert({ Name: "test1", Firstname: "test1", Age: 1 });
-                    db.linq.from("person").insert({ Name: "test2", Firstname: "test2", Age: 2 });
-                    db.linq.from("person").insert({ Name: "test3", Firstname: "test3", Age: 3 });
-                    db.linq.from("person").insert({ Name: "test4", Firstname: "test4", Age: 4 });
+                    db.linq.from("person").insert({ Name: "test1", Firstname: "test1", Age: 1, location: { country: "Belgium", city: "Ghent" } });
+                    db.linq.from("person").insert({ Name: "test2", Firstname: "test2", Age: 2, location: { country: "Belgium", city: "Brussels" } });
+                    db.linq.from("person").insert({ Name: "test3", Firstname: "test3", Age: 3, location: { country: "Belgium", city: "Bruges" } });
+                    db.linq.from("person").insert({ Name: "test4", Firstname: "test4", Age: 4, location: { country: "Belgium", city: "Brussels" } });
                     db.linq.from("person").insert({ Name: "test11", Firstname: "test11", Age: 11 }).then(function () {
 
-                        db.linq.from("person").merge({ location: "test" }, 3).then(function(d) {
+                        db.linq.from("person").merge({ location: { country: "Belgium", city: "Antwerp" } }, 3).then(function (d) {
                             var c = d;
                         });
                     });
+                    
+                    db.linq.from("person").where("location.city").equals("Brussels").select(["Name", "Firstname"]).then(function () { }, function () { }, function (data) {
+                        var tekst = $("#txtLog").val();
+                        tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + "\n\r";
+                        $("#txtLog").val(tekst);
+                    });
 
+                    //db.linq.from("person").where("Name").equals("test1").select(["Name", "Firstname"]).then(function () { }, function () { }, function (data) {
+                    //    var tekst = $("#txtLog").val();
+                    //    tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + "\n\r";
+                    //    $("#txtLog").val(tekst);
+                    //});
 
                     //db.linq.from("person").where("Name").equals("test1").select(["Name", "Firstname"]).then(function () { }, function () { }, function (data) {
                     //    var tekst = $("#txtLog").val();
@@ -83,17 +94,17 @@
                     //    $("#txtLog").val(tekst);
                     //});
 
-                    db.linq.from("person").where(function(data) {
-                        return data.Age > 3;
-                    }).and(function(data) {
-                        return data.Age < 10;
-                    }).select(["Name", "Firstname"]).then(function() {
-                    }, function() {
-                    }, function(data) {
-                        var tekst = $("#txtLog").val();
-                        tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + "\n\r";
-                        $("#txtLog").val(tekst);
-                    });
+                    //db.linq.from("person").where(function(data) {
+                    //    return data.Age > 3;
+                    //}).and(function(data) {
+                    //    return data.Age < 10;
+                    //}).select(["Name", "Firstname"]).then(function() {
+                    //}, function() {
+                    //}, function(data) {
+                    //    var tekst = $("#txtLog").val();
+                    //    tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + "\n\r";
+                    //    $("#txtLog").val(tekst);
+                    //});
                 });
             });
         </script>
