@@ -166,7 +166,7 @@ var enableLogging = true;
                     /// <summary>merges data.</summary>
                     /// <param name="data" type="Object">The data you want to merge.</param>
                     /// <param name="key" type="Object">
-                    ///     [Optional] The key of the data you want to update.
+                    ///     The key of the data you want to update.
                     /// </param>
                     /// <returns type="Object">The object that was updated.</returns>
                     return merge(queryBuilder, data, key);
@@ -575,7 +575,7 @@ var enableLogging = true;
 
                 var obj = new Object();
                 for (var i = 0; i < propertyNames.length; i++) {
-                    obj[propertyNames[i]] = data[propertyNames[i]];
+                    linq2indexedDB.prototype.utilities.setPropertyValue(obj, propertyNames[i], linq2indexedDB.prototype.utilities.getPropertyValue(data, propertyNames[i]));
                 }
                 return obj;
             }
@@ -1157,10 +1157,12 @@ var enableLogging = true;
                     for (var j = 0; j < sortClauses.length; j++) {
                         var valueX = array[i];
                         var valueY = data;
-
-                        if (valueX[sortClauses[j].propertyName] != valueY[sortClauses[j].propertyName]) {
-                            if ((sortClauses[j].descending && valueX[sortClauses[j].propertyName] > valueY[sortClauses[j].propertyName])
-                                || (!sortClauses[j].descending && valueX[sortClauses[j].propertyName] < valueY[sortClauses[j].propertyName])) {
+                        var sortPropvalueX = linq2indexedDB.prototype.utilities.getPropertyValue(valueX, sortClauses[j].propertyName);
+                        var sortPropvalueY = linq2indexedDB.prototype.utilities.getPropertyValue(valueY, sortClauses[j].propertyName);
+                        
+                        if (sortPropvalueX != sortPropvalueY) {
+                            if ((sortClauses[j].descending && sortPropvalueX > sortPropvalueY)
+                                || (!sortClauses[j].descending && sortPropvalueX < sortPropvalueY)) {
                                 newArray.push(valueX);
                             } else {
                                 if (!valueAdded) {
@@ -1206,6 +1208,20 @@ var enableLogging = true;
                 }
             }
             return value;
+        },
+        setPropertyValue: function(data, propertyName, value){
+            var structure = propertyName.split(".");
+            var obj = data;
+            for (var i = 0; i < structure.length; i++) {
+                if (i != (structure.length - 1)) {
+                    obj[structure[i]] = { };
+                    obj = obj[structure[i]];
+                }
+                else {
+                    obj[structure[i]] = value;
+                }
+            }
+            return obj;
         }
     };
 
