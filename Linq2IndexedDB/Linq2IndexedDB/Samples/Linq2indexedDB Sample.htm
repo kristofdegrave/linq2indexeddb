@@ -33,12 +33,18 @@
                     //        var c = d;
                     //    });
                     //});
-                    
-                    db.linq.from("person").orderByDesc("location.city").select(["Name", "Firstname", "location.city"]).then(function () { }, function () { }, function (data) {
-                        var tekst = $("#txtLog").val();
-                        tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + " city: " + linq2indexedDB.prototype.utilities.getPropertyValue(data, "location.city") + "\n\r";
-                        $("#txtLog").val(tekst);
-                    });
+
+                    //db.linq.from("person").where("Age").smallerThan(3).remove().then(function (data) {
+                    //    var tekst = $("#txtLog").val();
+                    //    tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + " city: " + linq2indexedDB.prototype.utilities.getPropertyValue(data, "location.city") + "\n\r";
+                    //    $("#txtLog").val(tekst);
+                    //});
+
+                    //db.linq.from("person").orderByDesc("location.city").select(["Name", "Firstname", "location.city"]).then(function () { }, function () { }, function (data) {
+                    //    var tekst = $("#txtLog").val();
+                    //    tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + " city: " + linq2indexedDB.prototype.utilities.getPropertyValue(data, "location.city") + "\n\r";
+                    //    $("#txtLog").val(tekst);
+                    //});
 
                     //db.linq.from("person").where("location.city").equals("Brussels").select(["Name", "Firstname"]).then(function () { }, function () { }, function (data) {
                     //    var tekst = $("#txtLog").val();
@@ -100,17 +106,17 @@
                     //    $("#txtLog").val(tekst);
                     //});
 
-                    //db.linq.from("person").where(function(data) {
-                    //    return data.Age > 3;
-                    //}).and(function(data) {
-                    //    return data.Age < 10;
-                    //}).select(["Name", "Firstname", "location.city"]).then(function() {
-                    //}, function() {
-                    //}, function(data) {
-                    //    var tekst = $("#txtLog").val();
-                    //    tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + " city: " + linq2indexedDB.prototype.utilities.getPropertyValue(data, "location.city") + "\n\r";
-                    //    $("#txtLog").val(tekst);
-                    //});
+                    db.linq.from("person").where(function(data) {
+                        return data.Age > 3;
+                    }).and(function(data) {
+                        return data.Age < 10;
+                    }).select(["Name", "Firstname", "location.city"]).then(function() {
+                    }, function() {
+                    }, function(data) {
+                        var tekst = $("#txtLog").val();
+                        tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + " city: " + linq2indexedDB.prototype.utilities.getPropertyValue(data, "location.city") + "\n\r";
+                        $("#txtLog").val(tekst);
+                    });
                 });
             });
         </script>
