@@ -1,4 +1,4 @@
-/// <reference path="jquery-1.7.2.js" />
+﻿/// <reference path="jquery-1.7.2.js" />
 /// <reference path="indexeddb.shim.js" />
 
 var linq2indexedDB;
@@ -304,15 +304,34 @@ var enableLogging = true;
                     queryBuilder.select.push(propertyNames[i]);
                 }
             }
-            return executeQuery(queryBuilder, linq2indexedDB.prototype.core.transactionTypes.READ_ONLY, executeRead);
+            return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
+                var returnData = [];
+                executeQuery(queryBuilder, linq2indexedDB.prototype.core.transactionTypes.READ_WRITE, executeWhere).then(function () {
+                    pw.complete(returnData);
+                },pw.error, function(args) {
+                    var obj = selectData(args[0], queryBuilder.select);
+                    returnData.push(obj);
+                    pw.progress(this, obj /*[obj]*/);
+                });
+            });
         }
 
         function insert(queryBuilder, data, key) {
             queryBuilder.insert.push({ data: data, key: key });
             return executeQuery(queryBuilder, linq2indexedDB.prototype.core.transactionTypes.READ_WRITE, function (qb, pw, transaction) {
-                linq2indexedDB.prototype.core.insert(linq2indexedDB.prototype.core.objectStore(transaction, qb.from), qb.insert[0].data, qb.insert[0].key).then(function (args /*storedData, storedkey*/) {
-                    pw.complete(this, args[0] /*{object: args[0], key: args[1]}*/ /*[storedData, storedkey]*/);
-                }, pw.error);
+                var objectStorePromis = linq2indexedDB.prototype.core.objectStore(transaction, qb.from);
+                if (linq2indexedDB.prototype.utilities.isArray(qb.insert[0].data) && !qb.insert[0].key) {
+                    for (var i = 0; i < qb.insert[0].data.length; i++) {
+                        linq2indexedDB.prototype.core.insert(objectStorePromis, qb.insert[0].data[i]).then(function (args /*storedData, storedkey*/) {
+                            pw.progress(this, args[0] /*{object: args[0], key: args[1]}*/ /*[storedData, storedkey]*/);
+                        }, pw.error);
+                    }
+                }
+                else {
+                    linq2indexedDB.prototype.core.insert(objectStorePromis, qb.insert[0].data, qb.insert[0].key).then(function(args /*storedData, storedkey*/) {
+                        pw.complete(this, args[0] /*{object: args[0], key: args[1]}*/ /*[storedData, storedkey]*/);
+                    }, pw.error);
+                }
             });
         }
 
@@ -331,8 +350,7 @@ var enableLogging = true;
                 var objectStore = linq2indexedDB.prototype.core.objectStore(transaction, qb.from);
                 var obj = null;
                 linq2indexedDB.prototype.core.cursor(objectStore, IDBKeyRange.only(qb.merge[0].key)).then(function () {
-                    //pw.complete(this, obj);
-                }, null, function (args /*data*/) {
+                }, pw.error, function (args /*data*/) {
                     obj = args[0];
                     for (var prop in qb.merge[0].data) {
                         obj[prop] = qb.merge[0].data[prop];
@@ -340,7 +358,6 @@ var enableLogging = true;
 
                     args[1].update(obj);
                     pw.complete(this, obj);
-                    //pw.progress(this, obj /*[data]*/);
                 }, pw.error);
             });
         }
@@ -355,18 +372,29 @@ var enableLogging = true;
                 });
             }
             else {
-                // todo: optimize
-                return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
-                    executeQuery(queryBuilder, executeRead).then(function (data) {
-                        executeQuery(queryBuilder, function (qb, promise, transaction) {
-                            linq2indexedDB.prototype.core.objectStore(transaction, qb.from).then(function (objectStoreArgs) {
-                                for (var i = 0; i < data.length; i++) {
-                                    linq2indexedDB.prototype.core.remove(objectStoreArgs[1], linq2indexedDB.prototype.utilities.getPropertyValue(data[i], objectStoreArgs[1].keyPath)).then(function (args1 /*data*/) {
-                                        pw.progress(this, args1[0] /*[data]*/);
-                                    }, promise.error);
-                                }
-                            }, promise.error);
-                        }).then(pw.complete, pw.error, pw.progress);
+                var cursorDelete = false;
+                return linq2indexedDB.prototype.utilities.promiseWrapper(function(pw) {
+                    executeQuery(queryBuilder, linq2indexedDB.prototype.core.transactionTypes.READ_WRITE, executeWhere).then(function (data) {
+                        if (cursorDelete) {
+                            pw.complete();
+                        }
+                        else {
+                            executeQuery(queryBuilder, linq2indexedDB.prototype.core.transactionTypes.READ_WRITE, function (qb, promise, transaction) {
+                                linq2indexedDB.prototype.core.objectStore(transaction, qb.from).then(function(objectStoreArgs) {
+                                    for (var i = 0; i < data.length; i++) {
+                                        linq2indexedDB.prototype.core.remove(objectStoreArgs[1], linq2indexedDB.prototype.utilities.getPropertyValue(data[i], objectStoreArgs[1].keyPath)).then(function(args1 /*data*/) {
+                                            pw.progress(this, args1[0] /*[data]*/);
+                                        }, promise.error);
+                                    }
+                                }, promise.error);
+                            }).then(pw.complete, pw.error, pw.progress);
+                        }
+                    }, null, function(args) {
+                        if (args.length > 1) {
+                            args[1]["delete"]();
+                            pw.progress(this);
+                            cursorDelete = true;
+                        }
                     });
                 });
             }
@@ -398,6 +426,8 @@ var enableLogging = true;
                     linq2indexedDB.prototype.core.transaction(args[0], queryBuilder.from, transactionType, dbConfig.autoGenerateAllowed).then(function (transactionArgs /* [transaction] */) {
                         var txn = transactionArgs[0];
                         txn.db.close();
+                        // call complete if it isn't called already
+                        pw.complete();
                     },
                     pw.error,
                     function (transactionArgs /* [transaction] */) {
@@ -416,9 +446,9 @@ var enableLogging = true;
                 });
             });
         }
-
-        function executeRead(queryBuilder, pw, transaction) {
-            linq2indexedDB.prototype.core.objectStore(transaction, queryBuilder.from).then(function(objArgs) {
+        
+        function executeWhere(queryBuilder, pw, transaction) {
+            linq2indexedDB.prototype.core.objectStore(transaction, queryBuilder.from).then(function (objArgs) {
                 try {
                     var objectStore = objArgs[1];
                     var whereClauses = queryBuilder.where || [];
@@ -426,35 +456,31 @@ var enableLogging = true;
                     var cursorPromise = determineCursor(objectStore, whereClauses);
 
                     cursorPromise.then(
-                        function(args1 /*data*/) {
+                        function (args1 /*data*/) {
                             var data = args1[0];
 
-                            linq2indexedDB.prototype.utilities.linq2indexedDBWorker(data, whereClauses, queryBuilder.sortClauses).then(function(d) {
+                            linq2indexedDB.prototype.utilities.linq2indexedDBWorker(data, whereClauses, queryBuilder.sortClauses).then(function (d) {
                                 // No need to notify again if it allready happend in the onProgress method of the cursor.
                                 if (returnData.length == 0) {
                                     for (var j = 0; j < d.length; j++) {
-                                        var obj = selectData(d[j], queryBuilder.select);
-                                        returnData.push(obj);
-                                        pw.progress(this, obj /*[obj]*/);
+                                        pw.progress(this, [d[j]] /*[obj]*/);
                                     }
                                 }
-                                pw.complete(this, returnData /*[returnData]*/);
+                                pw.complete(this, d /*[returnData]*/);
                             });
                         },
                         pw.error,
-                        function(args1 /*data*/) {
-                            var data = args1[0];
+                        function (args1 /*data*/) {
 
                             // When there are no more where clauses to fulfill and the collection doesn't need to be sorted, the data can be returned.
                             // In the other case let the complete handle it.
                             if (whereClauses.length == 0 && queryBuilder.sortClauses.length == 0) {
-                                var obj = selectData(data, queryBuilder.select);
-                                returnData.push(obj);
-                                pw.progress(this, obj /*[obj]*/);
+                                returnData.push(args1[0]);
+                                pw.progress(this, args1 /*[obj]*/);
                             }
                         }
                     );
-                } catch(ex) {
+                } catch (ex) {
                     // Handle errors like an invalid keyRange.
                     linq2indexedDB.prototype.core.abortTransaction(args[0]);
                     pw.error(this, [ex.message, ex]);
@@ -1501,7 +1527,7 @@ if (typeof window !== "undefined") {
                                 // When an upgradeneeded event is thrown, create the non-existing object stores
                                 if (event.type == "upgradeneeded") {
                                     for (var j = 0; j < nonExistingObjectStores.length; j++) {
-                                        linq2indexedDB.prototype.core.createObjectStore(args[0], nonExistingObjectStores[j]);
+                                        linq2indexedDB.prototype.core.createObjectStore(args[0], nonExistingObjectStores[j], {keyPath: "Id", autoIncrement: true});
                                     }
                                 }
                             });
