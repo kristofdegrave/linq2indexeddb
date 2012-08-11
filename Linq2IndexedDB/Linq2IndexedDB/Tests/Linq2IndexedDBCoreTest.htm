@@ -10,9 +10,57 @@
         <script type="text/javascript">
             $(document).ready(function() {
                 var dbName = "TestDatabase";
+                var objectStoreName = "objectStore";
+                var indexProperty = "name";
+                var msgCreatingInitialSituationFailed = "Creating initial situation failed";
 
-                function initieleSituatie() {
+                function initionalSituation(callBack) {
                     linq2indexedDB.prototype.core.deleteDb(dbName).then(function () {
+                        callBack();
+                    }, function () {
+                        ok(false, msgCreatingInitialSituationFailed);
+                        start();
+                    });
+                }
+                function initionalSituationObjectStore(callBack) {
+                    linq2indexedDB.prototype.core.deleteDb(dbName).then(function () {
+                        linq2indexedDB.prototype.core.db(dbName).then(function (args) {
+                            args[0].close();
+                            callBack();
+                        }, function () {
+                            ok(false, msgCreatingInitialSituationFailed);
+                            start();
+                        }, function (args) {
+                            if (args[1].type == "upgradeneeded") {
+                                linq2indexedDB.prototype.core.createObjectStore(args[0], objectStoreName).then(function () {
+                                }, function () {
+                                    ok(false, msgCreatingInitialSituationFailed);
+                                    start();
+                                });
+                            }
+                        });
+                    }, function () {
+                        ok(false, "Creating initial situation failed");
+                        start();
+                    });
+                }
+                function initionalSituationIndex(callBack) {
+                    linq2indexedDB.prototype.core.deleteDb(dbName).then(function () {
+                        linq2indexedDB.prototype.core.db(dbName).then(function (args) {
+                            args[0].close();
+                            callBack();
+                        }, function () {
+                            ok(false, msgCreatingInitialSituationFailed);
+                            start();
+                        }, function (args) {
+                            if (args[1].type == "upgradeneeded") {
+                                linq2indexedDB.prototype.core.createIndex(linq2indexedDB.prototype.core.createObjectStore(args[0], objectStoreName), indexProperty).then(function () {
+                                }, function () {
+                                    ok(false, msgCreatingInitialSituationFailed);
+                                    start();
+                                });
+                            }
+                        });
                     }, function () {
                         ok(false, "Creating initial situation failed");
                         start();
@@ -20,41 +68,42 @@
                 }
 
                 module("Database");
-                test("Opening/Creating Database", 3, function () {
-                    stop();
-                    initieleSituatie();
-
-                    linq2indexedDB.prototype.core.db(dbName).then(function (args) {
-                        equal(dbName, args[0].name, "Database opened/created");
-                        equal(1, args[0].version, "Database opened/created");
-                        args[0].close();
-                        start();
-                    }, function (args) {
-                        ok(false, "Creating database failed: " + args[0]);
-                        start();
-                    }, function (args) {
-                        equal("upgradeneeded", args[1].type, "Upgrading database");
+                asyncTest("Opening/Creating Database", 3, function () {
+                    initionalSituation(function() {
+                        linq2indexedDB.prototype.core.db(dbName).then(function(args) {
+                            equal(args[0].name, dbName, "Database opened/created");
+                            //equal(args[0].version, 1, "Database opened/created");
+                            // Necessary for indexeddb who work with setVersion
+                            equal(parseInt(args[0].version), 1, "Database opened/created");
+                            args[0].close();
+                            start();
+                        }, function(args) {
+                            ok(false, "Creating database failed: " + args[0]);
+                            start();
+                        }, function(args) {
+                            equal(args[1].type, "upgradeneeded", "Upgrading database");
+                        });
                     });
                 });
-                asyncTest("Opening/Creating Database with version", 3, function () {
+                asyncTest("Opening/Creating Database with version", 5, function () {
                     var version = 2;
-                    initieleSituatie();
-
-                    linq2indexedDB.prototype.core.db(dbName, version).then(function (args) {
-                        equal(dbName, args[0].name, "Database opened/created");
-                        equal(version, args[0].version, "Database opened/created");
-                        args[0].close();
-                        start();
-                    }, function (args) {
-                        ok(false, "Creating/Opening database failed: " + args[0]);
-                        start();
-                    }, function (args) {
-                        equal("upgradeneeded", args[1].type, "Upgrading database");
+                    initionalSituation(function() {
+                        linq2indexedDB.prototype.core.db(dbName, version).then(function(args) {
+                            equal(args[0].name, dbName, "Database opened/created");
+                            equal(args[0].version, version, "Database version");
+                            args[0].close();
+                            start();
+                        }, function(args) {
+                            ok(false, "Creating/Opening database failed: " + args[0]);
+                            start();
+                        }, function(args) {
+                            equal("upgradeneeded", args[1].type, "Upgrading database");
+                            equal(args[1].oldVersion, 0, "Old version");
+                            equal(args[1].newVersion, version, "New version");
+                        });
                     });
-                    
                 });
                 asyncTest("Deleting Database", 1, function () {
-                    // Delete database if existing
                     linq2indexedDB.prototype.core.db(dbName).then(function (args) {
                         args[0].close();
                         linq2indexedDB.prototype.core.deleteDb(dbName).then(function () {
@@ -65,28 +114,199 @@
                             start();
                         });
                     }, function () {
-                        ok(false, "Creating initial situation failed");
+                        ok(false, msgCreatingInitialSituationFailed);
                         start();
                     });
                 });
 
                 module("ObjectStores");
                 asyncTest("Creating ObjectStore", 3, function () {
-                    // Delete database if existing
-                    linq2indexedDB.prototype.core.deleteDb(dbName).then(function () {
-                        linq2indexedDB.prototype.core.db(dbName).then(function (args) {
-                            equal(dbName, args[0].name, "Database opened/created");
-                            equal(1, args[0].version, "Database opened/created");
+                    initionalSituation(function() {
+                        linq2indexedDB.prototype.core.db(dbName).then(function(args) {
+                            if (args[0].objectStoreNames.contains(objectStoreName)) {
+                                ok(true, "Object store present");
+                            }
                             args[0].close();
                             start();
-                        }, function () {
-                            ok(false, "Creating initial situation failed");
+                        }, function() {
+                            ok(false, "Database error");
                             start();
+                        }, function(args) {
+                            if (args[1].type == "upgradeneeded") {
+                                linq2indexedDB.prototype.core.createObjectStore(args[0], objectStoreName).then(function(objArgs) {
+                                    ok(true, "Object store created");
+                                    equals(objArgs[1].name, objectStoreName);
+                                }, function() {
+                                    ok(false, "Creating object store failed");
+                                });
+                            }
                         });
-                    }, function () {
-                        ok(false, "Creating initial situation failed");
-                        start();
                     });
+                });
+                asyncTest("Creating ObjectStore with options", 5, function () {
+                    var keyPath = "Id";
+                    var autoIncrement = true;
+                    initionalSituation(function() {
+                        linq2indexedDB.prototype.core.db(dbName).then(function(args) {
+                            if (args[0].objectStoreNames.contains(objectStoreName)) {
+                                ok(true, "Object store present");
+                            }
+                            args[0].close();
+                            start();
+                        }, function() {
+                            ok(false, "Database error");
+                            start();
+                        }, function(args) {
+                            if (args[1].type == "upgradeneeded") {
+                                linq2indexedDB.prototype.core.createObjectStore(args[0], objectStoreName, { keyPath: keyPath, autoIncrement: autoIncrement }).then(function(objArgs) {
+                                    ok(true, "Object store created");
+                                    equals(objArgs[1].name, objectStoreName, "Object store name");
+                                    equals(objArgs[1].keyPath, keyPath, "Object store keyPath");
+                                    if (objArgs[1].autoIncrement) {
+                                        equals(objArgs[1].keyPath, keyPath, "Object store autoIncrement");
+                                    } else {
+                                        ok(true, "Object store autoIncrement: attribute not implemented");
+                                    }
+                                }, function() {
+                                    ok(false, "Creating object store failed");
+                                });
+                            }
+                        });
+                    });
+                });
+                asyncTest("Deleting ObjectStore", 2, function () {
+                    initionalSituationObjectStore(function() {
+                        // Delete database if existing
+                        linq2indexedDB.prototype.core.db(dbName, 2).then(function(args) {
+                            if (!args[0].objectStoreNames.contains(objectStoreName)) {
+                                ok(true, "Object store is no longer present.");
+                            }
+                            args[0].close();
+                            start();
+                        }, function() {
+                            ok(false, "Database error");
+                            start();
+                        }, function(args) {
+                            if (args[1].type == "upgradeneeded") {
+                                linq2indexedDB.prototype.core.deleteObjectStore(args[0], objectStoreName).then(function() {
+                                    ok(true, "Object store deleted");
+                                }, function() {
+                                    ok(false, "Deleting object store failed");
+                                });
+                            }
+                        });
+                    });
+                });
+                
+                module("Indexes");
+                asyncTest("Creating Index", 4, function () {
+                    initionalSituationObjectStore(function () {
+                        linq2indexedDB.prototype.core.db(dbName, 2).then(function(args) {
+                            linq2indexedDB.prototype.core.transaction(args[0], [objectStoreName], linq2indexedDB.prototype.core.transactionTypes.READ_ONLY).then(function(transArgs) {
+                                transArgs[0].db.close();
+                                start();
+                            }, function() {
+                                ok(false, "Transaction error");
+                                start();
+                            }, function(transArgs) {
+                                linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function(objArgs) {
+                                    if (objArgs[1].indexNames.contains(indexProperty + linq2indexedDB.prototype.core.indexSuffix)) {
+                                        ok(true, "Index present");
+                                    }
+                                });
+                            });
+                        }, function() {
+                            ok(false, "Database error");
+                            start();
+                        }, function(args) {
+                            if (args[1].type == "upgradeneeded") {
+                                linq2indexedDB.prototype.core.createIndex(linq2indexedDB.prototype.core.objectStore(args[0], objectStoreName), indexProperty).then(function(indexArgs) {
+                                    ok(true, "Index created");
+                                    equals(indexArgs[1].name, indexProperty + linq2indexedDB.prototype.core.indexSuffix);
+                                    equals(indexArgs[1].keyPath, indexProperty);
+                                }, function() {
+                                    ok(false, "Creating index failed");
+                                });
+                            }
+                        });
+                    }, 1);
+                });
+                asyncTest("Creating Index with options", 6, function () {
+                    var unique = true;
+                    var multiEntry = true;
+                    initionalSituationObjectStore(function () {
+                        linq2indexedDB.prototype.core.db(dbName, 2).then(function (args) {
+                            linq2indexedDB.prototype.core.transaction(args[0], [objectStoreName], linq2indexedDB.prototype.core.transactionTypes.READ_ONLY).then(function (transArgs) {
+                                transArgs[0].db.close();
+                                start();
+                            }, function () {
+                                ok(false, "Transaction error");
+                                start();
+                            }, function (transArgs) {
+                                linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function () {
+                                    if (args[0].objectStoreNames.contains(objectStoreName)) {
+                                        ok(true, "Index present");
+                                    }
+                                });
+                            });
+                        }, function () {
+                            ok(false, "Database error");
+                            start();
+                        }, function (args) {
+                            if (args[1].type == "upgradeneeded") {
+                                linq2indexedDB.prototype.core.createIndex(linq2indexedDB.prototype.core.objectStore(args[0], objectStoreName), indexProperty, {unique: unique, multiEntry: multiEntry}).then(function (indexArgs) {
+                                    ok(true, "Index created");
+                                    equals(indexArgs[1].name, indexProperty + linq2indexedDB.prototype.core.indexSuffix);
+                                    equals(indexArgs[1].keyPath, indexProperty);
+                                    if (indexProperty[1].unique) {
+                                        equals(indexArgs[1].unique, unique);
+                                    }
+                                    else {
+                                        ok(true, "Index unique: attribute not implemented");
+                                    }
+                                    if (indexProperty[1].multiEntry) {
+                                        equals(indexArgs[1].multiEntry, multiEntry);
+                                    }
+                                    else {
+                                        ok(true, "Index multiEntry: attribute not implemented");
+                                    }
+                                }, function () {
+                                    ok(false, "Creating index failed");
+                                });
+                            }
+                        });
+                    }, 1);
+                });
+                asyncTest("Deleting Index", 2, function () {
+                    initionalSituationIndex(function () {
+                        // Delete database if existing
+                        linq2indexedDB.prototype.core.db(dbName, 2).then(function (args) {
+                            linq2indexedDB.prototype.core.transaction(args[0], [objectStoreName], linq2indexedDB.prototype.core.transactionTypes.READ_ONLY).then(function (transArgs) {
+                                transArgs[0].db.close();
+                                start();
+                            }, function () {
+                                ok(false, "Transaction error");
+                                start();
+                            }, function (transArgs) {
+                                linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
+                                    if (!objArgs[1].indexNames.contains(indexProperty + linq2indexedDB.prototype.core.indexSuffix)) {
+                                        ok(true, "Index is no longer present");
+                                    }
+                                });
+                            });
+                        }, function () {
+                            ok(false, "Database error");
+                            start();
+                        }, function (args) {
+                            if (args[1].type == "upgradeneeded") {
+                                linq2indexedDB.prototype.core.deleteIndex(linq2indexedDB.prototype.core.objectStore(args[0], objectStoreName), indexProperty).then(function () {
+                                    ok(true, "Index deleted");
+                                }, function () {
+                                    ok(false, "Deleting index failed");
+                                });
+                            }
+                        });
+                    }, 1);
                 });
             });
         </script>  

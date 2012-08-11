@@ -1454,10 +1454,10 @@ if (typeof window !== "undefined") {
                                 });
 
                             var currentVersion = internal.getDatabaseVersion(db);
-                            if (currentVersion < version || (version == -1)) {
+                            if (currentVersion < version || (version == -1) || currentVersion == "") {
                                 // Current version deferres from the requested version, database upgrade needed
                                linq2indexedDB.prototype.utilities.log("DB Promise upgradeneeded", this, db, e, db.connectionId);
-                                internal.changeDatabaseStructure(db, version).then(
+                                internal.changeDatabaseStructure(db, version || 1).then(
                                     function (args1 /*txn, event*/) {
                                         var txn = args1[0];
                                         var event = args1[1];
@@ -1798,7 +1798,7 @@ if (typeof window !== "undefined") {
                     }
 
                     if (!objectStore.indexNames.contains(indexName)) {
-                        var index = objectStore.createIndex(indexName, propertyName, { unique: indexOptions ? indexOptions.unique : false, /*multiRow: indexOptions ? indexOptions.multiEntry : false*/ });
+                        var index = objectStore.createIndex(indexName, propertyName, { unique: indexOptions ? indexOptions.unique : false, multiRow: indexOptions ? indexOptions.multiEntry : false, multiEntry: indexOptions ? indexOptions.multiEntry : false });
                         linq2indexedDB.prototype.utilities.log("createIndex completed", objectStore.transaction, index, objectStore);
                         linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.indexCreated, data: index });
                         pw.complete(this, [objectStore.transaction, index, objectStore]);
@@ -2194,10 +2194,14 @@ if (typeof window !== "undefined") {
                                 pw.progress(this, args);
                             });
                     } else {
-                        // Timeout necessary for letting it work on win8. If not, progress event triggers before listeners are coupled
-                        setTimeout(function () {
+                        if (isMetroApp) {
+                            // Timeout necessary for letting it work on win8. If not, progress event triggers before listeners are coupled
+                            setTimeout(function() {
+                                internal.transaction(pw, db, objectStoreNames, transactionType, autoGenerateAllowed);
+                            }, 1);
+                        } else {
                             internal.transaction(pw, db, objectStoreNames, transactionType, autoGenerateAllowed);
-                        }, 1);
+                        }
                     }
                 });
             },
@@ -2429,7 +2433,9 @@ if (typeof window !== "undefined") {
             dbStructureChanged: new eventTarget(),
             dbDataChanged: new eventTarget(),
             databaseEvents: dbEvents,
-            dataEvents: dataEvents
+            dataEvents: dataEvents,
+            implementation: implementation,
+            implementations: implementations
         };
 
         if (implementation == implementations.SHIM) {
@@ -2501,7 +2507,7 @@ if (typeof window !== "undefined") {
                     linq2indexedDB.prototype.utilities.log("IE10+ Initialized", window.indexedDB);
                     return implementations.MICROSOFT;
                 }
-
+                
                     // Initialising the window.indexedDB Object for IE 8 & 9
                 else if (navigator.appName == 'Microsoft Internet Explorer') {
                     try {
