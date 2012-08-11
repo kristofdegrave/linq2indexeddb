@@ -209,7 +209,11 @@
                                 ok(false, "Transaction error");
                                 start();
                             }, function(transArgs) {
-                                linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function(objArgs) {
+                                linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
+                                    // Work around for chrome, if nothing gets queried, the transaction gets aborted.
+                                    if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE) {
+                                        objArgs[1].get(1);
+                                    }
                                     if (objArgs[1].indexNames.contains(indexProperty + linq2indexedDB.prototype.core.indexSuffix)) {
                                         ok(true, "Index present");
                                     }
@@ -243,8 +247,12 @@
                                 ok(false, "Transaction error");
                                 start();
                             }, function (transArgs) {
-                                linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function () {
-                                    if (args[0].objectStoreNames.contains(objectStoreName)) {
+                                linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
+                                    // Work around for chrome, if nothing gets queried, the transaction gets aborted.
+                                    if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE) {
+                                        objArgs[1].get(1);
+                                    }
+                                    if (objArgs[1].indexNames.contains(indexProperty + linq2indexedDB.prototype.core.indexSuffix)) {
                                         ok(true, "Index present");
                                     }
                                 });
@@ -289,6 +297,10 @@
                                 start();
                             }, function (transArgs) {
                                 linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
+                                    // Work around for chrome, if nothing gets queried, the transaction gets aborted.
+                                    if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE) {
+                                        objArgs[1].get(1);
+                                    }
                                     if (!objArgs[1].indexNames.contains(indexProperty + linq2indexedDB.prototype.core.indexSuffix)) {
                                         ok(true, "Index is no longer present");
                                     }

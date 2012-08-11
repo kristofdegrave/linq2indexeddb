@@ -1579,19 +1579,22 @@ if (typeof window !== "undefined") {
                             // Handle transaction events
                             handlers.IDBTransaction(txn).then(function (args1 /*result, event*/) {
                                 // txn completed
+                                linq2indexedDB.prototype.utilities.log("Transaction completed.", txn);
                                 pw.complete(this, args1);
                             },
                                 function (args1 /*err, event*/) {
                                     // txn error or abort
+                                    linq2indexedDB.prototype.utilities.log("Transaction error/abort.", args1);
                                     pw.error(this, args1);
                                 });
 
                             // txn created
-                            linq2indexedDB.prototype.utilities.log("Transaction transaction created.", txn);
+                            linq2indexedDB.prototype.utilities.log("Transaction created.", txn);
                             pw.progress(txn, [txn]);
                         },
                             function (args /*error, event*/) {
                                 // When an error occures, bubble up.
+                                linq2indexedDB.prototype.utilities.log("Transaction error.", args);
                                 pw.error(this, args);
                             },
                             function (args /*txn, event*/) {
@@ -1611,10 +1614,12 @@ if (typeof window !== "undefined") {
                         // Handle transaction events
                         handlers.IDBTransaction(transaction).then(function (args /*result, event*/) {
                             // txn completed
+                            linq2indexedDB.prototype.utilities.log("Transaction completed.", args);
                             pw.complete(this, args);
                         },
                             function (args /*err, event*/) {
                                 // txn error or abort
+                                linq2indexedDB.prototype.utilities.log("Transaction error/abort.", args);
                                 pw.error(this, args);
                             });
 
