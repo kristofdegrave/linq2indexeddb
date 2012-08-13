@@ -1444,6 +1444,8 @@ if (typeof window !== "undefined") {
             objectStoreCleared: "Object store cleared"
         };
 
+        var upgradingDatabase = false;
+
         var internal = {
             db: function (pw, name, version) {
                 try {
@@ -1593,72 +1595,64 @@ if (typeof window !== "undefined") {
                     // When non-existing object stores are found and the autoGenerateAllowed is true.
                     // Then create these object stores
                     if (nonExistingObjectStores.length > 0 && autoGenerateAllowed) {
-                        var version = internal.getDatabaseVersion(db) + 1;
-                        var dbName = db.name;
-                        linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Transaction database upgrade needed: ", db);
-                        // Closing the current connections so it won't block the upgrade.
-                        linq2indexedDB.prototype.core.closeDatabaseConnection(db);
-                        // Open a new connection with the new version
-                        linq2indexedDB.prototype.core.db(dbName, version).then(function (args /*dbConnection, event*/) {
-                            // When the upgrade is completed, the transaction can be opened.
-                            //linq2indexedDB.prototype.core.transaction(args[0], objectStoreNames, transactionType, autoGenerateAllowed).then(function (args1 /*txn, ev*/) {
-                            //    // txn completed
-                            //    pw.complete(this, args1);
-                            //},
-                            //function (args1 /*error, ev*/) {
-                            //    // txn error or abort
-                            //    pw.error(this, args1);
-                            //},
-                            //function (args1 /*txn*/) {
-                            //    // txn created
-                            //    pw.progress(this, args1);
-                            //});
+                        // setTimeout is necessary when multiple request to generate an index come together.
+                        // This can result in a deadlock situation, there for the setTimeout
+                        setTimeout(function() {
+                            upgradingDatabase = true;
+                            var version = internal.getDatabaseVersion(db) + 1;
+                            var dbName = db.name;
+                            linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Transaction database upgrade needed: ", db);
+                            // Closing the current connections so it won't block the upgrade.
+                            linq2indexedDB.prototype.core.closeDatabaseConnection(db);
+                            // Open a new connection with the new version
+                            linq2indexedDB.prototype.core.db(dbName, version).then(function (args /*dbConnection, event*/) {
+                                upgradingDatabase = false;
+                                // Necessary for getting it work in WIN 8, WinJS promises have troubles with nesting promises
+                                var txn = args[0].transaction(objectStoreNames, transactionType);
 
-                            // Necessary for getting it work in WIN 8, WinJS promises have troubles with nesting promises
-                            var txn = args[0].transaction(objectStoreNames, transactionType);
+                                // Handle transaction events
+                                handlers.IDBTransaction(txn).then(function(args1 /*result, event*/) {
+                                    // txn completed
+                                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Transaction completed.", txn);
+                                    pw.complete(this, args1);
+                                },
+                                    function(args1 /*err, event*/) {
+                                        // txn error or abort
+                                        linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.error, "Transaction error/abort.", args1);
+                                        pw.error(this, args1);
+                                    });
 
-                            // Handle transaction events
-                            handlers.IDBTransaction(txn).then(function (args1 /*result, event*/) {
-                                // txn completed
-                                linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Transaction completed.", txn);
-                                pw.complete(this, args1);
+                                // txn created
+                                linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Transaction created.", txn);
+                                pw.progress(txn, [txn]);
                             },
-                                function (args1 /*err, event*/) {
-                                    // txn error or abort
-                                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.error, "Transaction error/abort.", args1);
-                                    pw.error(this, args1);
-                                });
+                                function(args /*error, event*/) {
+                                    // When an error occures, bubble up.
+                                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.error, "Transaction error.", args);
+                                    pw.error(this, args);
+                                },
+                                function(args /*txn, event*/) {
+                                    var event = args[1];
 
-                            // txn created
-                            linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Transaction created.", txn);
-                            pw.progress(txn, [txn]);
-                        },
-                            function (args /*error, event*/) {
-                                // When an error occures, bubble up.
-                                linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.error, "Transaction error.", args);
-                                pw.error(this, args);
-                            },
-                            function (args /*txn, event*/) {
-                                var event = args[1];
-
-                                // When an upgradeneeded event is thrown, create the non-existing object stores
-                                if (event.type == "upgradeneeded") {
-                                    for (var j = 0; j < nonExistingObjectStores.length; j++) {
-                                        linq2indexedDB.prototype.core.createObjectStore(args[0], nonExistingObjectStores[j], {keyPath: "Id", autoIncrement: true});
+                                    // When an upgradeneeded event is thrown, create the non-existing object stores
+                                    if (event.type == "upgradeneeded") {
+                                        for (var j = 0; j < nonExistingObjectStores.length; j++) {
+                                            linq2indexedDB.prototype.core.createObjectStore(args[0], nonExistingObjectStores[j], { keyPath: "Id", autoIncrement: true });
+                                        }
                                     }
-                                }
-                            });
+                                });
+                        }, upgradingDatabase ? 10 : 1);
                     } else {
                         // If no non-existing object stores are found, create the transaction.
                         var transaction = db.transaction(objectStoreNames, transactionType);
 
                         // Handle transaction events
-                        handlers.IDBTransaction(transaction).then(function (args /*result, event*/) {
+                        handlers.IDBTransaction(transaction).then(function(args /*result, event*/) {
                             // txn completed
                             linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Transaction completed.", args);
                             pw.complete(this, args);
                         },
-                            function (args /*err, event*/) {
+                            function(args /*err, event*/) {
                                 // txn error or abort
                                 linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.error, "Transaction error/abort.", args);
                                 pw.error(this, args);
@@ -1772,62 +1766,68 @@ if (typeof window !== "undefined") {
                         indexName = indexName + linq2indexedDB.prototype.core.indexSuffix;
                     }
 
-                    if (objectStore.indexNames.contains(indexName)) {
-                        // If index exists, resolve it
-                        var index = objectStore.index(indexName);
-                        linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Index completed", objectStore.transaction, index, objectStore);
-                        pw.complete(this, [objectStore.transaction, index, objectStore]);
-                    } else if (autoGenerateAllowed) {
+                    if (!objectStore.indexNames.contains(indexName) && autoGenerateAllowed) {
+                        // setTimeout is necessary when multiple request to generate an index come together.
+                        // This can result in a deadlock situation, there for the setTimeout
+                        setTimeout(function() {
+                            upgradingDatabase = true;
                             // If index doesn't exists, create it if autoGenerateAllowed
-                        var version = internal.getDatabaseVersion(objectStore.transaction.db) + 1;
-                        var dbName = objectStore.transaction.db.name;
-                        var transactionType = objectStore.transaction.mode;
-                        var objectStoreNames = [objectStore.name]; //transaction.objectStoreNames;
-                        var objectStoreName = objectStore.name;
-                        // Close the currenct database connections so it won't block
-                        linq2indexedDB.prototype.core.closeDatabaseConnection(objectStore.transaction.db);
+                            var version = internal.getDatabaseVersion(objectStore.transaction.db) + 1;
+                            var dbName = objectStore.transaction.db.name;
+                            var transactionType = objectStore.transaction.mode;
+                            var objectStoreNames = [objectStore.name]; //transaction.objectStoreNames;
+                            var objectStoreName = objectStore.name;
+                            // Close the currenct database connections so it won't block
+                            linq2indexedDB.prototype.core.closeDatabaseConnection(objectStore.transaction.db);
 
-                        // Open a new connection with the new version
-                        linq2indexedDB.prototype.core.db(dbName, version).then(function (args /*dbConnection, event*/) {
-                            // When the upgrade is completed, the index can be resolved.
-                            linq2indexedDB.prototype.core.transaction(args[0], objectStoreNames, transactionType, autoGenerateAllowed).then(function (/*transaction, ev*/) {
-                                // txn completed
-                                // TODO: what to do in this case
-                            },
-                                function (args1 /*error, ev*/) {
-                                    // txn error or abort
-                                    pw.error(this, args1);
+                            // Open a new connection with the new version
+                            linq2indexedDB.prototype.core.db(dbName, version).then(function (args /*dbConnection, event*/) {
+                                upgradingDatabase = false;
+                                // When the upgrade is completed, the index can be resolved.
+                                linq2indexedDB.prototype.core.transaction(args[0], objectStoreNames, transactionType, autoGenerateAllowed).then(function(/*transaction, ev*/) {
+                                    // txn completed
+                                    // TODO: what to do in this case
                                 },
-                                function (args1 /*transaction*/) {
-                                    // txn created
-                                    linq2indexedDB.prototype.core.index(linq2indexedDB.prototype.core.objectStore(args1[0], objectStoreName), propertyName).then(function (args2 /*trans, index, store*/) {
-                                        pw.complete(this, args2);
-                                    }, function (args2 /*error, ev*/) {
+                                    function(args1 /*error, ev*/) {
                                         // txn error or abort
-                                        pw.error(this, args2);
-                                    });
-                                });
-                        },
-                            function (args /*error, event*/) {
-                                // When an error occures, bubble up.
-                                pw.error(this, args);
-                            },
-                            function (args /*trans, event*/) {
-                                var trans = args[0];
-                                var event = args[1];
-
-                                // When an upgradeneeded event is thrown, create the non-existing object stores
-                                if (event.type == "upgradeneeded") {
-                                    linq2indexedDB.prototype.core.createIndex(linq2indexedDB.prototype.core.objectStore(trans, objectStore.name), propertyName).then(function (/*index, store, transaction*/) {
-                                        // index created
+                                        pw.error(this, args1);
                                     },
-                                        function (args1 /*error, ev*/) {
-                                            // When an error occures, bubble up.
-                                            pw.error(this, args1);
+                                    function(args1 /*transaction*/) {
+                                        // txn created
+                                        linq2indexedDB.prototype.core.index(linq2indexedDB.prototype.core.objectStore(args1[0], objectStoreName), propertyName).then(function(args2 /*trans, index, store*/) {
+                                            pw.complete(this, args2);
+                                        }, function(args2 /*error, ev*/) {
+                                            // txn error or abort
+                                            pw.error(this, args2);
                                         });
-                                }
-                            });
-                    }
+                                    });
+                            },
+                                function(args /*error, event*/) {
+                                    // When an error occures, bubble up.
+                                    pw.error(this, args);
+                                },
+                                function(args /*trans, event*/) {
+                                    var trans = args[0];
+                                    var event = args[1];
+
+                                    // When an upgradeneeded event is thrown, create the non-existing object stores
+                                    if (event.type == "upgradeneeded") {
+                                        linq2indexedDB.prototype.core.createIndex(linq2indexedDB.prototype.core.objectStore(trans, objectStore.name), propertyName).then(function(/*index, store, transaction*/) {
+                                            // index created
+                                        },
+                                            function(args1 /*error, ev*/) {
+                                                // When an error occures, bubble up.
+                                                pw.error(this, args1);
+                                            });
+                                    }
+                                });
+                        }, upgradingDatabase ? 10 : 1);
+                     } else {
+                         // If index exists, resolve it
+                         var index = objectStore.index(indexName);
+                         linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Index completed", objectStore.transaction, index, objectStore);
+                         pw.complete(this, [objectStore.transaction, index, objectStore]);
+                     }
                 } catch (ex) {
                     // index exception
                     linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.exception, "Exception index", ex);

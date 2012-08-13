@@ -119,15 +119,19 @@
                     //    $("#txtLog").val(tekst);
                     //});
 
-                    db.linq.from("person").where("Age").greaterThan(2).and("Name").like("test").merge({ test: "test" });
+                    //db.linq.from("person").where("Age").greaterThan(2).and("Name").like("test").merge({ test: "test" });
 
                     setTimeout(function () {
-                        db.linq.from("person").where("test").isUndefined().select().then(function () { }, function () { }, function (data) {
+                        db.linq.from("person").where("test").isUndefined().select().then(function () {
+                            var e = "";
+                        }, function () {
+                            var e = "";
+                        }, function (data) {
                             var tekst = $("#txtLog").val();
                             tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + " test: " + data["test"] + "\n\r";
                             $("#txtLog").val(tekst);
                         });
-                    }, 200);
+                    }, 2000);
                 });
             });
         </script>

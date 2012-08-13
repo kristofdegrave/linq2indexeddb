@@ -462,6 +462,30 @@
                         });
                     });
                 });
+                asyncTest("Opening ObjectStore", 1, function () {
+                    initionalSituationObjectStore(function () {
+                        linq2indexedDB.prototype.core.db(dbName).then(function (args) {
+                            linq2indexedDB.prototype.core.transaction(args[0], [objectStoreName], linq2indexedDB.prototype.core.transactionTypes.READ_ONLY).then(function (transArgs) {
+                                transArgs[0].db.close();
+                                start();
+                            }, function () {
+                                ok(false, "Transaction error");
+                                start();
+                            }, function (transArgs) {
+                                linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
+                                    ok(true, "Object store open")
+                                    // Work around for chrome, if nothing gets queried, the transaction gets aborted.
+                                    if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE) {
+                                        objArgs[1].get(1);
+                                    }
+                                });
+                            });
+                        }, function () {
+                            ok(false, "Database error");
+                            start();
+                        });
+                    });
+                });
                 asyncTest("Deleting ObjectStore", 2, function () {
                     initionalSituationObjectStore(function() {
                         // Delete database if existing
@@ -572,6 +596,104 @@
                             }
                         });
                     }, 1);
+                });
+                asyncTest("Opening Index", 1, function () {
+                    initionalSituationIndex(function () {
+                        // Delete database if existing
+                        linq2indexedDB.prototype.core.db(dbName, 2).then(function (args) {
+                            linq2indexedDB.prototype.core.transaction(args[0], [objectStoreName], linq2indexedDB.prototype.core.transactionTypes.READ_ONLY).then(function (transArgs) {
+                                transArgs[0].db.close();
+                                start();
+                            }, function () {
+                                ok(false, "Transaction error");
+                                start();
+                            }, function (transArgs) {
+                                linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
+                                    linq2indexedDB.prototype.core.index(objArgs[1], indexProperty).then(function (indexArgs) {
+                                        ok(true, "Index open");
+                                        if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE) {
+                                            indexArgs[1].get(1);
+                                        }
+                                    }, function () {
+                                        ok(false, "Index error");
+                                        start();
+                                    });
+                                }, function () {
+                                    ok(false, "Object store error");
+                                    start();
+                                });
+                            });
+                        }, function () {
+                            ok(false, "Database error");
+                            start();
+                        });
+                    });
+                });
+                asyncTest("Opening Index - non existing index", 2, function () {
+                    var anotherIndex = "anotherIndex";
+                    initionalSituationIndex(function () {
+                        // Delete database if existing
+                        linq2indexedDB.prototype.core.db(dbName, 2).then(function (args) {
+                            linq2indexedDB.prototype.core.transaction(args[0], [objectStoreName], linq2indexedDB.prototype.core.transactionTypes.READ_ONLY).then(function (transArgs) {
+                                transArgs[0].db.close();
+                                start();
+                            }, function (transArgs) {
+                                equal(transArgs[1].type, "abort", "Transaction aborted");
+                                start();
+                            }, function (transArgs) {
+                                linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
+                                    linq2indexedDB.prototype.core.index(objArgs[1], anotherIndex).then(function () {
+                                        ok(false, "Index open");
+                                        start();
+                                    }, function () {
+                                        ok(true, "Index error");
+                                        start();
+                                    });
+                                }, function () {
+                                    ok(false, "Object store error");
+                                    start();
+                                });
+                            });
+                        }, function () {
+                            ok(false, "Database error");
+                            start();
+                        });
+                    });
+                });
+                asyncTest("Opening Index - non existing index - autoGenerateAllowed", 1, function () {
+                    var anotherIndex = "anotherIndex";
+                    initionalSituationIndex(function () {
+                        // Delete database if existing
+                        linq2indexedDB.prototype.core.db(dbName, 2).then(function (args) {
+                            linq2indexedDB.prototype.core.transaction(args[0], [objectStoreName], linq2indexedDB.prototype.core.transactionTypes.READ_ONLY).then(function (transArgs) {
+                            }, function () {
+                                ok(false, "Transaction error");
+                                start();
+                            }, function (transArgs) {
+                                linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
+                                    linq2indexedDB.prototype.core.index(objArgs[1], anotherIndex, true).then(function (indexArgs) {
+                                        ok(true, "Index open");
+
+                                        if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE) {
+                                            indexArgs[1].get(1);
+                                        }
+                                        
+                                        indexArgs[0].db.close();
+                                        start();
+                                    }, function () {
+                                        ok(false, "Index error");
+                                        start();
+                                    });
+                                }, function () {
+                                    ok(false, "Object store error");
+                                    start();
+                                });
+                            });
+                        }, function () {
+                            ok(false, "Database error");
+                            start();
+                        });
+                    });
                 });
                 asyncTest("Deleting Index", 2, function () {
                     initionalSituationIndex(function () {
