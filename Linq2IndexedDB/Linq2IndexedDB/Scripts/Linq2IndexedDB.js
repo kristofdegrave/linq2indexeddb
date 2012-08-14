@@ -328,8 +328,8 @@ var enableLogging = true;
                     var returnData = [];
                     for (var i = 0; i < qb.insert[0].data.length; i++) {
                         linq2indexedDB.prototype.core.insert(objectStorePromis, qb.insert[0].data[i]).then(function (args /*storedData, storedkey*/) {
-                            pw.progress(this, args[0] /*{object: args[0], key: args[1]}*/ /*[storedData, storedkey]*/);
-                            returnData.push(args[0]);
+                            pw.progress(this, {object: args[0], key: args[1]}/*[storedData, storedkey]*/);
+                            returnData.push({ object: args[0], key: args[1] });
                             if (returnData.length == qb.insert[0].data.length) {
                                 pw.complete(this, returnData);
                             }
@@ -338,7 +338,7 @@ var enableLogging = true;
                 }
                 else {
                     linq2indexedDB.prototype.core.insert(objectStorePromis, qb.insert[0].data, qb.insert[0].key).then(function(args /*storedData, storedkey*/) {
-                        pw.complete(this, args[0] /*{object: args[0], key: args[1]}*/ /*[storedData, storedkey]*/);
+                        pw.complete(this, {object: args[0], key: args[1]} /*[storedData, storedkey]*/);
                     }, pw.error);
                 }
             });
@@ -348,7 +348,7 @@ var enableLogging = true;
             queryBuilder.update.push({ data: data, key: key });
             return executeQuery(queryBuilder, linq2indexedDB.prototype.core.transactionTypes.READ_WRITE, function (qb, pw, transaction) {
                 linq2indexedDB.prototype.core.update(linq2indexedDB.prototype.core.objectStore(transaction, qb.from), qb.update[0].data, qb.update[0].key).then(function (args /*storedData, storedkey*/) {
-                    pw.complete(this, args[0] /*{object: args[0], key: args[1]}*/ /*[storedData, storedkey]*/);
+                    pw.complete(this, {object: args[0], key: args[1]} /*[storedData, storedkey]*/);
                 }, pw.error);
             });
         }

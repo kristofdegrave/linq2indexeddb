@@ -545,7 +545,7 @@
                                 });
                             }
                         });
-                    }, 1);
+                    });
                 });
                 asyncTest("Creating Index with options", 6, function () {
                     var unique = true;
@@ -595,7 +595,7 @@
                                 });
                             }
                         });
-                    }, 1);
+                    });
                 });
                 asyncTest("Opening Index", 1, function () {
                     initionalSituationIndex(function () {
@@ -728,8 +728,11 @@
                                 });
                             }
                         });
-                    }, 1);
+                    });
                 });
+
+                module("Insert");
+                
             });
         </script>  
     </head>  
