@@ -313,7 +313,7 @@ var enableLogging = true;
                 executeQuery(queryBuilder, linq2indexedDB.prototype.core.transactionTypes.READ_WRITE, executeWhere).then(function () {
                     pw.complete(returnData);
                 },pw.error, function(args) {
-                    var obj = selectData(args[0], queryBuilder.select);
+                    var obj = selectData(args[0].data, queryBuilder.select);
                     returnData.push(obj);
                     pw.progress(this, obj /*[obj]*/);
                 });
@@ -361,12 +361,12 @@ var enableLogging = true;
                     var obj = null;
                     linq2indexedDB.prototype.core.cursor(objectStore, IDBKeyRange.only(qb.merge[0].key)).then(function() {
                     }, pw.error, function(args /*data*/) {
-                        obj = args[0];
+                        obj = args[0].data;
                         for (var prop in qb.merge[0].data) {
                             obj[prop] = qb.merge[0].data[prop];
                         }
 
-                        args[1].update(obj);
+                        args[0].update(obj);
                         pw.complete(this, obj);
                     }, pw.error);
                 });
@@ -398,13 +398,13 @@ var enableLogging = true;
                             }).then(pw.complete, pw.error, pw.progress);
                         }
                     }, null, function (args) {
-                        if (args.length > 1) {
-                            var obj = args[0];
+                        if (args[0].update) {
+                            var obj = args[0].data;
                             for (var prop in queryBuilder.merge[0].data) {
                                 obj[prop] = queryBuilder.merge[0].data[prop];
                             }
 
-                            args[1].update(obj);
+                            args[0].update(obj);
                             pw.progress(this, obj);
                             returnData.push(obj);
                         }
@@ -445,8 +445,8 @@ var enableLogging = true;
                             }).then(pw.complete, pw.error, pw.progress);
                         }
                     }, null, function(args) {
-                        if (args.length > 1) {
-                            args[1]["delete"]();
+                        if (args[0].remove) {
+                            args[0].remove();
                             pw.progress(this);
                             cursorDelete = true;
                         }
@@ -530,7 +530,7 @@ var enableLogging = true;
                             // When there are no more where clauses to fulfill and the collection doesn't need to be sorted, the data can be returned.
                             // In the other case let the complete handle it.
                             if (whereClauses.length == 0 && queryBuilder.sortClauses.length == 0) {
-                                returnData.push(args1[0]);
+                                returnData.push({ data: args1[0].data, key: args1[0].key });
                                 pw.progress(this, args1 /*[obj]*/);
                             }
                         }
@@ -1199,11 +1199,14 @@ var enableLogging = true;
 
             return true;
         },
+        logError: function (error) {
+            return linq2indexedDB.prototype.utilities.log(error.severity, error.message, error.type, error.method, error.orignialError);
+        },
         filterSort: function (data, filters, sortClauses) {
             var returnData = [];
 
             for (var i = 0; i < data.length; i++) {
-                if (utilities.isDataValid(data[i], filters)) {
+                if (utilities.isDataValid(data[i].data, filters)) {
                     returnData = utilities.addToSortedArray(returnData, data[i], sortClauses);
                 }
             }
@@ -1234,8 +1237,8 @@ var enableLogging = true;
             } else {
                 var valueAdded = false;
                 for (var i = 0; i < array.length; i++) {
-                    var valueX = array[i];
-                    var valueY = data;
+                    var valueX = array[i].data;
+                    var valueY = data.data;
                     for (var j = 0; j < sortClauses.length; j++) {
                         var sortPropvalueX = linq2indexedDB.prototype.utilities.getPropertyValue(valueX, sortClauses[j].propertyName);
                         var sortPropvalueY = linq2indexedDB.prototype.utilities.getPropertyValue(valueY, sortClauses[j].propertyName);
@@ -1515,20 +1518,8 @@ if (typeof window !== "undefined") {
                                         pw.progress(context, [txn, upgardeEvent]);
 
                                         handlers.IDBTransaction(txn).then(function (/*trans, args*/) {
-                                            // When the new version is completed, close the db connection, and make a new connection.
-                                            linq2indexedDB.prototype.core.closeDatabaseConnection(txn.db);
-                                            linq2indexedDB.prototype.core.db(name).then(function (args3 /*dbConnection, ev*/) {
-                                                // Connection resolved
-                                                pw.complete(this, args3);
-                                            },
-                                                function (args3 /*err, ev*/) {
-                                                    // Database connection error or abort
-                                                    pw.error(this, args3);
-                                                },
-                                                function (args3 /*dbConnection, ev*/) {
-                                                    // Database upgrade or blocked
-                                                    pw.progress(this, args3);
-                                                });
+                                            // When completed return the db + event of the original request.
+                                            pw.complete(this, args);
                                         },
                                             function (args2 /*err, ev*/) {
                                                 //txn error or abort
@@ -1546,7 +1537,14 @@ if (typeof window !== "undefined") {
                                     });
                             } else if (version && version < currentVersion) {
                                 linq2indexedDB.prototype.core.closeDatabaseConnection(db);
-                                pw.error(this, "Versionerror: database is opened in a lower version.");
+                                var err = {
+                                    severity: linq2indexedDB.prototype.utilities.severity.error,
+                                    type: "VersionError",
+                                    message: "You are trying to open the database in a lower version (" + version + ") than the current version of the database",
+                                    method: "db"
+                                };
+                                linq2indexedDB.prototype.utilities.logError(err);
+                                pw.error(this, err);
                             }
                             else {
                                 // Database Connection resolved.
@@ -1557,8 +1555,22 @@ if (typeof window !== "undefined") {
                         },
                         function (args /*error, e*/) {
                             // Database connection error or abort
-                            linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.error, "DB Promise rejected", args[0], args[1]);
-                            pw.error(this, args);
+                            var err = internal.wrapError(args[1], "db");
+                            
+                            // Fix for firefox & chrome
+                            if (args[1].target && args[1].target.error && args[1].target.error.name == "VersionError") {
+                                err.type = "VersionError";
+                            }
+                            
+                            if (err.type == "VersionError") {
+                                err.message = "You are trying to open the database in a lower version (" + version + ") than the current version of the database";
+                            }
+                            if (err.type == "AbortError") {
+                                err.message = "The VERSION_CHANGE transaction was aborted.";
+                            }
+                            // For old firefox implementations
+                            linq2indexedDB.prototype.utilities.logError(err);
+                            pw.error(this, err);
                         },
                         function (args /*result, e*/) {
                             // Database upgrade + db blocked
@@ -1571,8 +1583,13 @@ if (typeof window !== "undefined") {
                         }
                     );
                 } catch (ex) {
-                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.exception, "DB exception", this, ex.message, ex);
-                    pw.error(this, [ex.message, ex]);
+                    var error = internal.wrapException(ex, "db");
+                    if ((ex.INVALID_ACCESS_ERR && ex.code == ex.INVALID_ACCESS_ERR) || ex.name == "InvalidAccessError") {
+                        error.type = "InvalidAccessError";
+                        error.message = "You are trying to open a database with a negative version number.";
+                    }
+                    linq2indexedDB.prototype.utilities.logError(error);
+                    pw.error(this, error);
                 }
             },
             transaction: function (pw, db, objectStoreNames, transactionType, autoGenerateAllowed) {
@@ -1582,9 +1599,9 @@ if (typeof window !== "undefined") {
                 if (!linq2indexedDB.prototype.utilities.isArray(objectStoreNames)) objectStoreNames = [objectStoreNames];
                 transactionType = transactionType || linq2indexedDB.prototype.core.transactionTypes.READ_ONLY;
 
+                var nonExistingObjectStores = [];
+                
                 try {
-                    var nonExistingObjectStores = [];
-
                     // Check for non-existing object stores
                     for (var i = 0; i < objectStoreNames.length; i++) {
                         if (!db.objectStoreNames || !db.objectStoreNames.contains(objectStoreNames[i])) {
@@ -1652,20 +1669,59 @@ if (typeof window !== "undefined") {
                             linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Transaction completed.", args);
                             pw.complete(this, args);
                         },
-                            function(args /*err, event*/) {
+                            function (args /*err, event*/) {
+                                var err = internal.wrapError(args[1], "transaction");
+                                if (args[1].type == "abort") {
+                                    err.type = "abort";
+                                    err.severity = "abort";
+                                    err.message = "Transaction was aborted";
+                                }
+                                
+                                // Fix for firefox & chrome
+                                if (args[1].target && args[1].target.error && args[1].target.error.name == "ConstraintError") {
+                                    err.type = "ConstraintError";
+                                }
+
+                                if (err.type == "ConstraintError") {
+                                    err.message = "A mutation operation in the transaction failed. For more details look at the error on the instert, update, remove or clear statement.";
+                                } 
                                 // txn error or abort
-                                linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.error, "Transaction error/abort.", args);
-                                pw.error(this, args);
+                                linq2indexedDB.prototype.utilities.logError(err);
+                                pw.error(this, err);
                             });
 
                         // txn created
                         linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Transaction transaction created.", transaction);
                         pw.progress(transaction, [transaction]);
                     }
-                } catch (ex) {
-                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.exception, "Transaction exception", ex, db);
-                    ex.type = "exception";
-                    pw.error(this, [ex.message, ex]);
+                }
+                catch (ex) {
+                    var error = internal.wrapException(ex, "transaction");
+                    if ((ex.INVALID_ACCESS_ERR && ex.code == ex.INVALID_ACCESS_ERR) || ex.name == "InvalidAccessError") {
+                        error.type = "InvalidAccessError";
+                        error.message = "You are trying to open a transaction without providing an object store as scope.";
+                    }
+                    if ((ex.NOT_FOUND_ERR && ex.code == ex.NOT_FOUND_ERR) || ex.name == "NotFoundError") {
+                        var objectStores = "";
+                        for (var m = 0; m < nonExistingObjectStores.length; m++) {
+                            if (m > 0) {
+                                objectStores += ", ";
+                            }
+                            objectStores += nonExistingObjectStores[m];
+                        }
+                        error.type = "NotFoundError";
+                        error.message = "You are trying to open a transaction for object stores (" + objectStores + "), that doesn't exist.";
+                    }
+                    if ((ex.QUOTA_ERR && ex.code == ex.QUOTA_ERR) || ex.name == "QuotaExceededError") {
+                        error.type = "QuotaExceededError";
+                        error.message = "The size quota of the indexedDB database is reached.";
+                    }
+                    if ((ex.UNKNOWN_ERR && ex.code == ex.UNKNOWN_ERR) || ex.name == "UnknownError") {
+                        error.type = "UnknownError";
+                        error.message = "An I/O exception occured.";
+                    }
+                    linq2indexedDB.prototype.utilities.logError(error);
+                    pw.error(this, error);
                 }
             },
             changeDatabaseStructure: function (db, version) {
@@ -1692,9 +1748,19 @@ if (typeof window !== "undefined") {
                     linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "objectStore completed", transaction, store);
                     pw.complete(store, [transaction, store]);
                 } catch (ex) {
-                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.exception, "objectStore exception", ex, transaction);
+                    var error = internal.wrapException(ex, "objectStore");
+                    if ((ex.NOT_FOUND_ERR && ex.code == ex.NOT_FOUND_ERR) || ex.name == "NotFoundError") {
+                        error.type = "NotFoundError";
+                        error.message = "You are trying to open an object store (" + objectStoreName + "), that doesn't exist or isn't in side the transaction scope.";
+                    }
+                    if (ex.name == "TransactionInactiveError") {
+                        error.type = "TransactionInactiveError";
+                        error.message = "You are trying to open an object store (" + objectStoreName + ") outside a transaction.";
+                    }
+
+                    linq2indexedDB.prototype.utilities.logError(error);
                     linq2indexedDB.prototype.core.abortTransaction(transaction);
-                    pw.error(this, [ex.message, ex]);
+                    pw.error(this, error);
                 }
             },
             createObjectStore: function (pw, transaction, objectStoreName, objectStoreOptions) {
@@ -1731,41 +1797,56 @@ if (typeof window !== "undefined") {
                     }
                 } catch (ex) {
                     // store exception
-                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.exception, "createObjectStore Exception", ex);
-                    linq2indexedDB.prototype.core.abortTransaction(transaction);
-                    pw.error(this, [ex.message, ex]);
+                    var error = internal.wrapException(ex, "createObjectStore");
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                        error.type = "InvalidStateError";
+                        error.message = "You are trying to create an object store in a readonly or readwrite transaction.";
+                    }
+                    if ((ex.INVALID_ACCESS_ERR && ex.code == ex.INVALID_ACCESS_ERR) || ex.name == "InvalidAccessError") {
+                        error.type = "InvalidAccessError";
+                        error.message = "The object store can't have autoIncrement on and an empty string or an array with an empty string as keyPath.";
+                    }
+                    linq2indexedDB.prototype.utilities.logError(error);
+                    if (error.type != "InvalidStateError") {
+                        linq2indexedDB.prototype.core.abortTransaction(transaction);
+                    }
+                    pw.error(this, error);
                 }
             },
             deleteObjectStore: function (pw, transaction, objectStoreName) {
                 linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "deleteObjectStore Promise started", transaction, objectStoreName);
                 try {
-                    if (transaction.db.objectStoreNames.contains(objectStoreName)) {
-                        // store found, delete it
-                        transaction.db.deleteObjectStore(objectStoreName);
-                        linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "ObjectStore Deleted", objectStoreName);
-                        linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "deleteObjectStore completed", objectStoreName);
-                        linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.objectStoreRemoved, data: objectStoreName });
-                        pw.complete(this, [transaction, objectStoreName]);
-                    } else {
-                        // store not found, return error
-                        linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.error, "ObjectStore Not Found", objectStoreName);
-                        pw.error(this, ["ObjectStore Not Found" + objectStoreName]);
-                    }
+                    transaction.db.deleteObjectStore(objectStoreName);
+                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "ObjectStore Deleted", objectStoreName);
+                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "deleteObjectStore completed", objectStoreName);
+                    linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.objectStoreRemoved, data: objectStoreName });
+                    pw.complete(this, [transaction, objectStoreName]);
                 } catch (ex) {
+                    var error = internal.wrapException(ex, "deleteObjectStore");
+                    if ((ex.NOT_FOUND_ERR && ex.code == ex.NOT_FOUND_ERR) || ex.name == "NotFoundError") {
+                        error.type = "NotFoundError";
+                        error.message = "You are trying to delete an object store (" + objectStoreName + "), that doesn't exist.";
+                    }
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                        error.type = "InvalidStateError";
+                        error.message = "You are trying to delete an object store in a readonly or readwrite transaction.";
+                    }
                     // store exception
-                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.exception, "deleteObjectStore exception", ex);
-                    linq2indexedDB.prototype.core.abortTransaction(transaction);
-                    pw.error(this, [ex.message, ex]);
+                    linq2indexedDB.prototype.utilities.logError(error);
+                    if (error.type != "InvalidStateError") {
+                        linq2indexedDB.prototype.core.abortTransaction(transaction);
+                    }
+                    pw.error(this, error);
                 }
             },
             index: function (pw, objectStore, propertyName, autoGenerateAllowed) {
                 linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Index started", objectStore, propertyName, autoGenerateAllowed);
-                try {
-                    var indexName = propertyName;
-                    if (propertyName.indexOf(linq2indexedDB.prototype.core.indexSuffix) == -1) {
-                        indexName = indexName + linq2indexedDB.prototype.core.indexSuffix;
-                    }
+                var indexName = propertyName;
+                if (propertyName.indexOf(linq2indexedDB.prototype.core.indexSuffix) == -1) {
+                    indexName = indexName + linq2indexedDB.prototype.core.indexSuffix;
+                }
 
+                try {
                     if (!objectStore.indexNames.contains(indexName) && autoGenerateAllowed) {
                         // setTimeout is necessary when multiple request to generate an index come together.
                         // This can result in a deadlock situation, there for the setTimeout
@@ -1815,10 +1896,10 @@ if (typeof window !== "undefined") {
                                         linq2indexedDB.prototype.core.createIndex(linq2indexedDB.prototype.core.objectStore(trans, objectStore.name), propertyName).then(function(/*index, store, transaction*/) {
                                             // index created
                                         },
-                                            function(args1 /*error, ev*/) {
-                                                // When an error occures, bubble up.
-                                                pw.error(this, args1);
-                                            });
+                                        function(args1 /*error, ev*/) {
+                                            // When an error occures, bubble up.
+                                            pw.error(this, args1);
+                                        });
                                     }
                                 });
                         }, upgradingDatabase ? 10 : 1);
@@ -1829,10 +1910,19 @@ if (typeof window !== "undefined") {
                          pw.complete(this, [objectStore.transaction, index, objectStore]);
                      }
                 } catch (ex) {
+                    var error = internal.wrapException(ex, "index");
+                    if ((ex.NOT_FOUND_ERR && ex.code == ex.NOT_FOUND_ERR) || ex.name == "NotFoundError") {
+                        error.type = "NotFoundError";
+                        error.message = "You are trying to open an index (" + indexName + "), that doesn't exist.";
+                    }
+                    if (ex.name == "TransactionInactiveError") {
+                        error.type = "TransactionInactiveError";
+                        error.message = "You are trying to open an object store (" + indexName + ") outside a transaction.";
+                    }
                     // index exception
-                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.exception, "Exception index", ex);
+                    linq2indexedDB.prototype.utilities.logError(error);
                     linq2indexedDB.prototype.core.abortTransaction(objectStore.transaction);
-                    pw.error(this, [ex.message, ex]);
+                    pw.error(this, error);
                 }
             },
             createIndex: function (pw, objectStore, propertyName, indexOptions) {
@@ -1855,27 +1945,47 @@ if (typeof window !== "undefined") {
                         });
                     }
                 } catch (ex) {
-                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.exception, "createIndex Failed", ex);
-                    linq2indexedDB.prototype.core.abortTransaction(objectStore.transaction);
-                    pw.error(this, [ex.message, ex]);
+                    // store exception
+                    var error = internal.wrapException(ex, "createIndex");
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                        error.type = "InvalidStateError";
+                        error.message = "You are trying to create an index in a readonly or readwrite transaction.";
+                    }
+                    if (error.type != "InvalidStateError") {
+                        linq2indexedDB.prototype.core.abortTransaction(transaction);
+                    }
+                    linq2indexedDB.prototype.utilities.logError(error);
+                    pw.error(this, error);
                 }
             },
             deleteIndex: function (pw, objectStore, propertyName) {
                 linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "deleteIndex started", objectStore, propertyName);
+                var indexName = propertyName;
+                if (propertyName.indexOf(linq2indexedDB.prototype.core.indexSuffix) == -1) {
+                    indexName = indexName + linq2indexedDB.prototype.core.indexSuffix;
+                }
+                
                 try {
-                    var indexName = propertyName;
-                    if (propertyName.indexOf(linq2indexedDB.prototype.core.indexSuffix) == -1) {
-                        indexName = indexName + linq2indexedDB.prototype.core.indexSuffix;
-                    }
-
                     objectStore.deleteIndex(indexName);
                     linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.indexRemoved, data: indexName });
                     linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "deleteIndex completed", objectStore.transaction, propertyName, objectStore);
                     pw.complete(this, [objectStore.transaction, propertyName, objectStore]);
                 } catch (ex) {
-                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.exception, "deleteIndex Failed", ex);
-                    linq2indexedDB.prototype.core.abortTransaction(objectStore.transaction);
-                    pw.error(this, [ex.message, ex]);
+                    var error = internal.wrapException(ex, "deleteIndex");
+                    if ((ex.NOT_FOUND_ERR && ex.code == ex.NOT_FOUND_ERR) || ex.name == "NotFoundError") {
+                        error.type = "NotFoundError";
+                        error.message = "You are trying to delete an index (" + indexName + ", propertyName: " + propertyName + " ), that doesn't exist.";
+                    }
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                        error.type = "InvalidStateError";
+                        error.message = "You are trying to delete an index in a readonly or readwrite transaction.";
+                    }
+                    // store exception
+                    linq2indexedDB.prototype.utilities.logError(error);
+                    if (error.type != "InvalidStateError") {
+                        linq2indexedDB.prototype.core.abortTransaction(transaction);
+                    }
+                    pw.error(this, error);
                 }
             },
             cursor: function (pw, source, range, direction) {
@@ -1920,17 +2030,135 @@ if (typeof window !== "undefined") {
 
                             linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Cursor progress", result, e);
                             if (result.value) {
-                                pw.progress(this, [result.value, result, e]);
-                                returnData.push(result.value);
+                                var progressObj = {
+                                    data: result.value,
+                                    key: result.primaryKey,
+                                    skip: function(number) {
+                                        linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Cursor skip", result, e);
+                                        try {
+                                            result.advance(number);
+                                        }
+                                        catch (advanceEx) {
+                                            var advanceErr = internal.wrapException(advanceEx, "cursor - skip");
+
+                                            if ((advanceEx.DATA_ERR && advanceEx.code == advanceEx.DATA_ERR) || advanceEx.name == "DataError") {
+                                                advanceErr.type = "DataError";
+                                                advanceErr.message = "The provided range parameter isn't a valid key or key range.";
+                                            }
+
+                                            if (advanceEx.name == "TypeError") {
+                                                advanceErr.type = "TypeError";
+                                                advanceErr.message = "The provided count parameter is zero or a negative number.";
+                                            }
+
+                                            if ((advanceEx.INVALID_STATE_ERR && advanceEx.code == advanceEx.INVALID_STATE_ERR) || advanceEx.name == "InvalidStateError") {
+                                                advanceErr.type = "InvalidStateError";
+                                                advanceErr.message = "You are trying to skip data on a removed object store.";
+                                            }
+                                            linq2indexedDB.prototype.utilities.logError(advanceErr);
+                                            linq2indexedDB.prototype.core.abortTransaction(txn);
+                                            pw.error(this, advanceErr);
+                                        }
+                                    },
+                                    update: function(obj) {
+                                        linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Cursor update", result, e);
+                                        try {
+                                            result.update(obj);
+                                        }
+                                        catch (updateEx) {
+                                            var updateError = internal.wrapException(updateEx, "cursor - update");
+
+                                            if ((updateEx.DATA_ERR  && updateEx.code == updateEx.DATA_ERR) || updateEx.name == "DataError") {
+                                                updateError.type = "DataError";
+                                                updateError.message = "The underlying object store uses in-line keys and the property in value at the object store's key path does not match the key in this cursor's position.";
+                                            }
+
+                                            if ((updateEx.READ_ONLY_ERR && ex.code == updateEx.READ_ONLY_ERR) || updateEx.name == "ReadOnlyError") {
+                                                updateError.type = "ReadOnlyError";
+                                                updateError.message = "You are trying to update data in a readonly transaction.";
+                                            }
+
+                                            if (updateEx.name == "TransactionInactiveError") {
+                                                updateError.type = "TransactionInactiveError";
+                                                updateError.message = "You are trying to update data on an inactieve transaction. (The transaction was already aborted or committed)";
+                                            }
+
+                                            if ((updateEx.DATA_CLONE_ERR && updateEx.code == updateEx.DATA_CLONE_ERR) || updateEx.name == "DataCloneError") {
+                                                updateError.type = "DataCloneError";
+                                                updateError.message = "The data you are trying to update could not be cloned. Your data probably contains a function which can not be cloned by default. Try using the serialize method to update the data.";
+                                            }
+
+                                            if ((updateEx.INVALID_STATE_ERR && updateEx.code == updateEx.INVALID_STATE_ERR) || updateEx.name == "InvalidStateError") {
+                                                updateError.type = "InvalidStateError";
+                                                updateError.message = "You are trying to update data on a removed object store.";
+                                            }
+
+                                            linq2indexedDB.prototype.utilities.logError(updateError);
+                                            linq2indexedDB.prototype.core.abortTransaction(txn);
+                                            pw.error(this, updateError);
+                                        }
+                                    },
+                                    remove: function() {
+                                        linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Cursor remove", result, e);
+                                        try {
+                                            result["delete"]();
+                                        }
+                                        catch (deleteEx) {
+                                            var deleteError = internal.wrapException(deleteEx, "cursor - delete");
+
+                                            if ((deleteEx.READ_ONLY_ERR && deleteEx.code == deleteEx.READ_ONLY_ERR) || deleteEx.name == "ReadOnlyError") {
+                                                deleteError.type = "ReadOnlyError";
+                                                deleteError.message = "You are trying to remove data in a readonly transaction.";
+                                            }
+
+                                            if (deleteEx.name == "TransactionInactiveError") {
+                                                deleteError.type = "TransactionInactiveError";
+                                                deleteError.message = "You are trying to remove data on an inactieve transaction. (The transaction was already aborted or committed)";
+                                            }
+
+                                            if ((deleteEx.INVALID_STATE_ERR && deleteEx.code == deleteEx.INVALID_STATE_ERR) || deleteEx.name == "InvalidStateError") {
+                                                deleteError.type = "InvalidStateError";
+                                                deleteError.message = "You are trying to remove data on a removed object store.";
+                                            }
+
+                                            linq2indexedDB.prototype.utilities.logError(deleteError);
+                                            linq2indexedDB.prototype.core.abortTransaction(txn);
+                                            pw.error(this, deleteError);
+                                        }
+                                    }
+                                };
+
+                                pw.progress(this, [progressObj, result, e]);
+                                returnData.push({data: progressObj.data ,key: progressObj.key });
                             }
                             result["continue"]();
                         });
                 } catch (ex) {
                     var txn = source.transaction || source.objectStore.transaction;
-                    // cursor exception
-                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.exception, "Exception cursor", ex);
+                    var error = internal.wrapException(ex, "cursor");
+
+                    if ((ex.DATA_ERR && error.code == ex.DATA_ERR) || ex.name == "DataError") {
+                        error.type = "DataError";
+                        error.message = "The provided range parameter isn't a valid key or key range.";
+                    }
+
+                    if (ex.name == "TransactionInactiveError") {
+                        error.type = "TransactionInactiveError";
+                        error.message = "You are trying to retrieve data on an inactieve transaction. (The transaction was already aborted or committed)";
+                    }
+                    
+                    if (ex.name == "TypeError") {
+                        error.type = "TypeError";
+                        error.message = "The provided directory parameter is invalid";
+                    }
+
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                        error.type = "InvalidStateError";
+                        error.message = "You are trying to insert data on a removed object store.";
+                    }
+                    linq2indexedDB.prototype.utilities.logError(error);
                     linq2indexedDB.prototype.core.abortTransaction(txn);
-                    pw.error(this, [ex.message, ex]);
+                    pw.error(this, error);
                 }
             },
             keyCursor: function (pw, index, range, direction) {
@@ -1968,16 +2196,134 @@ if (typeof window !== "undefined") {
 
                             linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "keyCursor progress", result, e);
                             if (result.value) {
-                                pw.progress(this, [result.value, e, index.objectStore.transaction]);
-                                returnData.push(result.value);
+                                var progressObj = {
+                                    data: result.value,
+                                    key: result.primaryKey,
+                                    skip: function (number) {
+                                        linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "keyCursor skip", result, e);
+                                        try {
+                                            result.advance(number);
+                                        }
+                                        catch (advanceEx) {
+                                            var advanceErr = internal.wrapException(advanceEx, "keyCursor - skip");
+
+                                            if ((advanceEx.DATA_ERR && advanceEx.code == advanceEx.DATA_ERR) || advanceEx.name == "DataError") {
+                                                advanceErr.type = "DataError";
+                                                advanceErr.message = "The provided range parameter isn't a valid key or key range.";
+                                            }
+
+                                            if (advanceEx.name == "TypeError") {
+                                                advanceErr.type = "TypeError";
+                                                advanceErr.message = "The provided count parameter is zero or a negative number.";
+                                            }
+
+                                            if ((advanceEx.INVALID_STATE_ERR && advanceEx.code == advanceEx.INVALID_STATE_ERR) || advanceEx.name == "InvalidStateError") {
+                                                advanceErr.type = "InvalidStateError";
+                                                advanceErr.message = "You are trying to skip data on a removed object store.";
+                                            }
+                                            linq2indexedDB.prototype.utilities.logError(advanceErr);
+                                            linq2indexedDB.prototype.core.abortTransaction(index.objectStore.transaction);
+                                            pw.error(this, advanceErr);
+                                        }
+                                    },
+                                    update: function (obj) {
+                                        linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "keyCursor update", result, e);
+                                        try {
+                                            result.update(obj);
+                                        }
+                                        catch (updateEx) {
+                                            var updateError = internal.wrapException(updateEx, "keyCursor - update");
+
+                                            if ((updateEx.DATA_ERR && updateEx.code == updateEx.DATA_ERR) || updateEx.name == "DataError") {
+                                                updateError.type = "DataError";
+                                                updateError.message = "The underlying object store uses in-line keys and the property in value at the object store's key path does not match the key in this cursor's position.";
+                                            }
+
+                                            if ((updateEx.READ_ONLY_ERR && ex.code == updateEx.READ_ONLY_ERR) || updateEx.name == "ReadOnlyError") {
+                                                updateError.type = "ReadOnlyError";
+                                                updateError.message = "You are trying to update data in a readonly transaction.";
+                                            }
+
+                                            if (updateEx.name == "TransactionInactiveError") {
+                                                updateError.type = "TransactionInactiveError";
+                                                updateError.message = "You are trying to update data on an inactieve transaction. (The transaction was already aborted or committed)";
+                                            }
+
+                                            if ((updateEx.DATA_CLONE_ERR && updateEx.code == updateEx.DATA_CLONE_ERR) || updateEx.name == "DataCloneError") {
+                                                updateError.type = "DataCloneError";
+                                                updateError.message = "The data you are trying to update could not be cloned. Your data probably contains a function which can not be cloned by default. Try using the serialize method to update the data.";
+                                            }
+
+                                            if ((updateEx.INVALID_STATE_ERR && updateEx.code == updateEx.INVALID_STATE_ERR) || updateEx.name == "InvalidStateError") {
+                                                updateError.type = "InvalidStateError";
+                                                updateError.message = "You are trying to update data on a removed object store.";
+                                            }
+
+                                            linq2indexedDB.prototype.utilities.logError(updateError);
+                                            linq2indexedDB.prototype.core.abortTransaction(index.objectStore.transaction);
+                                            pw.error(this, updateError);
+                                        }
+                                    },
+                                    remove: function () {
+                                        linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "keyCursor remove", result, e);
+                                        try {
+                                            result["delete"]();
+                                        }
+                                        catch (deleteEx) {
+                                            var deleteError = internal.wrapException(deleteEx, "keyCursor - delete");
+
+                                            if ((deleteEx.READ_ONLY_ERR && deleteEx.code == deleteEx.READ_ONLY_ERR) || deleteEx.name == "ReadOnlyError") {
+                                                deleteError.type = "ReadOnlyError";
+                                                deleteError.message = "You are trying to remove data in a readonly transaction.";
+                                            }
+
+                                            if (deleteEx.name == "TransactionInactiveError") {
+                                                deleteError.type = "TransactionInactiveError";
+                                                deleteError.message = "You are trying to remove data on an inactieve transaction. (The transaction was already aborted or committed)";
+                                            }
+
+                                            if ((deleteEx.INVALID_STATE_ERR && deleteEx.code == deleteEx.INVALID_STATE_ERR) || deleteEx.name == "InvalidStateError") {
+                                                deleteError.type = "InvalidStateError";
+                                                deleteError.message = "You are trying to remove data on a removed object store.";
+                                            }
+
+                                            linq2indexedDB.prototype.utilities.logError(deleteError);
+                                            linq2indexedDB.prototype.core.abortTransaction(index.objectStore.transaction);
+                                            pw.error(this, deleteError);
+                                        }
+                                    }
+                                };
+
+                                pw.progress(this, [progressObj, result, e]);
+                                returnData.push(progressObj.data);
                             }
                             result["continue"]();
                         });
                 } catch (ex) {
-                    // cursor exception
-                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.exception, "Exception keyCursor", ex);
+                    var error = internal.wrapException(ex, "keyCursor");
+
+                    if ((ex.DATA_ERR && error.code == ex.DATA_ERR) || ex.name == "DataError") {
+                        error.type = "DataError";
+                        error.message = "The provided range parameter isn't a valid key or key range.";
+                    }
+
+                    if (ex.name == "TransactionInactiveError") {
+                        error.type = "TransactionInactiveError";
+                        error.message = "You are trying to retrieve data on an inactieve transaction. (The transaction was already aborted or committed)";
+                    }
+
+                    if (ex.name == "TypeError") {
+                        error.type = "TypeError";
+                        error.message = "The provided directory parameter is invalid";
+                    }
+
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                        error.type = "InvalidStateError";
+                        error.message = "You are trying to insert data on a removed object store.";
+                    }
+                    linq2indexedDB.prototype.utilities.logError(error);
                     linq2indexedDB.prototype.core.abortTransaction(index.objectStore.transaction);
-                    pw.error(this, [ex.message, ex]);
+                    pw.error(this, error);
                 }
             },
             get: function (pw, source, key) {
@@ -1997,10 +2343,71 @@ if (typeof window !== "undefined") {
                     });
                 } catch (ex) {
                     var txn = source.transaction || source.objectStore.transaction;
-                    // get exception
-                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.exception, "Exception get", ex);
+                    var error = internal.wrapException(ex, "get");
+
+                    if (error.code == ex.DATA_ERR || ex.name == "DataError") {
+                        error.message = "The provided key isn't a valid key (must be an array, string, date or number).";
+                    }
+
+                    if (ex.name == "TransactionInactiveError") {
+                        error.type = "TransactionInactiveError";
+                        error.message = "You are trying to retrieve data on an inactieve transaction. (The transaction was already aborted or committed)";
+                    }
+
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                        error.type = "InvalidStateError";
+                        error.message = "You are trying to retrieve data on a removed object store.";
+                    }
+                    linq2indexedDB.prototype.utilities.logError(error);
                     linq2indexedDB.prototype.core.abortTransaction(txn);
-                    pw.error(this, [ex.message, ex]);
+                    pw.error(this, error);
+                }
+            },
+            count: function (pw, source, key) {
+                linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Count Started", source);
+
+                try {
+                    var req;
+                    
+                    if (key) {
+                        req = source.count(key);
+                    }
+                    else {
+                        req = source.count();
+                    }
+
+                    handlers.IDBRequest(req).then(function (args /*result, e*/) {
+                        var result = args[0];
+                        var e = args[1];
+                        var transaction = source.transaction || source.objectStore.transaction;
+
+                        linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Count completed", result, transaction, e);
+                        pw.complete(this, [result, transaction, e]);
+                    }, function (args /*error, e*/) {
+                        linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.error, "Count error", args);
+                        pw.error(this, args);
+                    });
+                } catch (ex) {
+                    var txn = source.transaction || source.objectStore.transaction;
+                    var error = internal.wrapException(ex, "count");
+
+                    if (error.code == ex.DATA_ERR || ex.name == "DataError") {
+                        error.type = "DataError";
+                        error.message = "The provided key isn't a valid key or keyRange.";
+                    }
+
+                    if (ex.name == "TransactionInactiveError") {
+                        error.type = "TransactionInactiveError";
+                        error.message = "You are trying to count data on an inactieve transaction. (The transaction was already aborted or committed)";
+                    }
+
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                        error.type = "InvalidStateError";
+                        error.message = "You are trying to count data on a removed object store.";
+                    }
+                    linq2indexedDB.prototype.utilities.logError(error);
+                    linq2indexedDB.prototype.core.abortTransaction(txn);
+                    pw.error(this, error);
                 }
             },
             getKey: function (pw, index, key) {
@@ -2018,10 +2425,25 @@ if (typeof window !== "undefined") {
                         pw.error(this, args);
                     });
                 } catch (ex) {
-                    // getKey exception
-                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.exception, "Exception getKey", ex);
+                    var error = internal.wrapException(ex, "getKey");
+
+                    if (error.code == ex.DATA_ERR || ex.name == "DataError") {
+                        error.type = "DataError";
+                        error.message = "The provided key isn't a valid key or keyRange.";
+                    }
+
+                    if (ex.name == "TransactionInactiveError") {
+                        error.type = "TransactionInactiveError";
+                        error.message = "You are trying to getKey data on an inactieve transaction. (The transaction was already aborted or committed)";
+                    }
+
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                        error.type = "InvalidStateError";
+                        error.message = "You are trying to getKey data on a removed object store.";
+                    }
+                    linq2indexedDB.prototype.utilities.logError(error);
                     linq2indexedDB.prototype.core.abortTransaction(index.objectStore.transaction);
-                    pw.error(this, [ex.message, ex]);
+                    pw.error(this, error);
                 }
             },
             insert: function (pw, objectStore, data, key) {
@@ -2049,13 +2471,67 @@ if (typeof window !== "undefined") {
                         linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Insert completed", data, result, objectStore.transaction, e);
                         pw.complete(this, [data, result, objectStore.transaction, e]);
                     }, function (args /*error, e*/) {
-                        linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.error, "Insert error", args);
-                        pw.error(this, args);
+                        var err = internal.wrapError(args[1], "insert");
+
+                        // Fix for firefox & chrome
+                        if (args[1].target && args[1].target.error && args[1].target.error.name == "ConstraintError") {
+                            err.type = "ConstraintError";
+                        }
+                        
+                        if (err.type == "ConstraintError") {
+                            var duplicateKey = key;
+                            if (!duplicateKey && objectStore.keyPath) {
+                                duplicateKey = data[objectStore.keyPath];
+                            }
+                            err.message = "A record for the key (" + duplicateKey + ") already exists in the database or one of the properties of the provided data has a unique index declared.";
+                        }
+                        linq2indexedDB.prototype.core.abortTransaction(objectStore.transaction);
+                        linq2indexedDB.prototype.utilities.logError(err);
+                        pw.error(this, err);
                     });
                 } catch (ex) {
-                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.exception, "Insert exception", ex);
+                    var error = internal.wrapException(ex, "insert");
+
+                    if (error.code == ex.DATA_ERR || ex.name == "DataError") {
+                        error.type = "DataError";
+                        var possibleKey = key;
+                        if (!possibleKey && objectStore.keyPath) {
+                            possibleKey = data[objectStore.keyPath];
+                        }
+                        if (!possibleKey) {
+                            error.message = "There is no key provided for the data you want to insert for an object store without autoIncrement.";
+                        } else if (key && objectStore.keyPath) {
+                            error.message = "An external key is provided while the object store expects a keyPath key.";
+                        } else if (typeof possibleKey !== "string"
+                            && typeof possibleKey !== "number"
+                            && typeof possibleKey !== "Date"
+                            && !linq2indexedDB.prototype.utilities.isArray(possibleKey)) {
+                            error.message = "The provided key isn't a valid key (must be an array, string, date or number).";
+                        }
+                    }
+                    
+                    if ((ex.READ_ONLY_ERR && ex.code == ex.READ_ONLY_ERR) || ex.name == "ReadOnlyError") {
+                        error.type = "ReadOnlyError";
+                        error.message = "You are trying to insert data in a readonly transaction.";
+                    }
+                    
+                    if (ex.name == "TransactionInactiveError") {
+                        error.type = "TransactionInactiveError";
+                        error.message = "You are trying to insert data on an inactieve transaction. (The transaction was already aborted or committed)";
+                    }
+                    
+                    if ((ex.DATA_CLONE_ERR && ex.code == ex.DATA_CLONE_ERR) || ex.name == "DataCloneError") {
+                        error.type = "DataCloneError";
+                        error.message = "The data you are trying to insert could not be cloned. Your data probably contains a function which can not be cloned by default. Try using the serialize method to insert the data.";
+                    }
+                    
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                        error.type = "InvalidStateError";
+                        error.message = "You are trying to insert data on a removed object store.";
+                    }
+                    linq2indexedDB.prototype.utilities.logError(error);
                     linq2indexedDB.prototype.core.abortTransaction(objectStore.transaction);
-                    pw.error(this, [ex.message, ex]);
+                    pw.error(this, error);
                 }
             },
             update: function (pw, objectStore, data, key) {
@@ -2073,17 +2549,63 @@ if (typeof window !== "undefined") {
                         var result = args[0];
                         var e = args[1];
 
+                        if (objectStore.keyPath && data[objectStore.keyPath] === undefined) {
+                            data[objectStore.keyPath] = result;
+                        }
+
                         linq2indexedDB.prototype.core.dbDataChanged.fire({ type: dataEvents.dataUpdated, data: data, objectStore: objectStore });
                         linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Update completed", data, result, objectStore.transaction, e);
                         pw.complete(this, [data, result, objectStore.transaction, e]);
                     }, function (args /*error, e*/) {
-                        linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.error, "Update error", args);
-                        pw.error(this, args);
+                        var err = internal.wrapError(args[1], "update");
+                        linq2indexedDB.prototype.core.abortTransaction(objectStore.transaction);
+                        linq2indexedDB.prototype.utilities.logError(err);
+                        pw.error(this, err);
                     });
                 } catch (ex) {
-                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.exception, "Update exception", ex);
+                    var error = internal.wrapException(ex, "update");
+
+                    if (error.code == ex.DATA_ERR || ex.name == "DataError") {
+                        error.type = "DataError";
+                        var possibleKey = key;
+                        if (!possibleKey && objectStore.keyPath) {
+                            possibleKey = data[objectStore.keyPath];
+                        }
+                        if (!possibleKey) {
+                            error.message = "There is no key provided for the data you want to update for an object store without autoIncrement.";
+                        } else if (key && objectStore.keyPath) {
+                            error.message = "An external key is provided while the object store expects a keyPath key.";
+                        } else if (typeof possibleKey !== "string"
+                            && typeof possibleKey !== "number"
+                            && typeof possibleKey !== "Date"
+                            && !linq2indexedDB.prototype.utilities.isArray(possibleKey)) {
+                            error.message = "The provided key isn't a valid key (must be an array, string, date or number).";
+                        }
+                    }
+
+                    if ((ex.READ_ONLY_ERR && ex.code == ex.READ_ONLY_ERR) || ex.name == "ReadOnlyError") {
+                        error.type = "ReadOnlyError";
+                        error.message = "You are trying to update data in a readonly transaction.";
+                    }
+                    
+                    if (ex.name == "TransactionInactiveError") {
+                        error.type = "TransactionInactiveError";
+                        error.message = "You are trying to update data on an inactieve transaction. (The transaction was already aborted or committed)";
+                    }
+                    
+                    if ((ex.DATA_CLONE_ERR && ex.code == ex.DATA_CLONE_ERR) || ex.name == "DataCloneError") {
+                        error.type = "DataCloneError";
+                        error.message = "The data you are trying to update could not be cloned. Your data probably contains a function which can not be cloned by default. Try using the serialize method to update the data.";
+                    }
+
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                        error.type = "InvalidStateError";
+                        error.message = "You are trying to update data on a removed object store.";
+                    }
+                    
+                    linq2indexedDB.prototype.utilities.logError(error);
                     linq2indexedDB.prototype.core.abortTransaction(objectStore.transaction);
-                    pw.error(this, [ex.message, ex]);
+                    pw.error(this, error);
                 }
             },
             remove: function (pw, objectStore, key) {
@@ -2103,9 +2625,26 @@ if (typeof window !== "undefined") {
                             pw.error(this, args);
                         });
                 } catch (ex) {
-                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.exception, "Remove exception", ex);
+                    var error = internal.wrapException(ex, "delete");
+
+                    if ((ex.READ_ONLY_ERR && ex.code == ex.READ_ONLY_ERR) || ex.name == "ReadOnlyError") {
+                        error.type = "ReadOnlyError";
+                        error.message = "You are trying to remove data in a readonly transaction.";
+                    }
+
+                    if (ex.name == "TransactionInactiveError") {
+                        error.type = "TransactionInactiveError";
+                        error.message = "You are trying to remove data on an inactieve transaction. (The transaction was already aborted or committed)";
+                    }
+
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                        error.type = "InvalidStateError";
+                        error.message = "You are trying to remove data on a removed object store.";
+                    }
+
+                    linq2indexedDB.prototype.utilities.logError(error);
                     linq2indexedDB.prototype.core.abortTransaction(objectStore.transaction);
-                    pw.error(this, [ex.message, ex]);
+                    pw.error(this, error);
                 }
             },
             clear: function (pw, objectStore) {
@@ -2124,9 +2663,26 @@ if (typeof window !== "undefined") {
                             pw.error(this, args);
                         });
                 } catch (ex) {
-                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.exception, "Clear exception", ex);
+                    var error = internal.wrapException(ex, "clear");
+
+                    if ((ex.READ_ONLY_ERR && ex.code == ex.READ_ONLY_ERR) || ex.name == "ReadOnlyError") {
+                        error.type = "ReadOnlyError";
+                        error.message = "You are trying to clear data in a readonly transaction.";
+                    }
+
+                    if (ex.name == "TransactionInactiveError") {
+                        error.type = "TransactionInactiveError";
+                        error.message = "You are trying to clear data on an inactieve transaction. (The transaction was already aborted or committed)";
+                    }
+
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                        error.type = "InvalidStateError";
+                        error.message = "You are trying to clear data on a removed object store.";
+                    }
+
+                    linq2indexedDB.prototype.utilities.logError(error);
                     linq2indexedDB.prototype.core.abortTransaction(objectStore.transaction);
-                    pw.error(this, [ex.message, ex]);
+                    pw.error(this, error);
                 }
             },
             deleteDb: function (pw, name) {
@@ -2211,6 +2767,23 @@ if (typeof window !== "undefined") {
                     }
                 }
                 return -1;
+            },
+            wrapException: function (exception, method) {
+                return {
+                    code: exception.code,
+                    severity: linq2indexedDB.prototype.utilities.severity.exception,
+                    orignialError: exception,
+                    method: method,
+                    type: "unknown"
+                };
+            },
+            wrapError: function (error, method) {
+                return {
+                    severity: linq2indexedDB.prototype.utilities.severity.error,
+                    orignialError: error,
+                    type: (error.target && error.target.error && error.target.error.name) ? error.target.error.name : "unknown",
+                    method: method
+                };
             }
         };
 
@@ -2385,6 +2958,20 @@ if (typeof window !== "undefined") {
                         });
                     } else {
                         internal.get(pw, source, key);
+                    }
+                });
+            },
+            count: function (source) {
+                return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
+                    if (source.then) {
+                        source.then(function (args /*txn, source*/) {
+                            internal.count(pw, args[1]);
+                        }, function (args /*error, e*/) {
+                            // store or index error
+                            pw.error(this, args);
+                        });
+                    } else {
+                        internal.count(pw, source);
                     }
                 });
             },
