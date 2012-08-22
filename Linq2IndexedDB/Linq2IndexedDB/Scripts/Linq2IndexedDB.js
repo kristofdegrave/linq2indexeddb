@@ -1558,13 +1558,19 @@ if (typeof window !== "undefined") {
                             var err = internal.wrapError(args[1], "db");
                             
                             // Fix for firefox & chrome
-                            if (args[1].target && args[1].target.error && args[1].target.error.name == "VersionError") {
+                            if (args[1].target && args[1].target.errorCode == 12) {
                                 err.type = "VersionError";
                             }
                             
                             if (err.type == "VersionError") {
                                 err.message = "You are trying to open the database in a lower version (" + version + ") than the current version of the database";
                             }
+                            
+                            // Fix for firefox & chrome
+                            if (args[1].target && args[1].target.errorCode == 8) {
+                                err.type = "AbortError";
+                            }
+
                             if (err.type == "AbortError") {
                                 err.message = "The VERSION_CHANGE transaction was aborted.";
                             }
@@ -1678,7 +1684,7 @@ if (typeof window !== "undefined") {
                                 }
                                 
                                 // Fix for firefox & chrome
-                                if (args[1].target && args[1].target.error && args[1].target.error.name == "ConstraintError") {
+                                if (args[1].target && args[1].target.errorCode == 4) {
                                     err.type = "ConstraintError";
                                 }
 
@@ -1798,7 +1804,7 @@ if (typeof window !== "undefined") {
                 } catch (ex) {
                     // store exception
                     var error = internal.wrapException(ex, "createObjectStore");
-                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || (ex.NOT_ALLOWED_ERR && ex.code == ex.NOT_ALLOWED_ERR) || ex.name == "InvalidStateError") {
                         error.type = "InvalidStateError";
                         error.message = "You are trying to create an object store in a readonly or readwrite transaction.";
                     }
@@ -1827,7 +1833,7 @@ if (typeof window !== "undefined") {
                         error.type = "NotFoundError";
                         error.message = "You are trying to delete an object store (" + objectStoreName + "), that doesn't exist.";
                     }
-                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || (ex.NOT_ALLOWED_ERR && ex.code == ex.NOT_ALLOWED_ERR) || ex.name == "InvalidStateError") {
                         error.type = "InvalidStateError";
                         error.message = "You are trying to delete an object store in a readonly or readwrite transaction.";
                     }
@@ -1947,7 +1953,7 @@ if (typeof window !== "undefined") {
                 } catch (ex) {
                     // store exception
                     var error = internal.wrapException(ex, "createIndex");
-                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || (ex.NOT_ALLOWED_ERR && ex.code == ex.NOT_ALLOWED_ERR) || ex.name == "InvalidStateError") {
                         error.type = "InvalidStateError";
                         error.message = "You are trying to create an index in a readonly or readwrite transaction.";
                     }
@@ -1976,7 +1982,7 @@ if (typeof window !== "undefined") {
                         error.type = "NotFoundError";
                         error.message = "You are trying to delete an index (" + indexName + ", propertyName: " + propertyName + " ), that doesn't exist.";
                     }
-                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || (ex.NOT_ALLOWED_ERR && ex.code == ex.NOT_ALLOWED_ERR) || ex.name == "InvalidStateError") {
                         error.type = "InvalidStateError";
                         error.message = "You are trying to delete an index in a readonly or readwrite transaction.";
                     }
@@ -2152,7 +2158,7 @@ if (typeof window !== "undefined") {
                         error.message = "The provided directory parameter is invalid";
                     }
 
-                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || (ex.NOT_ALLOWED_ERR && ex.code == ex.NOT_ALLOWED_ERR) || ex.name == "InvalidStateError") {
                         error.type = "InvalidStateError";
                         error.message = "You are trying to insert data on a removed object store.";
                     }
@@ -2317,7 +2323,7 @@ if (typeof window !== "undefined") {
                         error.message = "The provided directory parameter is invalid";
                     }
 
-                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || (ex.NOT_ALLOWED_ERR && ex.code == ex.NOT_ALLOWED_ERR) || ex.name == "InvalidStateError") {
                         error.type = "InvalidStateError";
                         error.message = "You are trying to insert data on a removed object store.";
                     }
@@ -2354,7 +2360,7 @@ if (typeof window !== "undefined") {
                         error.message = "You are trying to retrieve data on an inactieve transaction. (The transaction was already aborted or committed)";
                     }
 
-                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || (ex.NOT_ALLOWED_ERR && ex.code == ex.NOT_ALLOWED_ERR) || ex.name == "InvalidStateError") {
                         error.type = "InvalidStateError";
                         error.message = "You are trying to retrieve data on a removed object store.";
                     }
@@ -2401,7 +2407,7 @@ if (typeof window !== "undefined") {
                         error.message = "You are trying to count data on an inactieve transaction. (The transaction was already aborted or committed)";
                     }
 
-                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || (ex.NOT_ALLOWED_ERR && ex.code == ex.NOT_ALLOWED_ERR) || ex.name == "InvalidStateError") {
                         error.type = "InvalidStateError";
                         error.message = "You are trying to count data on a removed object store.";
                     }
@@ -2437,7 +2443,7 @@ if (typeof window !== "undefined") {
                         error.message = "You are trying to getKey data on an inactieve transaction. (The transaction was already aborted or committed)";
                     }
 
-                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || (ex.NOT_ALLOWED_ERR && ex.code == ex.NOT_ALLOWED_ERR) || ex.name == "InvalidStateError") {
                         error.type = "InvalidStateError";
                         error.message = "You are trying to getKey data on a removed object store.";
                     }
@@ -2474,7 +2480,7 @@ if (typeof window !== "undefined") {
                         var err = internal.wrapError(args[1], "insert");
 
                         // Fix for firefox & chrome
-                        if (args[1].target && args[1].target.error && args[1].target.error.name == "ConstraintError") {
+                        if (args[1].target && args[1].target.errorCode == 4) {
                             err.type = "ConstraintError";
                         }
                         
@@ -2525,7 +2531,7 @@ if (typeof window !== "undefined") {
                         error.message = "The data you are trying to insert could not be cloned. Your data probably contains a function which can not be cloned by default. Try using the serialize method to insert the data.";
                     }
                     
-                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || (ex.NOT_ALLOWED_ERR && ex.code == ex.NOT_ALLOWED_ERR) || ex.name == "InvalidStateError") {
                         error.type = "InvalidStateError";
                         error.message = "You are trying to insert data on a removed object store.";
                     }
@@ -2598,7 +2604,7 @@ if (typeof window !== "undefined") {
                         error.message = "The data you are trying to update could not be cloned. Your data probably contains a function which can not be cloned by default. Try using the serialize method to update the data.";
                     }
 
-                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || (ex.NOT_ALLOWED_ERR && ex.code == ex.NOT_ALLOWED_ERR) || ex.name == "InvalidStateError") {
                         error.type = "InvalidStateError";
                         error.message = "You are trying to update data on a removed object store.";
                     }
@@ -2637,7 +2643,7 @@ if (typeof window !== "undefined") {
                         error.message = "You are trying to remove data on an inactieve transaction. (The transaction was already aborted or committed)";
                     }
 
-                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || (ex.NOT_ALLOWED_ERR && ex.code == ex.NOT_ALLOWED_ERR) || ex.name == "InvalidStateError") {
                         error.type = "InvalidStateError";
                         error.message = "You are trying to remove data on a removed object store.";
                     }
@@ -2675,7 +2681,7 @@ if (typeof window !== "undefined") {
                         error.message = "You are trying to clear data on an inactieve transaction. (The transaction was already aborted or committed)";
                     }
 
-                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || ex.name == "InvalidStateError") {
+                    if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || (ex.NOT_ALLOWED_ERR && ex.code == ex.NOT_ALLOWED_ERR) || ex.name == "InvalidStateError") {
                         error.type = "InvalidStateError";
                         error.message = "You are trying to clear data on a removed object store.";
                     }
@@ -3117,6 +3123,7 @@ if (typeof window !== "undefined") {
                     if (!window.IDBObjectStore) window.IDBObjectStore = window.webkitIDBObjectStore;
                     if (!window.IDBRequest) window.IDBRequest = window.webkitIDBRequest;
                     if (!window.IDBTransaction) window.IDBTransaction = window.webkitIDBTransaction;
+                    if (!window.IDBOpenDBRequest) window.IDBOpenDBRequest = window.webkitIDBOpenDBRequest;
                     if (typeof window.IDBTransaction.READ_ONLY === "number"
                         && typeof window.IDBTransaction.READ_WRITE === "number"
                         && typeof window.IDBTransaction.VERSION_CHANGE === "number") {
