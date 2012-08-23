@@ -40,7 +40,9 @@
                     });
 
                     setTimeout(function() {
-                        db.linq.from("person").select().then(null, null, function(data) {
+                        db.linq.from("person").select().then(function(e) {
+                            var d = e;
+                        }, null, function (data) {
                             var tekst = $("#txtLog").val();
                             tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + " city: " + linq2indexedDB.prototype.utilities.getPropertyValue(data, "location.city") + "\n\r";
                             $("#txtLog").val(tekst);

@@ -311,7 +311,7 @@ var enableLogging = true;
             return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
                 var returnData = [];
                 executeQuery(queryBuilder, linq2indexedDB.prototype.core.transactionTypes.READ_WRITE, executeWhere).then(function () {
-                    pw.complete(returnData);
+                    pw.complete(this, returnData);
                 },pw.error, function(args) {
                     var obj = selectData(args[0].data, queryBuilder.select);
                     returnData.push(obj);
