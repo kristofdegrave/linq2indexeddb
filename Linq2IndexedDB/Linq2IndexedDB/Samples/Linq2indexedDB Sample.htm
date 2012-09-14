@@ -28,25 +28,36 @@
                     db.linq.from("person").insert({ Name: "test3", Firstname: "test3", Age: 3, location: { country: "Belgium", city: "Bruges" } });
                     db.linq.from("person").insert({ Name: "test4", Firstname: "test4", Age: 4, location: { country: "Belgium", city: "Brussels" } });
                     db.linq.from("person").insert([{ Name: "test10", Firstname: "test10" }, { Name: "test100", Firstname: "test100" }]);
-                    
-                    db.linq.from("person").insert({ Name: "test11", Firstname: "test11", Age: 11 }).then(function () {
 
-                        db.linq.from("person").merge({ location: { country: "Belgium", city: "Antwerp" } }, 3).then(function (d) {
-                            var c = d;
-                        });
-                    });
                     
-                    db.linq.from("person").where("Age").smallerThan(3).remove().then(function(data) {
-                    });
+                    //db.linq.from("person").insert({ Name: "test11", Firstname: "test11", Age: 11 }).then(function () {
+
+                    //    db.linq.from("person").merge({ location: { country: "Belgium", city: "Antwerp" } }, 3).then(function (d) {
+                    //        var c = d;
+                    //    });
+                    //});
+                    
+                    //db.linq.from("person").where("Age").smallerThan(3).remove().then(function(data) {
+                    //});
 
                     setTimeout(function() {
-                        db.linq.from("person").select().then(function(e) {
+                        db.linq.from("person").orderBy("name").select().then(function(e) {
                             var d = e;
                         }, null, function (data) {
                             var tekst = $("#txtLog").val();
                             tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + " city: " + linq2indexedDB.prototype.utilities.getPropertyValue(data, "location.city") + "\n\r";
                             $("#txtLog").val(tekst);
                         });
+
+                        //var x = search("test1"); //db.linq.from("person").where("Name").equals("test1").select(); //search("test1");
+
+                        //search("test1").then(function (e) {
+                        //    var d = e;
+                        //}, null, function (data) {
+                        //    var tekst = $("#txtLog").val();
+                        //    tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + " city: " + linq2indexedDB.prototype.utilities.getPropertyValue(data, "location.city") + "\n\r";
+                        //    $("#txtLog").val(tekst);
+                        //});
                     }, 200);
 
                     //db.linq.from("person").where("Age").smallerThan(3).remove().then(function(data) {
@@ -159,6 +170,10 @@
                     //            });
                     //}, 2000);
                 });
+                
+                function search(filter) {
+                    return db.linq.from("person").where("Name").equals(filter).select();
+                }
             });
         </script>
     </head>

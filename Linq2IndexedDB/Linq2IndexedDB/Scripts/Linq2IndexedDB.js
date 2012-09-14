@@ -860,7 +860,7 @@ var enableLogging = true;
                     ///     returns a function to retrieve the necessary values for the filter
                     /// </returns>
                     return function (value) {
-                        if (!value) {
+                        if (typeof (value) === "undefined") {
                             throw "linq2indexedDB: value needs to be provided to the equal clause";
                         }
                         filterMetaData.value = value;
@@ -895,10 +895,10 @@ var enableLogging = true;
                     return function (minValue, maxValue, minValueIncluded, maxValueIncluded) {
                         var isMinValueIncluded = typeof (minValueIncluded) === undefined ? false : minValueIncluded;
                         var isMasValueIncluded = typeof (maxValueIncluded) === undefined ? false : maxValueIncluded;
-                        if (!minValue) {
+                        if (typeof (minValue) === "undefined") {
                             throw "linq2indexedDB: minValue needs to be provided to the between clause";
                         }
-                        if (!maxValue) {
+                        if (typeof (maxValue) === "undefined") {
                             throw "linq2indexedDB: maxValue needs to be provided to the between clause";
                         }
 
@@ -934,7 +934,7 @@ var enableLogging = true;
                     ///     returns a function to retrieve the necessary values for the filter
                     /// </returns>
                     return function (value, valueIncluded) {
-                        if (!value) {
+                        if (typeof (value) === "undefined") {
                             throw "linq2indexedDB: value needs to be provided to the greatherThan clause";
                         }
                         var isValueIncluded = typeof (valueIncluded) === undefined ? false : valueIncluded;
@@ -969,7 +969,7 @@ var enableLogging = true;
                     ///     returns a function to retrieve the necessary values for the filter
                     /// </returns>
                     return function (value, valueIncluded) {
-                        if (!value) {
+                        if (typeof (value) === "undefined") {
                             throw "linq2indexedDB: value needs to be provided to the smallerThan clause";
                         }
                         var isValueIncluded = typeof (valueIncluded) === undefined ? false : valueIncluded;
@@ -1009,7 +1009,7 @@ var enableLogging = true;
                     ///     returns a function to retrieve the necessary values for the filter
                     /// </returns>
                     return function (array) {
-                        if (!array && typeof array !== "Array") {
+                        if (typeof (value) === "undefined" || typeof array !== "Array") {
                             throw "linq2indexedDB: array needs to be provided to the inArray clause";
                         }
 
@@ -1047,7 +1047,7 @@ var enableLogging = true;
                     ///     returns a function to retrieve the necessary values for the filter
                     /// </returns>
                     return function (value) {
-                        if (!value) {
+                        if (typeof (value) === "undefined") {
                             throw "linq2indexedDB: value needs to be provided to the like clause";
                         }
 
@@ -1246,17 +1246,17 @@ var enableLogging = true;
                         if (sortPropvalueX != sortPropvalueY) {
                             if ((sortClauses[j].descending && sortPropvalueX > sortPropvalueY)
                                 || (!sortClauses[j].descending && sortPropvalueX < sortPropvalueY)) {
-                                newArray.push(valueX);
+                                newArray.push(array[i]);
                             } else {
                                 if (!valueAdded) {
                                     valueAdded = true;
-                                    newArray.push(valueY);
+                                    newArray.push(data);
                                 }
-                                newArray.push(valueX);
+                                newArray.push(array[i]);
                             }
                         }
                         else if (j == (sortClauses.length - 1)) {
-                            newArray.push(valueX);
+                            newArray.push(array[i]);
                         }
                     }
                 }
