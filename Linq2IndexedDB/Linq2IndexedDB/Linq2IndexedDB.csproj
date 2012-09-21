@@ -122,6 +122,7 @@
     <Content Include="Content\themes\base\minified\jquery.ui.tabs.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.theme.min.css" />
     <Content Include="IndexedDBViewer\IndexedDBViewer.html" />
+    <Content Include="Tests\Stresstest.htm" />
     <Content Include="Scripts\indexeddb.shim.js" />
     <Content Include="Scripts\IndexedDBViewer.js" />
     <Content Include="Samples\Consumptions.css" />
@@ -130,6 +131,7 @@
     <Content Include="Packages\IndexedbDBViewer.nuspec" />
     <Content Include="Packages\Linq2IndexedDB.nuspec" />
     <Content Include="Packages\Linq2IndexedDBWin8.nuspec" />
+    <Content Include="Packages\build.bat" />
     <None Include="Scripts\jquery-1.7.2.intellisense.js">
       <DependentUpon>jquery-1.7.2.js</DependentUpon>
     </None>

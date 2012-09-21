@@ -1940,7 +1940,7 @@ if (typeof window !== "undefined") {
                     }
 
                     if (!objectStore.indexNames.contains(indexName)) {
-                        var index = objectStore.createIndex(indexName, propertyName, { unique: indexOptions ? indexOptions.unique : false, multiRow: indexOptions ? indexOptions.multiEntry : false, multiEntry: indexOptions ? indexOptions.multiEntry : false });
+                        var index = objectStore.createIndex(indexName, propertyName, { unique: indexOptions ? indexOptions.unique : false, multiRow: indexOptions ? indexOptions.multirow : false, multiEntry: indexOptions ? indexOptions.multirow : false });
                         linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "createIndex completed", objectStore.transaction, index, objectStore);
                         linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.indexCreated, data: index });
                         pw.complete(this, [objectStore.transaction, index, objectStore]);
