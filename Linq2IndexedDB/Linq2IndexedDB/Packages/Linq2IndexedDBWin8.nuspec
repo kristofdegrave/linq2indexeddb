@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
-    <id>Linq2IndexedDB</id>
-    <version>1.0.15</version>
+    <id>Linq2IndexedDBWin8</id>
+    <version>1.0.16</version>
     <title>Linq2IndexedDB</title>
     <authors>Kristof Degrave,Parashuram Narasimhan</authors>
     <owners>Kristof Degrave,Parashuram Narasimhan</owners>
