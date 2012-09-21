@@ -127,6 +127,9 @@
     <Content Include="Samples\Consumptions.css" />
     <Content Include="Samples\Consumptions.htm" />
     <Content Include="Samples\Consumptions.js" />
+    <Content Include="Packages\IndexedbDBViewer.nuspec" />
+    <Content Include="Packages\Linq2IndexedDB.nuspec" />
+    <Content Include="Packages\Linq2IndexedDBWin8.nuspec" />
     <None Include="Scripts\jquery-1.7.2.intellisense.js">
       <DependentUpon>jquery-1.7.2.js</DependentUpon>
     </None>

@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>Linq2IndexedDB</id>
+    <version>1.0.15</version>
+    <title>Linq2IndexedDB</title>
+    <authors>Kristof Degrave,Parashuram Narasimhan</authors>
+    <owners>Kristof Degrave,Parashuram Narasimhan</owners>
+    <licenseUrl>http://linq2indexeddb.codeplex.com/license</licenseUrl>
+    <projectUrl>http://linq2indexeddb.codeplex.com/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>
+      With linq2indexeddb developpers can add, update, delete and search data on an easy way without having to think how to put up an connection, handeling transaction, etc. For now this project is still in development, so everything is subject to change.
+
+      Now only the basic CRUD operations are supported. In the near future this will be extended to multiple where clauses, joins, ...
+
+      Supports:
+      - Internet Explorer 10+
+      - FireFox 8+
+      - Chrome 17+
+      - Safari 5+
+      - Opera 11.6+
+      - iOs Safari 3.2+
+      - Opera Mobile 11 +
+
+      Using the Linq2IndexededDB viewer you can view the structure + content of your database while you are debugging your application.
+    </description>
+    <summary>
+      Linq2indexeddb makes it easier for JavaScript developpers to make use of the client side database: IndexedDB.
+
+      Inclusive a viewer to view the structure + content at all times
+    </summary>
+    <releaseNotes>bugfix in the complete callback of the select. The data collection gets returned again instead of undefined</releaseNotes>
+    <language>en-US</language>
+    <tags>IndexedDB, HTML5, LINQ, Linq2IndexedDB, jQuery</tags>
+    <dependencies>
+      <dependency id="jQuery" version="1.7.1" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="..\Scripts\indexeddb.shim.js" target="Scripts" />
+    <file src="..\Scripts\Linq2IndexedDB.js" target="Scripts" />
+  </files>
+</package>
