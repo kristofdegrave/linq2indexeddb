@@ -1,4 +1,4 @@
-﻿if "%NuGet%"=="" SET NuGet=nuget.exe 
+if "%NuGet%"=="" SET NuGet=nuget.exe 
 if "%SourcesPath%"=="" SET SourcesPath=. 
 
 %NuGet% pack %SourcesPath%\Linq2IndexedDB\Packages\IndexedbDBViewer.nuspec -version 1.0.4
