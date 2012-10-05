@@ -1099,6 +1099,7 @@ var enableLogging = true;
                     var worker = new Worker(utilities.linq2indexedDBWorkerFileLocation);
                     worker.onmessage = function (event) {
                         pw.complete(this, event.data);
+                        worker.terminate();
                     };
                     worker.onerror = pw.error;
 

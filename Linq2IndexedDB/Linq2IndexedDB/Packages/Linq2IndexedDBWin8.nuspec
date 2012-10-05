@@ -30,7 +30,6 @@
 
       Inclusive a viewer to view the structure + content at all times
     </summary>
-    <releaseNotes>bugfix in the complete callback of the select. The data collection gets returned again instead of undefined</releaseNotes>
     <language>en-US</language>
     <tags>IndexedDB, HTML5, LINQ, Linq2IndexedDB, jQuery</tags>
     <dependencies>

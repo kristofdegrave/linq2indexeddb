@@ -169,6 +169,16 @@
                     //                $("#txtLog").val(tekst);
                     //            });
                     //}, 2000);
+
+                    $("#btnExecute").click(function () {
+                        $("#txtLog").val("");
+                        db.linq.from("person").where("Name").like("test").select().then(function () {
+                        }, null, function (data) {
+                            var tekst = $("#txtLog").val();
+                            tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + " city: " + linq2indexedDB.prototype.utilities.getPropertyValue(data, "location.city") + "\n\r";
+                            $("#txtLog").val(tekst);
+                        });
+                    });
                 });
                 
                 function search(filter) {
@@ -179,5 +189,6 @@
     </head>
     <body>
         <textarea id="txtLog"></textarea>
+        <input type="button" id="btnExecute"/>
     </body>
 </html>
