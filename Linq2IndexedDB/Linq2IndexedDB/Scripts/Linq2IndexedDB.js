@@ -1009,7 +1009,7 @@ var enableLogging = true;
                     ///     returns a function to retrieve the necessary values for the filter
                     /// </returns>
                     return function (array) {
-                        if (typeof (value) === "undefined" || typeof array !== "Array") {
+                        if (typeof (array) === "undefined" || typeof array !== "Array") {
                             throw "linq2indexedDB: array needs to be provided to the inArray clause";
                         }
 
