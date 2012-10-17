@@ -111,12 +111,12 @@ function saveConsumption(consumption) {
     if (consumption.Id && consumption.Id != 0) {
         db.linq.from(CONSUMPTION).update(consumption).then(function(data) {
             //loadConsumptionType(consumption.ConsumptionTypeId);
-            showConsumption(data, GetConsumptionType(data.ConsumptionTypeId));
+            showConsumption(data.object, GetConsumptionType(data.object.ConsumptionTypeId));
         }, handleError);
     } else {
         db.linq.from(CONSUMPTION).insert(consumption).then(function(data) {
             //loadConsumptionType(consumption.ConsumptionTypeId);
-            showConsumption(data, GetConsumptionType(data.ConsumptionTypeId));
+            showConsumption(data.object, GetConsumptionType(data.object.ConsumptionTypeId));
         }, handleError);
     }
 }

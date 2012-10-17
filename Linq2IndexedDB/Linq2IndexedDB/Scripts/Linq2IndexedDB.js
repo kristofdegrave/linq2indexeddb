@@ -6,7 +6,6 @@ var enableLogging = true;
 
 // Initializes the linq2indexeddb object.
 (function () {
-    /// <param name="$" type="jQuery" />
     "use strict";
 
     linq2indexedDB = function (name, configuration, enableDebugging) {
@@ -1639,16 +1638,19 @@ if (typeof window !== "undefined") {
                                     // txn completed
                                     linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Transaction completed.", txn);
                                     pw.complete(this, args1);
+                                    txn = null;
                                 },
                                     function(args1 /*err, event*/) {
                                         // txn error or abort
                                         linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.error, "Transaction error/abort.", args1);
                                         pw.error(this, args1);
+                                        txn = null;
                                     });
 
                                 // txn created
                                 linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Transaction created.", txn);
                                 pw.progress(txn, [txn]);
+                                txn = null;
                             },
                                 function(args /*error, event*/) {
                                     // When an error occures, bubble up.
@@ -1700,6 +1702,7 @@ if (typeof window !== "undefined") {
                         // txn created
                         linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Transaction transaction created.", transaction);
                         pw.progress(transaction, [transaction]);
+                        transaction = null;
                     }
                 }
                 catch (ex) {
@@ -2759,21 +2762,14 @@ if (typeof window !== "undefined") {
                     pw.error(this, [ex.message, ex]);
                 }
             },
-            getDatabaseVersion: function (db) {
+            getDatabaseVersion: function (db)
+            {
                 var dbVersion = parseInt(db.version);
                 if (isNaN(dbVersion) || dbVersion < 0) {
                     return 0;
                 } else {
                     return dbVersion;
                 }
-            },
-            indexOf: function (array, value, propertyName) {
-                for (var i = 0; i < array.length; i++) {
-                    if (array[i][propertyName] == value[propertyName]) {
-                        return i;
-                    }
-                }
-                return -1;
             },
             wrapException: function (exception, method) {
                 return {
@@ -3060,6 +3056,7 @@ if (typeof window !== "undefined") {
             closeDatabaseConnection: function (db) {
                 linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Close database Connection: ", db);
                 db.close();
+                db = null;
             },
             abortTransaction: function (transaction) {
                 linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Abort transaction: " + transaction);
@@ -3252,36 +3249,39 @@ if (typeof window !== "undefined") {
                     e.type = "exception";
                     pw.error(request, [e.message, e]);
                 }
+                finally {
+                    request = null;
+                }
             });
         };
 
         function IDBSuccessHandler(pw, request) {
             request.onsuccess = function (e) {
-                pw.complete(request, [request.result, e]);
+                pw.complete(e.target, [e.target.result, e]);
             };
         };
 
         function IDBErrorHandler(pw, request) {
             request.onerror = function (e) {
-                pw.error(request, [request.errorCode, e]);
+                pw.error(e.target, [e.target.errorCode, e]);
             };
         };
 
         function IDBAbortHandler(pw, request) {
             request.onabort = function (e) {
-                pw.error(request, [request.errorCode, e]);
+                pw.error(e.target, [e.target.errorCode, e]);
             };
         };
 
         function IDBVersionChangeHandler(pw, request) {
             request.onversionchange = function (e) {
-                pw.progress(request, [request.result, e]);
+                pw.progress(e.target, [e.target.result, e]);
             };
         };
 
         function IDBCompleteHandler(pw, request) {
             request.oncomplete = function (e) {
-                pw.complete(request, [request, e]);
+                pw.complete(e.target, [e.target, e]);
             };
         };
 
@@ -3292,10 +3292,10 @@ if (typeof window !== "undefined") {
 
         function IDBCursorRequestHandler(pw, request) {
             request.onsuccess = function (e) {
-                if (!request.result) {
-                    pw.complete(request, [request.result, e]);
+                if (!e.target.result) {
+                    pw.complete(e.target, [e.target.result, e]);
                 } else {
-                    pw.progress(request, [request.result, e]);
+                    pw.progress(e.target, [e.target.result, e]);
                 }
             };
             IDBErrorHandler(pw, request);
@@ -3304,14 +3304,14 @@ if (typeof window !== "undefined") {
         function IDBBlockedRequestHandler(pw, request) {
             IDBRequestHandler(pw, request);
             request.onblocked = function (e) {
-                pw.progress(request, ["blocked", e]);
+                pw.progress(e.target, ["blocked", e]);
             };
         };
 
         function IDBOpenDbRequestHandler(pw, request) {
             IDBBlockedRequestHandler(pw, request);
             request.onupgradeneeded = function (e) {
-                pw.progress(request, [request.transaction, e]);
+                pw.progress(e.target, [e.target.transaction, e]);
             };
         };
 
