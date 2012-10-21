@@ -2,7 +2,7 @@
 /// <reference path="indexeddb.shim.js" />
 
 var linq2indexedDB;
-var enableLogging = true;
+var enableLogging = false;
 
 // Initializes the linq2indexeddb object.
 (function () {
@@ -33,7 +33,9 @@ var enableLogging = true;
             if (configuration.schema) {
                 var appVersion = dbConfig.version || -1;
                 for (key in configuration.schema) {
-                    appVersion = version > key ? version : key;
+                    if (typeof key === "number") {
+                        appVersion = version > key ? version : key;
+                    }
                 }
                 if (version > -1) {
                     dbConfig.autoGenerateAllowed = false;
@@ -62,14 +64,14 @@ var enableLogging = true;
             initialize: function () {
                 linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Initialize Started");
                 return linq2indexedDB.prototype.utilities.promiseWrapper(function (pw) {
-                    linq2indexedDB.prototype.core.db(dbConfig.name, dbConfig.version).then(function (args /*db*/) {
+                    linq2indexedDB.prototype.core.db(dbConfig.name, dbConfig.version).then(function (args) /*db*/ {
                         var db = args[0];
 
                         linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Close dbconnection");
                         db.close();
                         linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Initialize Succesfull");
                         pw.complete();
-                    }, pw.error, function (args /*txn, e*/) {
+                    }, pw.error, function (args) /*txn, e*/ {
                         var txn = args[0];
                         var e = args[1];
                         if (e.type == "upgradeneeded") {
@@ -193,7 +195,7 @@ var enableLogging = true;
             var whereClauses = {};
             var filterMetaData;
 
-            if (typeof isNotClause === "undefined") {
+            if (isNotClause === "undefined") {
                 whereClauses.not = function () {
                     return where(queryBuilder, filter, isAndClause, isOrClause, true);
                 };
@@ -204,7 +206,7 @@ var enableLogging = true;
                     propertyName: filter,
                     isOrClause: isOrClause,
                     isAndClause: isAndClause,
-                    isNotClause: (typeof isNotClause === "undefined" ? false : isNotClause),
+                    isNotClause: (isNotClause === "undefined" ? false : isNotClause),
                     filter: linq2indexedDB.prototype.linq.createFilter("anonymous" + queryBuilder.where.length, filter, null)
                 };
                 return whereClause(queryBuilder, filterMetaData);
@@ -1129,7 +1131,7 @@ var enableLogging = true;
                 }
             };
         },
-        promiseWrapper: function (promise) {
+        promiseWrapper: function (promise, arg1, arg2, arg3, arg4, arg5) {
             if (isMetroApp) {
                 return new WinJS.Promise(function (completed, error, progress) {
                     promise({
@@ -1142,7 +1144,7 @@ var enableLogging = true;
                         progress: function (context, args) {
                             progress(args);
                         }
-                    });
+                    }, arg1, arg2, arg3, arg4, arg5);
                 });
             } else if (typeof ($) === "function" && $.Deferred) {
                 return $.Deferred(function (dfd) {
@@ -1156,7 +1158,7 @@ var enableLogging = true;
                         progress: function (context, args) {
                             dfd.notifyWith(context, [args]);
                         }
-                    });
+                    }, arg1, arg2, arg3, arg4, arg5);
                 }).promise();
             } else {
                 throw "linq2indexedDB: No framework (WinJS or jQuery) that supports promises found. Please ensure jQuery or WinJS is referenced before the linq2indexedDB.js file.";
@@ -1451,22 +1453,22 @@ if (typeof window !== "undefined") {
 
         var internal = {
             db: function (pw, name, version) {
+                var req;
                 try {
                     // Initializing defaults
-                    var req;
                     name = name ? name : defaultDatabaseName;
 
                     // Creating a new database conection
                     if (version) {
                         linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "db opening", name, version);
-                        req = handlers.IDBOpenDBRequest(window.indexedDB.open(name, version));
+                        req = window.indexedDB.open(name, version);
                     } else {
                         linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "db opening", name);
-                        req = handlers.IDBOpenDBRequest(window.indexedDB.open(name));
+                        req = window.indexedDB.open(name);
                     }
 
                     // Handle the events of the creation of the database connection
-                    req.then(
+                    handlers.IDBOpenDBRequest(req).then(
                         function (args /*db, e*/) {
                             var db = args[0];
                             var e = args[1];
@@ -1477,9 +1479,9 @@ if (typeof window !== "undefined") {
                                 function (/*result, event*/) {
                                     // No done present.
                                 },
-                                function (/*error, event*/) {
+                                function (args1/*error, event*/) {
                                     // Database error or abort
-                                    linq2indexedDB.prototype.core.closeDatabaseConnection(db);
+                                    linq2indexedDB.prototype.core.closeDatabaseConnection(args1[1].target);
                                     // When an error occures the result will already be resolved. This way calling the reject won't case a thing
                                 },
                                 function (args1 /*result, event*/) {
@@ -1487,9 +1489,9 @@ if (typeof window !== "undefined") {
                                     if (event) {
                                         // Sending a notify won't have any effect because the result is already resolved. There is nothing more to do than close the current connection.
                                         if (event.type === "versionchange") {
-                                            if (event.version != db.version) {
+                                            if (event.version != event.target.db.version) {
                                                 // If the version is changed and the current version is different from the requested version, the connection needs to get closed.
-                                                linq2indexedDB.prototype.core.closeDatabaseConnection(db);
+                                                linq2indexedDB.prototype.core.closeDatabaseConnection(event.target);
                                             }
                                         }
                                     }
@@ -1505,7 +1507,7 @@ if (typeof window !== "undefined") {
                                         var event = args1[1];
 
                                         // Fake the onupgrade event.
-                                        var context = req;
+                                        var context = txn.db;
                                         context.transaction = txn;
 
                                         var upgardeEvent = {};
@@ -1521,10 +1523,10 @@ if (typeof window !== "undefined") {
                                             // When completed return the db + event of the original request.
                                             pw.complete(this, args);
                                         },
-                                            function (args2 /*err, ev*/) {
-                                                //txn error or abort
-                                                pw.error(this, args2);
-                                            });
+                                        function (args2 /*err, ev*/) {
+                                            //txn error or abort
+                                            pw.error(this, args2);
+                                        });
                                     },
                                     function (args1 /*err, event*/) {
                                         // txn error or abort
@@ -1532,7 +1534,7 @@ if (typeof window !== "undefined") {
                                     },
                                     function (args1 /*result, event*/) {
                                         // txn blocked
-                                        linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.databaseBlocked, data: args });
+                                        linq2indexedDB.prototype.core.dbStructureChanged.fire({ type: dbEvents.databaseBlocked, data: args1 });
                                         pw.progress(this, args1);
                                     });
                             } else if (version && version < currentVersion) {
@@ -1638,19 +1640,16 @@ if (typeof window !== "undefined") {
                                     // txn completed
                                     linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Transaction completed.", txn);
                                     pw.complete(this, args1);
-                                    txn = null;
                                 },
                                     function(args1 /*err, event*/) {
                                         // txn error or abort
                                         linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.error, "Transaction error/abort.", args1);
                                         pw.error(this, args1);
-                                        txn = null;
                                     });
 
                                 // txn created
                                 linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Transaction created.", txn);
                                 pw.progress(txn, [txn]);
-                                txn = null;
                             },
                                 function(args /*error, event*/) {
                                     // When an error occures, bubble up.
@@ -1702,7 +1701,6 @@ if (typeof window !== "undefined") {
                         // txn created
                         linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Transaction transaction created.", transaction);
                         pw.progress(transaction, [transaction]);
-                        transaction = null;
                     }
                 }
                 catch (ex) {
@@ -1860,16 +1858,16 @@ if (typeof window !== "undefined") {
                     if (!objectStore.indexNames.contains(indexName) && autoGenerateAllowed) {
                         // setTimeout is necessary when multiple request to generate an index come together.
                         // This can result in a deadlock situation, there for the setTimeout
-                        setTimeout(function() {
+                        setTimeout((function(objStore) {
                             upgradingDatabase = true;
                             // If index doesn't exists, create it if autoGenerateAllowed
-                            var version = internal.getDatabaseVersion(objectStore.transaction.db) + 1;
-                            var dbName = objectStore.transaction.db.name;
-                            var transactionType = objectStore.transaction.mode;
-                            var objectStoreNames = [objectStore.name]; //transaction.objectStoreNames;
-                            var objectStoreName = objectStore.name;
+                            var version = internal.getDatabaseVersion(objStore.transaction.db) + 1;
+                            var dbName = objStore.transaction.db.name;
+                            var transactionType = objStore.transaction.mode;
+                            var objectStoreNames = [objStore.name]; //transaction.objectStoreNames;
+                            var objectStoreName = objStore.name;
                             // Close the currenct database connections so it won't block
-                            linq2indexedDB.prototype.core.closeDatabaseConnection(objectStore.transaction.db);
+                            linq2indexedDB.prototype.core.closeDatabaseConnection(objStore);
 
                             // Open a new connection with the new version
                             linq2indexedDB.prototype.core.db(dbName, version).then(function (args /*dbConnection, event*/) {
@@ -1903,7 +1901,7 @@ if (typeof window !== "undefined") {
 
                                     // When an upgradeneeded event is thrown, create the non-existing object stores
                                     if (event.type == "upgradeneeded") {
-                                        linq2indexedDB.prototype.core.createIndex(linq2indexedDB.prototype.core.objectStore(trans, objectStore.name), propertyName).then(function(/*index, store, transaction*/) {
+                                        linq2indexedDB.prototype.core.createIndex(linq2indexedDB.prototype.core.objectStore(trans, objectStoreName), propertyName).then(function (/*index, store, transaction*/) {
                                             // index created
                                         },
                                         function(args1 /*error, ev*/) {
@@ -1912,7 +1910,7 @@ if (typeof window !== "undefined") {
                                         });
                                     }
                                 });
-                        }, upgradingDatabase ? 10 : 1);
+                        })(objectStore), upgradingDatabase ? 10 : 1);
                      } else {
                          // If index exists, resolve it
                          var index = objectStore.index(indexName);
@@ -2000,11 +1998,13 @@ if (typeof window !== "undefined") {
             },
             cursor: function (pw, source, range, direction) {
                 linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Cursor Promise Started", source);
-
+                var keyRange;
+                var returnData = [];
+                var request;
+                
                 try {
-                    var returnData = [];
-                    var request;
-                    var keyRange = range;
+                    
+                    keyRange = range;
 
                     if (!keyRange) {
                         if (implementation != implementations.GOOGLE) {
@@ -2169,6 +2169,9 @@ if (typeof window !== "undefined") {
                     linq2indexedDB.prototype.utilities.logError(error);
                     linq2indexedDB.prototype.core.abortTransaction(txn);
                     pw.error(this, error);
+                }
+                finally {
+                    keyRange = null;
                 }
             },
             keyCursor: function (pw, index, range, direction) {
@@ -3053,17 +3056,31 @@ if (typeof window !== "undefined") {
                     internal.deleteDb(pw, name);
                 });
             },
-            closeDatabaseConnection: function (db) {
+            closeDatabaseConnection: function (target) {
+                var db;
+                if (target instanceof IDBCursor) {
+                    target = target.source;
+                }
+
+                if (target instanceof IDBDatabase) {
+                    db = target;
+                } else if (target instanceof IDBTransaction) {
+                    db = target.db;
+                } else if (target instanceof IDBObjectStore || target instanceof IDBRequest) {
+                    db = target.transaction.db;
+                } else if (target instanceof IDBIndex) {
+                    db = target.objectStore.transaction.db;
+                } 
+
                 linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Close database Connection: ", db);
                 db.close();
-                db = null;
             },
             abortTransaction: function (transaction) {
                 linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Abort transaction: " + transaction);
                 // Calling the abort, blocks the database in IE10
                 if (implementation != implementations.MICROSOFT) {
                     transaction.abort();
-                    linq2indexedDB.prototype.core.closeDatabaseConnection(transaction.db);
+                    linq2indexedDB.prototype.core.closeDatabaseConnection(transaction);
                 }
             },
             transactionTypes: transactionTypes,
@@ -3329,9 +3346,7 @@ if (typeof window !== "undefined") {
 
     })(window, typeof Windows !== "undefined");
     window.linq2indexedDB = linq2indexedDB;
-    if (typeof window.jQuery !== "undefined") {
-        $.linq2indexedDB = linq2indexedDB;
-    }
+
 } else {
     // Web Worker Thread
     onmessage = function (event) {
