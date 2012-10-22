@@ -89,10 +89,15 @@ var enableLogging = false;
             }
         };
 
+        enableLogging = enableDebugging;
         if (enableDebugging) {
             returnObject.viewer = viewer(dbConfig);
-            enableLogging = enableDebugging;
+            linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.warning, "Debugging enabled: be carefull when using in production enviroment. Complex objects get written to  the log and may cause memory leaks.")
+            
+        } else {
+            returnObject.viewer = null;
         }
+        
 
         return returnObject;
     };
@@ -1169,34 +1174,39 @@ var enableLogging = false;
                 return false;
             }
 
-            function currentTime() {
+            var currtime = (function currentTime() {
                 var time = new Date();
                 return time.getHours() + ':' + time.getMinutes() + ':' + time.getSeconds() + '.' + time.getMilliseconds();
-            }
+            })();
 
+            var args = [];
             var severity = arguments[0];
-            arguments[0] = currentTime() + ' Linq2IndexedDB: ';
-            arguments[1] = arguments[1] + ' ';
+
+            args.push(currtime + ' Linq2IndexedDB: ');
+
+            for (var i = 1; i < arguments.length; i++) {
+                args.push(arguments[i]);
+            }
             
             switch (severity) {
                 case linq2indexedDB.prototype.utilities.severity.exception:
                     if (window.console.exception) {
-                        window.console.exception.apply(console, arguments);
+                        window.console.exception.apply(console, args);
                     } else {
-                        window.console.error.apply(console, arguments);
+                        window.console.error.apply(console, args);
                     }
                     break;
                 case linq2indexedDB.prototype.utilities.severity.error:
-                    window.console.error.apply(console, arguments);
+                    window.console.error.apply(console, args);
                     break;
                 case linq2indexedDB.prototype.utilities.severity.warning:
-                    window.console.warning.apply(console, arguments);
+                    window.console.warning.apply(console, args);
                     break;
                 case linq2indexedDB.prototype.utilities.severity.information:
-                    window.console.log.apply(console, arguments);
+                    window.console.log.apply(console, args);
                     break;
                 default:
-                    window.console.log.apply(console, arguments);
+                    window.console.log.apply(console, args);
             }
 
             return true;
