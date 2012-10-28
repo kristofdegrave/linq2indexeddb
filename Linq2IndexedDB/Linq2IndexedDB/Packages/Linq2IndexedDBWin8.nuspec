@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>Linq2IndexedDBWin8</id>
-    <version>$version$</version>
+    <version>1.0.0</version>
     <title>Linq2IndexedDB (win8)</title>
     <authors>Kristof Degrave,Parashuram Narasimhan</authors>
     <owners>Kristof Degrave,Parashuram Narasimhan</owners>
@@ -35,6 +35,6 @@
     <tags>IndexedDB, HTML5, LINQ, Linq2IndexedDB, jQuery, WinJS, Windows 8</tags>
   </metadata>
   <files>
-    <file src="..\Scripts\Linq2IndexedDB.js" target="Scripts" />
+    <file src="..\Scripts\Linq2IndexedDB.js" target="Content\Scripts" />
   </files>
 </package>

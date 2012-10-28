@@ -24,7 +24,7 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="..\IndexedDBViewer\IndexedDBViewer.html" target="IndexedDBViewer" />
-    <file src="..\Scripts\IndexedDBViewer.js" target="Scripts" />
+    <file src="..\IndexedDBViewer\IndexedDBViewer.html" target="Content\IndexedDBViewer" />
+    <file src="..\Scripts\IndexedDBViewer.js" target="Content\Scripts" />
   </files>
 </package>
