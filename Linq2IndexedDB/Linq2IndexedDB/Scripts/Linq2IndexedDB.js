@@ -192,7 +192,10 @@ var enableLogging = false;
                     /// <param name="key" type="Object">The key of the object you want to retrieve.</param>
                     /// <returns type="Object">The object that has the provided key.</returns>
                     return get(queryBuilder, key);
-                }
+                },
+                //databind: function (provider, bindingList) {
+                //    return databind(queryBuilder, provider, bindingList);
+                //}
             };
         }
 
@@ -477,6 +480,28 @@ var enableLogging = false;
                     pw.complete(this, args[0] /*[data]*/);
                 }, pw.error);
             });
+        }
+        
+        function databind(queryBuilder, provider, bindingList) {
+            var operations = {
+                insert: function (data) {
+                    insert(queryBuilder, data);
+                },
+                update: function (data) {
+                    update(queryBuilder, data);
+                },
+                remove: function (data) {
+                    //remove(queryBuilder, data);
+                }
+            };
+
+            var list = provider(bindingList, operations);
+
+            select(queryBuilder).then(function (data) {
+                provider.populate(data);
+            });
+
+            return list;
         }
 
         function executeQuery(queryBuilder, transactionType, callBack) {
@@ -772,7 +797,7 @@ var enableLogging = false;
                     if (defaultDataDefinition.remove) {
                         linq2indexedDB.prototype.core.remove(linq2indexedDB.prototype.core.objectStore(txn, defaultDataDefinition.objectStoreName), defaultDataDefinition.key);
                     } else {
-                        linq2indexedDB.prototype.core.insert(linq2indexedDB.prototype.core.objectStore(txn, defaultDataDefinition.objectStoreName), defaultDataDefinition.data, defaultDataDefinition.key);
+                        linq2indexedDB.prototype.core.update(linq2indexedDB.prototype.core.objectStore(txn, defaultDataDefinition.objectStoreName), defaultDataDefinition.data, defaultDataDefinition.key);
                     }
                 }
             }
@@ -1015,7 +1040,7 @@ var enableLogging = false;
                     ///     returns a function to retrieve the necessary values for the filter
                     /// </returns>
                     return function (array) {
-                        if (typeof (array) === "undefined" || typeof array !== "Array") {
+                        if (typeof (array) === "undefined" || array.push === "undefined"){ // typeof array !== "Array") {
                             throw "linq2indexedDB: array needs to be provided to the inArray clause";
                         }
 
@@ -1200,7 +1225,13 @@ var enableLogging = false;
                     window.console.error.apply(console, args);
                     break;
                 case linq2indexedDB.prototype.utilities.severity.warning:
-                    window.console.warning.apply(console, args);
+                    if (window.console.warning) {
+                        window.console.warning.apply(console, args);
+                    } else if (window.console.warn) {
+                        window.console.warn.apply(console, args);
+                    } else {
+                        window.console.log.apply(console, args);
+                    }
                     break;
                 case linq2indexedDB.prototype.utilities.severity.information:
                     window.console.log.apply(console, args);
@@ -1409,7 +1440,7 @@ if (typeof window !== "undefined") {
                     event.target = this;
                 }
 
-                if (!event.type) { //falsy
+                if (!event.type) { //false
                     throw new Error("Event object missing 'type' property.");
                 }
 

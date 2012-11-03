@@ -121,7 +121,13 @@
     <Content Include="Content\themes\base\minified\jquery.ui.slider.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.tabs.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.theme.min.css" />
+    <Content Include="IndexedDBViewer\IndexedDBViewer2.html" />
     <Content Include="IndexedDBViewer\IndexedDBViewer.html" />
+    <Content Include="Samples\await.html" />
+    <Content Include="Samples\index.htm" />
+    <Content Include="Scripts\Linq2IndexedDB.BindingListProvider.js" />
+    <Content Include="testfile.html" />
+    <Content Include="testscript.js" />
     <Content Include="Tests\Stresstest.htm" />
     <Content Include="Scripts\indexeddb.shim.js" />
     <Content Include="Scripts\IndexedDBViewer.js" />
@@ -129,7 +135,9 @@
     <Content Include="Samples\Consumptions.htm" />
     <Content Include="Samples\Consumptions.js" />
     <Content Include="Packages\IndexedbDBViewer.nuspec" />
-    <Content Include="Packages\Linq2IndexedDB.nuspec" />
+    <Content Include="Packages\Linq2IndexedDB.nuspec">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Packages\Linq2IndexedDBWin8.nuspec" />
     <Content Include="Packages\build.bat" />
     <None Include="Scripts\jquery-1.7.2.intellisense.js">

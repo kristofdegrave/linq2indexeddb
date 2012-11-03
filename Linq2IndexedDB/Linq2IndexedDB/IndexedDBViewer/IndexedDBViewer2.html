@@ -1,0 +1,420 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>..:: IndexedDBViewer ::..</title>
+        <script type="text/javascript" src="../Scripts/jquery-1.7.2.js"> </script>
+        <script type="text/javascript" src="../Scripts/Linq2IndexedDB.js"> </script>
+        <script>
+            $(function () {
+                function initializeViewer() {
+                    var placeholder = $("#indexedDBViewer");
+                    var dbName = placeholder.attr("data-dbName");
+                    retrieveOrCreateElement('indexedDBViewerHeader', 'div', placeholder);
+                    var navigation = retrieveOrCreateElement('indexedDBViewerNavigation', 'div', placeholder);
+                    var menu = retrieveOrCreateElement('indexedDBViewerMenu', 'ul', navigation);
+                    var menuOverview = expandableListItem('indexedDBViewerMenuOverview', dbName, menu, viewDb, { dbName: dbName, objectStore: null, index: null });
+
+                    navigation.addClass('nav');
+
+                    linq2indexedDB.prototype.core.db(dbName).then(function () {
+                        var connection = arguments[0][0];
+
+                        linq2indexedDB.prototype.core.dbStructureChanged.addListener(linq2indexedDB.prototype.core.databaseEvents.databaseBlocked, function() {
+                            connection.close();
+                        });
+
+                        var menuObjectStores = retrieveOrCreateElement('indexedDBViewerMenuObjectStores', 'ul', menuOverview);
+
+                        for (var i = 0; i < connection.objectStoreNames.length; i++) {
+                            var storeName = connection.objectStoreNames[i];
+                            var menuObjectStore = expandableListItem('indexedDBViewerMenuObjectStore' + storeName, storeName, menuObjectStores, viewDb, { dbName: dbName, objectStore: storeName, index: null });
+
+                            linq2indexedDB.prototype.core.objectStore(linq2indexedDB.prototype.core.transaction(connection, storeName, linq2indexedDB.prototype.core.transactionTypes.READ_ONLY, false), storeName).then(function(args) {
+                                var store = args[1];
+
+                                var menuObjectStore = retrieveOrCreateElement('indexedDBViewerMenuObjectStore' + storeName, 'li', menuObjectStores);
+                                var menuIndexes = retrieveOrCreateElement('indexedDBViewerMenuObjectStore' + store.name + 'Indexes', 'ul', menuObjectStore);
+
+                                for (var j = 0; j < store.indexNames.length; j++) {
+                                    var indexName = store.indexNames[i];
+                                    expandableListItem('indexedDBViewerMenuObjectStore' + store.name + 'Index' + indexName, indexName, menuIndexes, viewDb, { dbName: dbName, objectStore: store.name, index: indexName });
+                                }
+                            });
+                        }
+                    }, null, function (args) {
+                        if (args[1].type == "upgradeneeded") {
+                            args[0].abort();
+                        }
+                    });
+                }
+               
+                function viewDb(e) {
+                    var dbName = e.data.dbName;
+                    var objectStore = e.data.objectStore;
+                    var index = e.data.index;
+                    var content = retrieveOrCreateElement('indexedDBViewerContent', 'div', $("#indexedDBViewer"));
+                    content.empty();
+
+                    if (objectStore != null) {
+                        if (index != null) {
+                            retrieveOrCreateElement('indexedDBViewerContentGeneral', 'h1', content).text(index);
+                        }
+                        else {
+                            retrieveOrCreateElement('indexedDBViewerContentGeneral', 'h1', content).text(objectStore);
+                        }
+                    }
+
+                    linq2indexedDB.prototype.core.db(dbName).then(function() {
+                        var connection = arguments[0][0];
+
+                        if (objectStore == null) {
+                            retrieveOrCreateElement('indexedDBViewerContentGeneral', 'h1', content).text("General");
+                            retrieveOrCreateElement('indexedDBViewerContentGeneralName', 'span', content).text("Name: " + connection.name);
+                            content.append("<br/>");
+                            retrieveOrCreateElement('indexedDBViewerContentGeneralVersion', 'span', content).text("Version: " + connection.version);
+                            content.append("<br/>");
+                            content.append("<br/>");
+
+                            retrieveOrCreateElement('indexedDBViewerContentObjectStores', 'h1', content).text("Object stores");
+                            retrieveOrCreateElement('indexedDBViewerContentObjectStoresTable', 'table', content);
+                            content.append("<br/>");
+                            content.append("<br/>");
+
+                            retrieveOrCreateElement('indexedDBViewerContentIndex', 'h1', content).text("Indexes");
+                            retrieveOrCreateElement('indexedDBViewerContentIndexTable', 'table', content);
+                            content.append("<br/>");
+                        }
+
+                        linq2indexedDB.prototype.core.dbStructureChanged.addListener(linq2indexedDB.prototype.core.databaseEvents.databaseBlocked, function() {
+                            connection.close();
+                        });
+
+                        for (var i = 0; i < connection.objectStoreNames.length; i++) {
+                            var storeName = connection.objectStoreNames[i];
+                            linq2indexedDB.prototype.core.objectStore(linq2indexedDB.prototype.core.transaction(connection, storeName, linq2indexedDB.prototype.core.transactionTypes.READ_ONLY, false), storeName).then(function(args) {
+                                var store = args[1];
+                                if (objectStore == null) {
+                                    viewObjectStoreDefinition(store.name, store.keyPath, store.autoIncrement, content);
+                                }
+                                else {
+                                    if (index == null && store.name == objectStore) {
+                                        linq2indexedDB.prototype.core.cursor(store).then(function () {
+
+                                        }, function () {
+                                        }, function (args1) {
+                                            var keyValue = args1[0];
+                                            viewObjectStoreData(keyValue.key, keyValue.data, content);
+                                        });
+                                    }
+                                }
+                                for (var j = 0; j < store.indexNames.length; j++) {
+                                    linq2indexedDB.prototype.core.index(store, store.indexNames[j], false).then(function(args1) {
+                                        var ix = args1[1];
+                                        if (objectStore == null) {
+                                            viewIndexDefinition(ix.name, ix.keyPath, ix.objectStore.name, ix.multiEntry || ix.multiRow, ix.unique, content);
+                                        }
+                                        else {
+                                            if (index != null && ix.name == index) {
+                                                linq2indexedDB.prototype.core.cursor(ix).then(function () {
+                                                    var x = 1;
+                                                }, function () {
+                                                }, function (args1) {
+                                                    var keyValue = args1[0];
+                                                    viewIndexData(keyValue.key, args1[1].primaryKey, keyValue.data, content);
+                                                });
+                                            }
+                                        }
+                                    });
+                                }
+                            });
+                        }
+
+                    });
+                }
+
+                function viewObjectStoreDefinition(name, keyPath, autoIncrement, parent) {
+                    var table = retrieveOrCreateElement('indexedDBViewerContentObjectStoresTable', 'table', parent);
+                    var headerRow = retrieveOrCreateElement('indexedDBViewerContentObjectStoresRowHeader', 'tr', table);
+                    retrieveOrCreateElement('indexedDBViewerContentObjectStoresRowHeaderName', 'th', headerRow).text("name");
+                    retrieveOrCreateElement('indexedDBViewerContentObjectStoresRowHeaderKeyPath', 'th', headerRow).text("keyPath");
+                    retrieveOrCreateElement('indexedDBViewerContentObjectStoresRowHeaderAutoIncrement', 'th', headerRow).text("autoIncrement");
+                    
+
+                    var dataRow = retrieveOrCreateElement('indexedDBViewerContentObjectStoresRow' + name, 'tr', table);
+                    retrieveOrCreateElement('indexedDBViewerContentObjectStoresRow' + name + 'Name', 'td', dataRow).text(name);
+                    retrieveOrCreateElement('indexedDBViewerContentObjectStoresRow' + name + 'KeyPath', 'td', dataRow).text(keyPath);
+                    retrieveOrCreateElement('indexedDBViewerContentObjectStoresRow' + name + 'AutoIncrement', 'td', dataRow).text(autoIncrement);
+                }
+
+                function viewIndexDefinition(name, keyPath, objectStore, multiEntry, unique, parent) {
+                    var table = retrieveOrCreateElement('indexedDBViewerContentIndexTable', 'table', parent);
+                    var headerRow = retrieveOrCreateElement('indexedDBViewerContentIndexRowHeader', 'tr', table);
+                    retrieveOrCreateElement('indexedDBViewerContentIndexRowHeaderName', 'th', headerRow).text("name");
+                    retrieveOrCreateElement('indexedDBViewerContentIndexRowHeaderKeyPath', 'th', headerRow).text("keyPath");
+                    retrieveOrCreateElement('indexedDBViewerContentIndexRowHeaderObjectStore', 'th', headerRow).text("objectStore");
+                    retrieveOrCreateElement('indexedDBViewerContentIndexRowHeaderMultiEntry', 'th', headerRow).text("multiEntry");
+                    retrieveOrCreateElement('indexedDBViewerContentIndexRowHeaderUnique', 'th', headerRow).text("unique");
+
+
+                    var dataRow = retrieveOrCreateElement('indexedDBViewerContentIndexRow' + name, 'tr', table);
+                    retrieveOrCreateElement('indexedDBViewerContentIndexRow' + name + 'Name', 'td', dataRow).text(name);
+                    retrieveOrCreateElement('indexedDBViewerContentIndexRow' + name + 'KeyPath', 'td', dataRow).text(keyPath);
+                    retrieveOrCreateElement('indexedDBViewerContentIndexRow' + name + 'ObjectStore', 'td', dataRow).text(objectStore);
+                    retrieveOrCreateElement('indexedDBViewerContentIndexRow' + name + 'MultiEntry', 'td', dataRow).text(multiEntry);
+                    retrieveOrCreateElement('indexedDBViewerContentIndexRow' + name + 'Unique', 'td', dataRow).text(unique);
+                }
+
+                function viewObjectStoreData(key, value, parent) {
+                    var table = retrieveOrCreateElement('indexedDBViewerContentObjectStoreTable', 'table', parent);
+                    var headerRow = retrieveOrCreateElement('indexedDBViewerContentObjectStoreRowHeader', 'tr', table);
+                    retrieveOrCreateElement('indexedDBViewerContentObjectStoreRowHeaderKey', 'th', headerRow).text("key");
+                    retrieveOrCreateElement('indexedDBViewerContentObjectStoreRowHeaderValue', 'th', headerRow).text("value");
+
+
+                    var dataRow = retrieveOrCreateElement('indexedDBViewerContentObjectStoreRow' + key, 'tr', table);
+                    viewData(key, retrieveOrCreateElement('indexedDBViewerContentObjectStoreRow' + key + 'Key', 'td', dataRow));
+                    viewData(value, retrieveOrCreateElement('indexedDBViewerContentObjectStoreRow' + key + 'Value', 'td', dataRow));
+                }
+                
+                function viewIndexData(key, primaryKey, value, parent) {
+                    var table = retrieveOrCreateElement('indexedDBViewerContentIndexTable', 'table', parent);
+                    var headerRow = retrieveOrCreateElement('indexedDBViewerContentIndexRowHeader', 'tr', table);
+                    retrieveOrCreateElement('indexedDBViewerContentIndexRowHeaderKey', 'th', headerRow).text("key");
+                    retrieveOrCreateElement('indexedDBViewerContentIndexRowHeaderPrimaryKey', 'th', headerRow).text("primary key");
+                    retrieveOrCreateElement('indexedDBViewerContentIndexRowHeaderValue', 'th', headerRow).text("value");
+
+
+                    var dataRow = retrieveOrCreateElement('indexedDBViewerContentIndexRow' + primaryKey, 'tr', table);
+                    viewData(key, retrieveOrCreateElement('indexedDBViewerContentIndexRow' + primaryKey + 'Key', 'td', dataRow));
+                    viewData(primaryKey, retrieveOrCreateElement('indexedDBViewerContentIndexRow' + primaryKey + 'PrimaryKey', 'td', dataRow));
+                    viewData(value, retrieveOrCreateElement('indexedDBViewerContentIndexRow' + primaryKey + 'Value', 'td', dataRow));
+                }
+                
+                function viewData(value, parent, propName) {
+                    var text;
+                    
+                    if (propName) {
+                        text = propName + value;
+                    }
+                    else {
+                        parent = retrieveOrCreateElement(null, 'ul', parent);
+                        text = value;
+                    }
+                    
+                    if (typeof (value) === "object" && !(value instanceof Date)) {
+                        var object = expandableListItem(null, text, parent);
+                        var properties = retrieveOrCreateElement(null, 'ul', object);
+                        for(prop in value)
+                        {
+                            viewData(value[prop], properties, prop + ": ");
+                        }
+                    }
+                    else {
+                        retrieveOrCreateElement(null, 'li', parent).text(text);
+                    }
+                }
+                
+                function expandableListItem(id, text, parent, clickEvent, clickEventData) {
+                    var li = retrieveOrCreateElement(id, 'li', parent);
+                    var col = retrieveOrCreateElement(null, 'span', li);
+                    col.text(' - ');
+                    col.data('status', 'open');
+                    col.click(function () {
+                        if ($(this).data('status') == 'closed') {
+                            $($($(this)[0].parentElement).find('ul')[0]).show();
+                            col.text(' - ');
+                            col.data('status', 'open');
+                        } 
+                        else if ($(this).data('status') == 'open') {
+                            $($($(this)[0].parentElement).find('ul')[0]).hide();
+                            col.text(' + ');
+                            col.data('status', 'closed');
+                        }
+                    });
+                    var item = retrieveOrCreateElement(null, 'span', li);
+                    item.text(text);
+                    
+                    if (clickEvent) {
+                        item.click(clickEventData, clickEvent);
+                    }
+
+                    return li;
+                }
+
+                function retrieveOrCreateElement(id, element, parent) {
+                    var el;
+
+                    if (id && id != null && id != '') {
+                        if ($('#' + id).length > 0) {
+                            el = $('#' + id);
+                        } else {
+                            el = $('<' + element + ' id="' + id + '"></' + element + '>');
+                            parent.append(el);
+                        }
+                    }
+                    else {
+                        el = $('<' + element + '></' + element + '>');
+                        parent.append(el);
+                    }
+
+                    return el;
+                }
+
+                initializeViewer();
+                
+                // mouseDown, MouseMove, mouseUp for resizing the placeholder
+                //$("#indexedDBViewer").
+            });
+
+        </script>
+        
+        <style>
+        #indexedDBViewer {
+            padding: 0px;
+            margin: 0px;
+            font-family: Sans-serif;
+            font-size: 12px;
+            width: 100%;
+            position: absolute;
+            bottom: 2px;
+            left: 0px;
+            height: 170px;
+        }
+
+        #indexedDBViewer li {
+            padding: 0px;
+            margin: 0px;
+            list-style: none;
+        }  
+        
+        #indexedDBViewer ul {
+            list-style: none;
+            margin: 0px;
+            padding: 0px 0px 0px 15px;
+        } 
+
+        #indexedDBViewer h1 {
+            padding: 0px 0px 5px 0px;
+            margin: 0px;
+            font-size: 14px;
+        } 
+
+        #indexedDBViewerHeader {
+            height: 10px;
+            width: 100%;
+        }
+
+        #indexedDBViewerNavigation {
+            display: inline-block;
+            height: 100%;
+            width: auto;
+            min-width: 200px;
+            vertical-align: top;
+            padding: 2px 2px 2px 2px;
+        }
+
+        #indexedDBViewerContent {
+            display: inline-block;
+            height: 100%;
+            width: auto;
+            min-width: 400px;
+            vertical-align: top;
+            padding: 2px 2px 2px 12px;
+            overflow: scroll;
+        }
+
+        #indexedDBViewerContentObjectStoresTable {
+            width: 100%
+        }
+
+        #indexedDBViewerContentObjectStoresRowHeaderName {
+            width: auto;
+            min-width: 100px;
+            text-align: left;
+        }
+
+        #indexedDBViewerContentObjectStoresRowHeaderKeyPath {
+            width: 100px;
+            text-align: left;
+        }
+
+        #indexedDBViewerContentObjectStoresRowHeaderAutoIncrement {
+            width: 100px;
+            text-align: left;
+        }
+
+        #indexedDBViewerContentIndexTable {
+            width: 100%
+        }
+        
+        #indexedDBViewerContentIndexRowHeaderName {
+            width: auto;
+            min-width: 150px;
+            text-align: left;
+        }
+        
+        #indexedDBViewerContentIndexRowHeaderKeyPath {
+            width: auto;
+            min-width: 100px;
+            text-align: left;
+        }
+        
+        #indexedDBViewerContentIndexRowHeaderObjectStore {
+            width: auto;
+            min-width: 100px;
+            text-align: left;
+        }
+        
+        #indexedDBViewerContentIndexRowHeaderMultiEntry {
+            width: 100px;
+            text-align: left;
+        }
+
+        #indexedDBViewerContentIndexRowHeaderUnique {
+            width: 100px;
+            text-align: left;
+        }
+
+        #indexedDBViewerContentObjectStoreRowHeaderKey {
+            width: auto;
+            min-width: 100px;
+            text-align: left;
+        }
+
+        #indexedDBViewerContentObjectStoreRowHeaderValue {
+            width: auto;
+            min-width: 400px;
+            text-align: left;
+        }
+        
+        #indexedDBViewerContentIndexRowHeaderKey {
+            width: auto;
+            min-width: 100px;
+            text-align: left;
+        }
+        
+        #indexedDBViewerContentIndexRowHeaderPrimaryKey {
+            width: auto;
+            min-width: 100px;
+            text-align: left;
+        }
+
+        #indexedDBViewerContentIndexRowHeaderValue {
+            width: auto;
+            min-width: 400px;
+            text-align: left;
+        }
+
+        #indexedDBViewerContentObjectStoreTable td, #indexedDBViewerContentIndexTable td {
+            vertical-align: top;
+            text-align: left;
+            padding: 0px;
+            margin: 0px;
+         }
+
+        </style>
+    </head>
+    <body>
+        <div id="indexedDBViewer" data-dbName="Consumption database"></div>
+    </body>
+</html>
