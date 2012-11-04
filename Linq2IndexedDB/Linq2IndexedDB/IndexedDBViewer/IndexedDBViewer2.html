@@ -9,7 +9,7 @@
                 function initializeViewer() {
                     var placeholder = $("#indexedDBViewer");
                     var dbName = placeholder.attr("data-dbName");
-                    retrieveOrCreateElement('indexedDBViewerHeader', 'div', placeholder);
+                    createHeader('indexedDBViewerHeader', placeholder);
                     var navigation = retrieveOrCreateElement('indexedDBViewerNavigation', 'div', placeholder);
                     var menu = retrieveOrCreateElement('indexedDBViewerMenu', 'ul', navigation);
                     var menuOverview = expandableListItem('indexedDBViewerMenuOverview', dbName, menu, viewDb, { dbName: dbName, objectStore: null, index: null });
@@ -240,6 +240,31 @@
 
                     return li;
                 }
+                
+                function createHeader(id, parent) {
+                    var header = retrieveOrCreateElement(id, 'div', parent);
+                    var col = retrieveOrCreateElement(null, 'span', header);
+                    col.text(' - ');
+                    col.data('status', 'open');
+                    col.click(function () {
+                        if ($(this).data('status') == 'closed') {
+                            $('#indexedDBViewer').height(170);
+                            $('#indexedDBViewer').width('100%');
+                            $('#indexedDBViewerNavigation').show();
+                            $('#indexedDBViewerContent').show();
+                            col.text(' - ');
+                            col.data('status', 'open');
+                        }
+                        else if ($(this).data('status') == 'open') {
+                            $('#indexedDBViewer').height($(this).outerHeight());
+                            $('#indexedDBViewer').width($(this).outerWidth()); 
+                            $('#indexedDBViewerNavigation').hide();
+                            $('#indexedDBViewerContent').hide();
+                            col.text(' + ');
+                            col.data('status', 'closed');
+                        }
+                    });
+                }
 
                 function retrieveOrCreateElement(id, element, parent) {
                     var el;
@@ -262,8 +287,28 @@
 
                 initializeViewer();
                 
-                // mouseDown, MouseMove, mouseUp for resizing the placeholder
-                //$("#indexedDBViewer").
+                // mousedown, mousemove, mouseup and mouseleave for resizing the placeholder
+                $(window).bind('mousedown', function (event) {
+                    var location = $(window).height() - $("#indexedDBViewer").height();
+                    if ((location - 2) <= event.pageY && event.pageY <= (location + 5)) {
+                        $(window).bind('mousemove', resize);
+                    }
+                });
+
+                $(window).bind('mouseup', function () {
+                    $(window).unbind('mousemove', resize);
+                });
+                
+                $(window).bind('mouseleave', function () {
+                    $(window).unbind('mousemove', resize);
+                });
+
+                function resize(event) {
+                    var pageHeight = $(window).height();
+                    if (pageHeight - event.pageY >= 50) {
+                        $("#indexedDBViewer").height(pageHeight - event.pageY);
+                    }
+                }
             });
 
         </script>
@@ -276,9 +321,12 @@
             font-size: 12px;
             width: 100%;
             position: absolute;
-            bottom: 2px;
-            left: 0px;
-            height: 170px;
+            bottom: 0px;
+            right: 0px;
+            height: 150px;
+            z-index: 999999;
+            background-color: lightgray;
+            overflow: hidden;
         }
 
         #indexedDBViewer li {
@@ -302,25 +350,39 @@
         #indexedDBViewerHeader {
             height: 10px;
             width: 100%;
+            cursor: row-resize;
+            text-align: right;
+        }
+
+        #indexedDBViewerHeader span {
+            cursor: pointer;
+            height: 13px;
+            width: 13px;
+            padding-left: 0px;
+            padding-right: 0px;
+            border: 1px solid black;
+            display: inline-block;
+            text-align: center;
         }
 
         #indexedDBViewerNavigation {
             display: inline-block;
-            height: 100%;
+            height: auto;
             width: auto;
             min-width: 200px;
             vertical-align: top;
             padding: 2px 2px 2px 2px;
+            overflow-y: auto;
         }
 
         #indexedDBViewerContent {
             display: inline-block;
-            height: 100%;
+            height: auto;
             width: auto;
             min-width: 400px;
             vertical-align: top;
             padding: 2px 2px 2px 12px;
-            overflow: scroll;
+            overflow: auto;
         }
 
         #indexedDBViewerContentObjectStoresTable {

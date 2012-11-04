@@ -1,0 +1,43 @@
+﻿<!DOCTYPE html>
+<html>
+    <head>
+        <title>..:: Consumptions ::..</title>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+
+        <link href="Content/themes/base/jquery.ui.all.css" rel="stylesheet" type="text/css" />
+        <link href="Consumptions.css" rel="stylesheet" type="text/css" />
+
+        <script type="text/javascript" src="Scripts/jquery-1.7.2.js"> </script>
+        <script type="text/javascript" src="Scripts/jquery-ui-1.8.20.js"> </script>
+        <script type="text/javascript" src="Scripts/modernizr-2.5.3.js"> </script>
+        <script type="text/javascript" src="Scripts/indexeddb.shim.js"> </script>
+        <script type="text/javascript" src="Scripts/Linq2IndexedDB.js"> </script>
+        <script src="Consumptions.js" type="text/javascript"> </script>
+    </head>
+    <body>
+        <div id="dialog-form" title="Add new consumption">
+            <form>
+                <fieldset>
+                    <label for="Id" id="lblId" class="invisible">Day</label>
+                    <input type="number" name="Id" id="txtId" value="" class="text ui-widget-content ui-corner-all invisible" />
+                    <label for="Date" id="lblDate">Date</label>
+                    <input type="date" name="Date" id="dtpDate" class="text ui-widget-content ui-corner-all" />
+                    <label for="TypeConsumption" id="lblTypeConsumption">Type consumption</label>
+                    <select name="TypeConsumption" id="cboTypeConsumption" class="text ui-widget-content ui-corner-all"></select>
+                    <label for="DayValue" id="lblDayValue">Day</label>
+                    <input type="number" name="DayValue" id="txtDayValue" value="" class="text ui-widget-content ui-corner-all" />
+                    <label for="NightValue" id="lblNightValue">Night</label>
+                    <input type="number" name="NightValue" id="txtNightValue" value="" class="text ui-widget-content ui-corner-all" />
+                </fieldset>
+            </form>
+        </div>
+
+        <h1>Consumptions</h1>
+
+        <div id="tabs">
+            <ul></ul>
+        </div>
+
+
+    </body>
+</html>
