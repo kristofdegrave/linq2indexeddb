@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
-    <version>1.0.4</version>
+    <version>1.0.0</version>
     <authors>Kristof Degrave,Parashuram Narasimhan</authors>
     <owners>Kristof Degrave,Parashuram Narasimhan</owners>
     <licenseUrl>http://linq2indexeddb.codeplex.com/license</licenseUrl>
@@ -18,13 +18,13 @@
     <language>en-US</language>
     <tags>IndexedDB, HTML5, IndexedDBViewer, Storage, Viewer</tags>
     <dependencies>
-      <dependency id="jQuery.UI.Combined" version="1.8.20" />
       <dependency id="jQuery" version="1.7.2" />
-      <dependency id="Linq2IndexedDB" version="1.0.4" />
+      <dependency id="Linq2IndexedDB" version="1.0.20" />
     </dependencies>
   </metadata>
   <files>
-    <file src="..\IndexedDBViewer\IndexedDBViewer.html" target="Content\IndexedDBViewer" />
+    <file src="..\IndexedDBViewer\IndexedDBViewer.html" target="Content\Sample" />
     <file src="..\Scripts\IndexedDBViewer.js" target="Content\Scripts" />
+    <file src="..\Content\IndexedDBViewer.css" target="Content\Content" />
   </files>
 </package>
