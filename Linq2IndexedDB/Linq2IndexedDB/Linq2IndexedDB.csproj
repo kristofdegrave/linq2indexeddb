@@ -122,7 +122,7 @@
     <Content Include="Content\themes\base\minified\jquery.ui.slider.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.tabs.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.theme.min.css" />
-    <Content Include="IndexedDBViewer\IndexedDBViewer2.html" />
+    <Content Include="IndexedDBViewer\IndexedDBViewerSample.html" />
     <Content Include="Samples\await.html" />
     <Content Include="Samples\index.htm" />
     <Content Include="Scripts\Linq2IndexedDB.BindingListProvider.js" />

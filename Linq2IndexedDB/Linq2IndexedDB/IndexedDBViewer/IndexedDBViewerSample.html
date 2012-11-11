@@ -1,0 +1,38 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>..:: IndexedDBViewer ::..</title>
+        <script type="text/javascript" src="/Scripts/jquery-1.7.2.js"> </script>
+        <script type="text/javascript" src="/Scripts/Linq2IndexedDB.js"> </script>
+        <script>
+            var indexedDBName = "Consumption database";
+            var applicationVersion = 1;
+            var CONSUMPTIONTYPE = "ConsumptionType";
+            var CONSUMPTION = "Consumption";
+
+            var databaseDefinition = [{
+                version: 1,
+                objectStores: [{ name: CONSUMPTIONTYPE, objectStoreOptions: { autoIncrement: false, keyPath: "Id" } },
+                    { name: CONSUMPTION, objectStoreOptions: { autoIncrement: true, keyPath: "Id" } }],
+                indexes: [{ objectStoreName: CONSUMPTION, propertyName: "ConsumptionTypeId", indexOptions: { unique: false, multirow: false } }],
+                defaultData: [{ objectStoreName: CONSUMPTIONTYPE, data: { Id: 1, Description: "Electricity", HasDay: true, hasNight: true }, remove: false },
+                    { objectStoreName: CONSUMPTIONTYPE, data: { Id: 2, Description: "Gas", HasDay: true, hasNight: false }, remove: false },
+                    { objectStoreName: CONSUMPTIONTYPE, data: { Id: 3, Description: "Water", HasDay: true, hasNight: false }, remove: false },
+                    { objectStoreName: CONSUMPTION, data: { Date: Date.now(), dayValue: 1, nightValue: 1, ConsumptionTypeId: 1 }, remove: false },
+                    { objectStoreName: CONSUMPTION, data: { Date: Date.now(), dayValue: 2, nightValue: 2, ConsumptionTypeId: 1 }, remove: false }]
+            }];
+
+            var dbConfig = new Object();
+            dbConfig.version = applicationVersion;
+            dbConfig.definition = databaseDefinition;
+
+            var db = window.linq2indexedDB(indexedDBName, dbConfig, true);
+            db.initialize();
+        </script>
+        <script type="text/javascript" src="/Scripts/IndexedDBViewer.js"></script>
+        <link href="/Content/IndexedDBViewer.css" rel="stylesheet" />
+    </head>
+    <body>
+        <div id="indexedDBViewer" data-dbName="Consumption database"></div>
+    </body>
+</html>

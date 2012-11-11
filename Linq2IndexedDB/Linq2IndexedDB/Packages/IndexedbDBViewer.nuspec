@@ -10,20 +10,20 @@
     <title>IndexedDBViewer</title>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>
-      A webpage to check the structure and contents of your indexeddb database. The only thing you need to provide is the name of the database, and the webpage must be hosted in the same domain of the webapp that uses the indexeddb
+      A webpage to check the structure and contents of your indexeddb database. The only thing you need to do is adding a div with the id "indexedDBViewer", provide the name of the database in the data-dbName attribute on the div.
 
       For this it uses the linq2indexeddb framework.
     </description>
-    <summary>A webpage to check the structure and contents of your indexeddb database.</summary>
+    <summary>Add-in to check the structure and contents of your indexeddb database on a webpage.</summary>
     <language>en-US</language>
     <tags>IndexedDB, HTML5, IndexedDBViewer, Storage, Viewer</tags>
     <dependencies>
-      <dependency id="jQuery" version="1.7.2" />
+      <dependency id="jQuery" version="1.8.2" />
       <dependency id="Linq2IndexedDB" version="1.0.20" />
     </dependencies>
   </metadata>
   <files>
-    <file src="..\IndexedDBViewer\IndexedDBViewer.html" target="Content\Sample" />
+    <file src="..\IndexedDBViewer\IndexedDBViewerSample.html" target="Content\Sample" />
     <file src="..\Scripts\IndexedDBViewer.js" target="Content\Scripts" />
     <file src="..\Content\IndexedDBViewer.css" target="Content\Content" />
   </files>
