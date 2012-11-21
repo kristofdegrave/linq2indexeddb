@@ -1,8 +1,8 @@
-﻿/// <reference path="jquery-1.7.2.js" />
-/// <reference path="indexeddb.shim.js" />
+﻿/// <reference path="jquery-1.8.2.js" />
+/// <reference path="IndexedDBShim.min.js" />
 
 var linq2indexedDB;
-var enableLogging = false;
+var enableLogging = true;
 
 // Initializes the linq2indexeddb object.
 (function () {
@@ -3148,6 +3148,14 @@ if (typeof window !== "undefined") {
             }
 
             if (window.indexedDB) {
+                if (window.idbModules) {
+
+                    transactionTypes.READ_ONLY = 1;
+                    transactionTypes.READ_WRITE = 2;
+
+                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Shim", window.indexedDB);
+                    return implementations.SHIM;
+                }
                 linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Native implementation", window.indexedDB);
                 return implementations.NATIVE;
             } else {
@@ -3288,11 +3296,9 @@ if (typeof window !== "undefined") {
                     };
 
                     return implementations.MICROSOFTPROTOTYPE;
-                } else if (window.shimIndexedDB) {
-                    window.indexedDB = window.shimIndexedDB;
-
-                    return implementations.SHIM;
-                } else {
+                } 
+                
+                else {
                     linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Your browser doesn't support indexedDB.");
                     return implementations.NONE;
                 }
@@ -3339,7 +3345,12 @@ if (typeof window !== "undefined") {
 
         function IDBCompleteHandler(pw, request) {
             request.oncomplete = function (e) {
-                pw.complete(e.target, [e.target, e]);
+                if(linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM){
+                    pw.complete(this, [this]);
+                }
+                else{
+                    pw.complete(e.target, [e.target, e]);
+                }
             };
         };
 

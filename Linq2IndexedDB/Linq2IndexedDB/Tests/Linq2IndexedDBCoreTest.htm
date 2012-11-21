@@ -5,9 +5,9 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
 
         <link href="qunit.css" rel="stylesheet" type="text/css" />  
-        <script type="text/javascript" src="../Scripts/jquery-1.7.2.js"> </script>
+        <script type="text/javascript" src="../Scripts/jquery-1.8.2.js"> </script>
         <script src="qunit.js" type="text/javascript"> </script> 
-        <script type="text/javascript" src="../Scripts/indexeddb.shim.js"> </script>
+        <script type="text/javascript" src="../Scripts/IndexedDBShim.min.js"> </script>
         <script src="../Scripts/Linq2IndexedDB.js" type="text/javascript"> </script>
         <script type="text/javascript">
             $(document).ready(function () {
@@ -114,7 +114,7 @@
                             start();
                         }, function (args) {
                             if (args[1].type == "upgradeneeded") {
-                                linq2indexedDB.prototype.core.createObjectStore(args[0], objectStoreName, {autoIncrement: false}).then(function () {
+                                linq2indexedDB.prototype.core.createObjectStore(args[0], objectStoreName, { autoIncrement: false }).then(function () {
                                 }, function () {
                                     ok(false, msgCreatingInitialSituationFailed);
                                     start();
@@ -283,7 +283,7 @@
                                     ok(false, msgCreatingInitialSituationFailed);
                                     start();
                                 });
-                                
+
                             }
                         });
                     }, function () {
@@ -316,33 +316,33 @@
 
                 module("Database");
                 asyncTest("Opening/Creating Database", 3, function () {
-                    initionalSituation(function() {
-                        linq2indexedDB.prototype.core.db(dbName).then(function(args) {
+                    initionalSituation(function () {
+                        linq2indexedDB.prototype.core.db(dbName).then(function (args) {
                             equal(args[0].name, dbName, "Database opened/created");
                             // Necessary for indexeddb who work with setVersion
                             equal(parseInt(args[0].version), 1, "Database opened/created");
                             args[0].close();
                             start();
-                        }, function() {
+                        }, function () {
                             ok(false, "Creating database failed");
                             start();
-                        }, function(args) {
+                        }, function (args) {
                             equal(args[1].type, "upgradeneeded", "Upgrading database");
                         });
                     });
                 });
                 asyncTest("Opening/Creating Database with version", 5, function () {
                     var version = 2;
-                    initionalSituation(function() {
-                        linq2indexedDB.prototype.core.db(dbName, version).then(function(args) {
+                    initionalSituation(function () {
+                        linq2indexedDB.prototype.core.db(dbName, version).then(function (args) {
                             equal(args[0].name, dbName, "Database opened/created");
                             equal(args[0].version, version, "Database version");
                             args[0].close();
                             start();
-                        }, function() {
+                        }, function () {
                             ok(false, "Creating/Opening database failed");
                             start();
-                        }, function(args) {
+                        }, function (args) {
                             equal("upgradeneeded", args[1].type, "Upgrading database");
                             equal(args[1].oldVersion, 0, "Old version");
                             equal(args[1].newVersion, version, "New version");
@@ -428,11 +428,11 @@
                     });
                 });
                 asyncTest("Deleting non existing Database", 1, function () {
-                    initionalSituation(function() {
-                        linq2indexedDB.prototype.core.deleteDb(dbName).then(function() {
+                    initionalSituation(function () {
+                        linq2indexedDB.prototype.core.deleteDb(dbName).then(function () {
                             ok(true, "Database removed");
                             start();
-                        }, function() {
+                        }, function () {
                             ok(false, "Deleting database failed");
                             start();
                         });
@@ -453,15 +453,20 @@
                                 start();
                             }, function (transArgs) {
                                 ok(true, "Transaction open");
-                                // Work around for chrome, if nothing gets queried, the transaction gets aborted.
+
                                 if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE) {
                                     equal(transArgs[0].mode, "readonly");
-                                    linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
-                                        objArgs[1].get(1);
-                                    });
                                 } else {
                                     equal(transArgs[0].mode, linq2indexedDB.prototype.core.transactionTypes.READ_ONLY);
                                 }
+
+                                // Work around for chrome, if nothing gets queried, the transaction gets aborted.
+                                if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE
+                                    || linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM) {
+                                    linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
+                                        objArgs[1].get(1);
+                                    });
+                                } 
                             });
                         }, function () {
                             ok(false, "Database error");
@@ -483,14 +488,19 @@
                             }, function (transArgs) {
                                 ok(true, "Transaction open");
                                 // Work around for chrome, if nothing gets queried, the transaction gets aborted.
+
                                 if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE) {
                                     equal(transArgs[0].mode, "readonly");
-                                    linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
-                                        objArgs[1].get(1);
-                                    });
                                 } else {
                                     equal(transArgs[0].mode, linq2indexedDB.prototype.core.transactionTypes.READ_ONLY);
                                 }
+
+                                if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE
+                                    || linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM) {
+                                    linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
+                                        objArgs[1].get(1);
+                                    });
+                                } 
                             });
                         }, function () {
                             ok(false, "Database error");
@@ -511,15 +521,20 @@
                                 start();
                             }, function (transArgs) {
                                 ok(true, "Transaction open");
-                                // Work around for chrome, if nothing gets queried, the transaction gets aborted.
+
                                 if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE) {
                                     equal(transArgs[0].mode, "readwrite");
-                                    linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
-                                        objArgs[1].get(1);
-                                    });
                                 } else {
                                     equal(transArgs[0].mode, linq2indexedDB.prototype.core.transactionTypes.READ_WRITE);
                                 }
+
+                                // Work around for chrome, if nothing gets queried, the transaction gets aborted.
+                                if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE
+                                    || linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM) {
+                                    linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
+                                        objArgs[1].get(1);
+                                    });
+                                } 
                             });
                         }, function () {
                             ok(false, "Database error");
@@ -604,14 +619,15 @@
                                 start();
                             }, function (transArgs) {
                                 ok(true, "Transaction open");
-                                
+
                                 if (transArgs[0].db.objectStoreNames.contains(anOtherObjectStore)) {
                                     ok(true, "Object store present");
                                 }
-                                
+
                                 // Work around for chrome, if nothing gets queried, the transaction gets aborted.
-                                if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE) {
-                                    linq2indexedDB.prototype.core.objectStore(transArgs[0], anOtherObjectStore).then(function(objArgs) {
+                                if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE
+                                    || linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM) {
+                                    linq2indexedDB.prototype.core.objectStore(transArgs[0], anOtherObjectStore).then(function (objArgs) {
                                         objArgs[1].get(1);
                                     });
                                 }
@@ -625,22 +641,22 @@
 
                 module("ObjectStores");
                 asyncTest("Creating ObjectStore", 3, function () {
-                    initionalSituation(function() {
-                        linq2indexedDB.prototype.core.db(dbName).then(function(args) {
+                    initionalSituation(function () {
+                        linq2indexedDB.prototype.core.db(dbName).then(function (args) {
                             if (args[0].objectStoreNames.contains(objectStoreName)) {
                                 ok(true, "Object store present");
                             }
                             args[0].close();
                             start();
-                        }, function() {
+                        }, function () {
                             ok(false, "Database error");
                             start();
-                        }, function(args) {
+                        }, function (args) {
                             if (args[1].type == "upgradeneeded") {
-                                linq2indexedDB.prototype.core.createObjectStore(args[0], objectStoreName).then(function(objArgs) {
+                                linq2indexedDB.prototype.core.createObjectStore(args[0], objectStoreName).then(function (objArgs) {
                                     ok(true, "Object store created");
                                     equals(objArgs[1].name, objectStoreName);
-                                }, function() {
+                                }, function () {
                                     ok(false, "Creating object store failed");
                                 });
                             }
@@ -650,19 +666,19 @@
                 asyncTest("Creating ObjectStore with options", 5, function () {
                     var keyPath = "Id";
                     var autoIncrement = true;
-                    initionalSituation(function() {
-                        linq2indexedDB.prototype.core.db(dbName).then(function(args) {
+                    initionalSituation(function () {
+                        linq2indexedDB.prototype.core.db(dbName).then(function (args) {
                             if (args[0].objectStoreNames.contains(objectStoreName)) {
                                 ok(true, "Object store present");
                             }
                             args[0].close();
                             start();
-                        }, function() {
+                        }, function () {
                             ok(false, "Database error");
                             start();
-                        }, function(args) {
+                        }, function (args) {
                             if (args[1].type == "upgradeneeded") {
-                                linq2indexedDB.prototype.core.createObjectStore(args[0], objectStoreName, { keyPath: keyPath, autoIncrement: autoIncrement }).then(function(objArgs) {
+                                linq2indexedDB.prototype.core.createObjectStore(args[0], objectStoreName, { keyPath: keyPath, autoIncrement: autoIncrement }).then(function (objArgs) {
                                     ok(true, "Object store created");
                                     equals(objArgs[1].name, objectStoreName, "Object store name");
                                     equals(objArgs[1].keyPath, keyPath, "Object store keyPath");
@@ -671,7 +687,7 @@
                                     } else {
                                         ok(true, "Object store autoIncrement: attribute not implemented");
                                     }
-                                }, function() {
+                                }, function () {
                                     ok(false, "Creating object store failed");
                                 });
                             }
@@ -681,15 +697,15 @@
                 asyncTest("Creating ObjectStore in readwrite transaction", 1, function () {
                     initionalSituationObjectStore(function () {
                         linq2indexedDB.prototype.core.db(dbName).then(function (args) {
-                            linq2indexedDB.prototype.core.transaction(args[0], [objectStoreName], linq2indexedDB.prototype.core.transactionTypes.READ_WRITE).then(function(transArgs) {
+                            linq2indexedDB.prototype.core.transaction(args[0], [objectStoreName], linq2indexedDB.prototype.core.transactionTypes.READ_WRITE).then(function (transArgs) {
                                 linq2indexedDB.prototype.core.createObjectStore(transArgs[0], "obj").then(function () {
                                     ok(false, "object store created");
-                                }, function(objArgs) {
+                                }, function (objArgs) {
                                     equal(objArgs.type, "InvalidStateError", objArgs.message);
                                     transArgs[0].db.close();
                                     start();
                                 });
-                            }, function() {
+                            }, function () {
                                 ok(false, "transaction error");
                                 start();
                             });
@@ -790,22 +806,22 @@
                     });
                 });
                 asyncTest("Deleting ObjectStore", 2, function () {
-                    initionalSituationObjectStore(function() {
+                    initionalSituationObjectStore(function () {
                         // Delete database if existing
-                        linq2indexedDB.prototype.core.db(dbName, 2).then(function(args) {
+                        linq2indexedDB.prototype.core.db(dbName, 2).then(function (args) {
                             if (!args[0].objectStoreNames.contains(objectStoreName)) {
                                 ok(true, "Object store is no longer present.");
                             }
                             args[0].close();
                             start();
-                        }, function() {
+                        }, function () {
                             ok(false, "Database error");
                             start();
-                        }, function(args) {
+                        }, function (args) {
                             if (args[1].type == "upgradeneeded") {
-                                linq2indexedDB.prototype.core.deleteObjectStore(args[0], objectStoreName).then(function() {
+                                linq2indexedDB.prototype.core.deleteObjectStore(args[0], objectStoreName).then(function () {
                                     ok(true, "Object store deleted");
-                                }, function() {
+                                }, function () {
                                     ok(false, "Deleting object store failed");
                                 });
                             }
@@ -856,18 +872,18 @@
                         });
                     });
                 });
-                
+
                 module("Indexes");
                 asyncTest("Creating Index", 4, function () {
                     initionalSituationObjectStore(function () {
-                        linq2indexedDB.prototype.core.db(dbName, 2).then(function(args) {
-                            linq2indexedDB.prototype.core.transaction(args[0], [objectStoreName], linq2indexedDB.prototype.core.transactionTypes.READ_ONLY).then(function(transArgs) {
+                        linq2indexedDB.prototype.core.db(dbName, 2).then(function (args) {
+                            linq2indexedDB.prototype.core.transaction(args[0], [objectStoreName], linq2indexedDB.prototype.core.transactionTypes.READ_ONLY).then(function (transArgs) {
                                 transArgs[0].db.close();
                                 start();
-                            }, function() {
+                            }, function () {
                                 ok(false, "Transaction error");
                                 start();
-                            }, function(transArgs) {
+                            }, function (transArgs) {
                                 linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
                                     // Work around for chrome, if nothing gets queried, the transaction gets aborted.
                                     if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE) {
@@ -878,16 +894,16 @@
                                     }
                                 });
                             });
-                        }, function() {
+                        }, function () {
                             ok(false, "Database error");
                             start();
-                        }, function(args) {
+                        }, function (args) {
                             if (args[1].type == "upgradeneeded") {
-                                linq2indexedDB.prototype.core.createIndex(linq2indexedDB.prototype.core.objectStore(args[0], objectStoreName), indexProperty).then(function(indexArgs) {
+                                linq2indexedDB.prototype.core.createIndex(linq2indexedDB.prototype.core.objectStore(args[0], objectStoreName), indexProperty).then(function (indexArgs) {
                                     ok(true, "Index created");
                                     equals(indexArgs[1].name, indexProperty + linq2indexedDB.prototype.core.indexSuffix);
                                     equals(indexArgs[1].keyPath, indexProperty);
-                                }, function() {
+                                }, function () {
                                     ok(false, "Creating index failed");
                                 });
                             }
@@ -921,10 +937,10 @@
                             start();
                         }, function (args) {
                             if (args[1].type == "upgradeneeded") {
-                                linq2indexedDB.prototype.core.createIndex(linq2indexedDB.prototype.core.objectStore(args[0], objectStoreName), indexProperty, {unique: unique, multiEntry: multiEntry}).then(function (indexArgs) {
+                                linq2indexedDB.prototype.core.createIndex(linq2indexedDB.prototype.core.objectStore(args[0], objectStoreName), indexProperty, { unique: unique, multiEntry: multiEntry }).then(function (indexArgs) {
                                     ok(true, "Index created");
                                     equals(indexArgs[1].name, indexProperty + linq2indexedDB.prototype.core.indexSuffix, "index name");
-                                    equals(indexArgs[1].keyPath, indexProperty , "index keyPath");
+                                    equals(indexArgs[1].keyPath, indexProperty, "index keyPath");
                                     if (indexArgs[1].unique) {
                                         equals(indexArgs[1].unique, unique, "index unique attribute");
                                     }
@@ -1024,7 +1040,7 @@
                                         if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE) {
                                             indexArgs[1].get(1);
                                         }
-                                        
+
                                         indexArgs[0].db.close();
                                         start();
                                     }, function () {
@@ -1495,7 +1511,7 @@
                         });
                     });
                 });
-                
+
                 module("Update");
                 asyncTest("Updating data", 2, function () {
                     var data = { test: "test" };
@@ -1541,7 +1557,7 @@
                                         notEqual(updateArgs[0], insertData, "Original data deferres from the current data");
                                         equal(updateArgs[0], data, "Data ok");
                                         equal(updateArgs[1], key, "Key ok");
-                                        linq2indexedDB.prototype.core.count(objArgs[1]).then(function(countArgs) {
+                                        linq2indexedDB.prototype.core.count(objArgs[1]).then(function (countArgs) {
                                             equal(countArgs[0], 1, "Count ok");
                                         });
                                     }, function () {
@@ -1570,7 +1586,7 @@
                                     linq2indexedDB.prototype.core.update(objArgs[1], data).then(function (updateArgs) {
                                         ok(true, "data inserted");
                                         equal(updateArgs[0], data, "Data ok");
-                                        linq2indexedDB.prototype.core.count(objArgs[1]).then(function(countArgs) {
+                                        linq2indexedDB.prototype.core.count(objArgs[1]).then(function (countArgs) {
                                             equal(countArgs[0], 2, "Count ok");
                                         });
                                     }, function () {
@@ -1603,7 +1619,7 @@
                                         notEqual(updateArgs[0], insertData, "Original data deferres from the current data");
                                         equal(updateArgs[0], data, "Data ok");
                                         equal(updateArgs[1], key, "Key ok");
-                                        linq2indexedDB.prototype.core.count(objArgs[1]).then(function(countArgs) {
+                                        linq2indexedDB.prototype.core.count(objArgs[1]).then(function (countArgs) {
                                             equal(countArgs[0], 1, "Count ok");
                                         });
                                     }, function () {
@@ -1929,27 +1945,27 @@
                 });
                 asyncTest("Remove data - non existing key", 2, function () {
                     var nonExistingKey = 9999;
-                    initionalSituationObjectStoreWithData(function() {
-                        linq2indexedDB.prototype.core.db(dbName).then(function(args) {
-                            linq2indexedDB.prototype.core.transaction(args[0], [objectStoreName], linq2indexedDB.prototype.core.transactionTypes.READ_WRITE).then(function(transArgs) {
+                    initionalSituationObjectStoreWithData(function () {
+                        linq2indexedDB.prototype.core.db(dbName).then(function (args) {
+                            linq2indexedDB.prototype.core.transaction(args[0], [objectStoreName], linq2indexedDB.prototype.core.transactionTypes.READ_WRITE).then(function (transArgs) {
                                 transArgs[0].db.close();
                                 start();
-                            }, function() {
+                            }, function () {
                                 ok(false, "Transaction error");
                                 start();
-                            }, function(transArgs) {
-                                linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function(objArgs) {
-                                    linq2indexedDB.prototype.core.remove(objArgs[1], nonExistingKey).then(function() {
+                            }, function (transArgs) {
+                                linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
+                                    linq2indexedDB.prototype.core.remove(objArgs[1], nonExistingKey).then(function () {
                                         ok(true, "remove success");
-                                        linq2indexedDB.prototype.core.count(objArgs[1]).then(function(countArgs) {
+                                        linq2indexedDB.prototype.core.count(objArgs[1]).then(function (countArgs) {
                                             equal(countArgs[0], 1, "Count ok");
                                         });
-                                    }, function() {
+                                    }, function () {
                                         ok(false, "remove error");
                                     });
                                 });
                             });
-                        }, function() {
+                        }, function () {
                             ok(false, "Database error");
                             start();
                         });
@@ -1957,27 +1973,27 @@
                 });
                 asyncTest("Remove data - key range", 2, function () {
                     var keyRange = IDBKeyRange.only(insertData.Id);
-                    initionalSituationObjectStoreWithData(function() {
-                        linq2indexedDB.prototype.core.db(dbName).then(function(args) {
-                            linq2indexedDB.prototype.core.transaction(args[0], [objectStoreName], linq2indexedDB.prototype.core.transactionTypes.READ_WRITE).then(function(transArgs) {
+                    initionalSituationObjectStoreWithData(function () {
+                        linq2indexedDB.prototype.core.db(dbName).then(function (args) {
+                            linq2indexedDB.prototype.core.transaction(args[0], [objectStoreName], linq2indexedDB.prototype.core.transactionTypes.READ_WRITE).then(function (transArgs) {
                                 transArgs[0].db.close();
                                 start();
-                            }, function() {
+                            }, function () {
                                 ok(false, "Transaction error");
                                 start();
-                            }, function(transArgs) {
-                                linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function(objArgs) {
-                                    linq2indexedDB.prototype.core.remove(objArgs[1], keyRange).then(function() {
+                            }, function (transArgs) {
+                                linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
+                                    linq2indexedDB.prototype.core.remove(objArgs[1], keyRange).then(function () {
                                         ok(true, "remove success");
-                                        linq2indexedDB.prototype.core.count(objArgs[1]).then(function(countArgs) {
+                                        linq2indexedDB.prototype.core.count(objArgs[1]).then(function (countArgs) {
                                             equal(countArgs[0], 0, "Count ok");
                                         });
-                                    }, function() {
+                                    }, function () {
                                         ok(false, "remove error");
                                     });
                                 });
                             });
-                        }, function() {
+                        }, function () {
                             ok(false, "Database error");
                             start();
                         });
@@ -2032,7 +2048,7 @@
                         });
                     });
                 });
-                
+
                 module("clear");
                 asyncTest("Clear data", 2, function () {
                     initionalSituationObjectStoreWithData(function () {
@@ -2085,7 +2101,7 @@
                         });
                     });
                 });
-                
+
                 module("count");
                 asyncTest("Count data", 1, function () {
                     initionalSituationObjectStoreWithData(function () {
@@ -2117,7 +2133,7 @@
                 module("key get");
 
                 module("cursor");
-                
+
                 module("key cursor");
             });
         </script>  

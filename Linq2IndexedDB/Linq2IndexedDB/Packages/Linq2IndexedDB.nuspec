@@ -39,7 +39,7 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="..\Scripts\indexeddb.shim.js" target="Content\Scripts" />
+    <file src="..\Scripts\IndexedDBShim.min.js" target="Content\Scripts" />
     <file src="..\Scripts\Linq2IndexedDB.js" target="Content\Scripts" />
   </files>
 </package>  

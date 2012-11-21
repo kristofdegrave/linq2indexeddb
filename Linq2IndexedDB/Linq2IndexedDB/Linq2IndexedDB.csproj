@@ -90,12 +90,15 @@
     <Content Include="Content\themes\base\jquery.ui.core.css" />
     <Content Include="Content\themes\base\jquery.ui.datepicker.css" />
     <Content Include="Content\themes\base\jquery.ui.dialog.css" />
+    <Content Include="Content\themes\base\jquery.ui.menu.css" />
     <Content Include="Content\themes\base\jquery.ui.progressbar.css" />
     <Content Include="Content\themes\base\jquery.ui.resizable.css" />
     <Content Include="Content\themes\base\jquery.ui.selectable.css" />
     <Content Include="Content\themes\base\jquery.ui.slider.css" />
+    <Content Include="Content\themes\base\jquery.ui.spinner.css" />
     <Content Include="Content\themes\base\jquery.ui.tabs.css" />
     <Content Include="Content\themes\base\jquery.ui.theme.css" />
+    <Content Include="Content\themes\base\jquery.ui.tooltip.css" />
     <Content Include="Content\themes\base\minified\images\ui-bg_flat_0_aaaaaa_40x100.png" />
     <Content Include="Content\themes\base\minified\images\ui-bg_flat_75_ffffff_40x100.png" />
     <Content Include="Content\themes\base\minified\images\ui-bg_glass_55_fbf9ee_1x400.png" />
@@ -116,20 +119,29 @@
     <Content Include="Content\themes\base\minified\jquery.ui.core.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.datepicker.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.dialog.min.css" />
+    <Content Include="Content\themes\base\minified\jquery.ui.menu.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.progressbar.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.resizable.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.selectable.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.slider.min.css" />
+    <Content Include="Content\themes\base\minified\jquery.ui.spinner.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.tabs.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.theme.min.css" />
+    <Content Include="Content\themes\base\minified\jquery.ui.tooltip.min.css" />
     <Content Include="IndexedDBViewer\IndexedDBViewerSample.html" />
     <Content Include="Samples\await.html" />
     <Content Include="Samples\index.htm" />
+    <Content Include="Scripts\IndexedDBShim.min.js" />
+    <Content Include="Scripts\jquery-1.8.2-vsdoc.js" />
+    <Content Include="Scripts\jquery-1.8.2.js" />
+    <Content Include="Scripts\jquery-1.8.2.min.js" />
+    <Content Include="Scripts\jquery-ui-1.9.0.js" />
+    <Content Include="Scripts\jquery-ui-1.9.0.min.js" />
     <Content Include="Scripts\Linq2IndexedDB.BindingListProvider.js" />
+    <Content Include="Scripts\modernizr-2.6.2.js" />
     <Content Include="testfile.html" />
     <Content Include="testscript.js" />
     <Content Include="Tests\Stresstest.htm" />
-    <Content Include="Scripts\indexeddb.shim.js" />
     <Content Include="Scripts\IndexedDBViewer.js" />
     <Content Include="Samples\Consumptions.css" />
     <Content Include="Samples\Consumptions.htm" />
@@ -140,18 +152,6 @@
     </Content>
     <Content Include="Packages\Linq2IndexedDBWin8.nuspec" />
     <Content Include="Packages\build.bat" />
-    <None Include="Scripts\jquery-1.7.2.intellisense.js">
-      <DependentUpon>jquery-1.7.2.js</DependentUpon>
-    </None>
-    <Content Include="Scripts\jquery-1.7.2.js" />
-    <Content Include="Scripts\jquery-1.7.2.min.js">
-      <DependentUpon>jquery-1.7.2.js</DependentUpon>
-    </Content>
-    <Content Include="Scripts\jquery-ui-1.8.20.js" />
-    <Content Include="Scripts\jquery-ui-1.8.20.min.js">
-      <DependentUpon>jquery-ui-1.8.20.js</DependentUpon>
-    </Content>
-    <Content Include="Scripts\modernizr-2.5.3.js" />
     <Content Include="Tests\Linq2IndexedDBCoreTest.htm" />
     <Content Include="Tests\LinqTest.htm" />
     <Content Include="Tests\QueryTest.htm" />
