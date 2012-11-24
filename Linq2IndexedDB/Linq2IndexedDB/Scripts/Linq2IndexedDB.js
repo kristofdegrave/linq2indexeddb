@@ -3137,7 +3137,7 @@ if (typeof window !== "undefined") {
             linq2indexedDB.prototype.core.indexSuffix = "IIndex";
         } else {
 
-            linq2indexedDB.prototype.core.indexSuffix = "-Index";
+            linq2indexedDB.prototype.core.indexSuffix = "_Index";
         }
 
         // Region Functions
@@ -3148,14 +3148,14 @@ if (typeof window !== "undefined") {
             }
 
             if (window.indexedDB) {
-                if (window.idbModules) {
+                //if (window.idbModules) {
 
-                    transactionTypes.READ_ONLY = 1;
-                    transactionTypes.READ_WRITE = 2;
+                //    transactionTypes.READ_ONLY = 1;
+                //    transactionTypes.READ_WRITE = 2;
 
-                    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Shim", window.indexedDB);
-                    return implementations.SHIM;
-                }
+                //    linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Shim", window.indexedDB);
+                //    return implementations.SHIM;
+                //}
                 linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.information, "Native implementation", window.indexedDB);
                 return implementations.NATIVE;
             } else {
@@ -3327,13 +3327,23 @@ if (typeof window !== "undefined") {
 
         function IDBErrorHandler(pw, request) {
             request.onerror = function (e) {
-                pw.error(e.target, [e.target.errorCode, e]);
+                if (e) {
+                    pw.error(e.target, [e.target.errorCode, e]);
+                }
+                else {
+                    pw.error(this, [this, this]);
+                }
             };
         };
 
         function IDBAbortHandler(pw, request) {
             request.onabort = function (e) {
-                pw.error(e.target, [e.target.errorCode, e]);
+                if (e) {
+                    pw.error(e.target, [e.target.errorCode, e]);
+                }
+                else {
+                    pw.error(this, [this, this]);
+                }
             };
         };
 
@@ -3345,7 +3355,7 @@ if (typeof window !== "undefined") {
 
         function IDBCompleteHandler(pw, request) {
             request.oncomplete = function (e) {
-                if(linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM){
+                if(!e){
                     pw.complete(this, [this]);
                 }
                 else{

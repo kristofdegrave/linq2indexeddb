@@ -461,12 +461,12 @@
                                 }
 
                                 // Work around for chrome, if nothing gets queried, the transaction gets aborted.
-                                if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE
-                                    || linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM) {
+                                //if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE
+                                //    || linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM) {
                                     linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
                                         objArgs[1].get(1);
                                     });
-                                } 
+                                //} 
                             });
                         }, function () {
                             ok(false, "Database error");
@@ -495,12 +495,12 @@
                                     equal(transArgs[0].mode, linq2indexedDB.prototype.core.transactionTypes.READ_ONLY);
                                 }
 
-                                if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE
-                                    || linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM) {
+                                //if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE
+                                //    || linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM) {
                                     linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
                                         objArgs[1].get(1);
                                     });
-                                } 
+                                //} 
                             });
                         }, function () {
                             ok(false, "Database error");
@@ -529,12 +529,12 @@
                                 }
 
                                 // Work around for chrome, if nothing gets queried, the transaction gets aborted.
-                                if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE
-                                    || linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM) {
+                                //if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE
+                                //    || linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM) {
                                     linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
                                         objArgs[1].get(1);
                                     });
-                                } 
+                                //} 
                             });
                         }, function () {
                             ok(false, "Database error");
@@ -555,7 +555,13 @@
                                 start();
                             }, function (transArgs) {
                                 ok(true, "Transaction open");
+                                if (transArgs[0].__active) {
+                                    linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function(objArgs) {
+                                        objArgs[1].get(1);
+                                    });
+                                }
                                 transArgs[0].abort();
+                                
                             });
                             start();
                         }, function () {
@@ -575,8 +581,15 @@
                                 equal(transArgs.type, "InvalidAccessError", "Transaction error");
                                 args[0].close();
                                 start();
-                            }, function () {
+                            }, function (transArgs) {
                                 ok(false, "Transaction open");
+                                // Work around for chrome, if nothing gets queried, the transaction gets aborted.
+                                //if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE
+                                //    || linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM) {
+                                linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
+                                    objArgs[1].get(1);
+                                });
+                                //} 
                             });
                         }, function () {
                             ok(false, "Database error");
@@ -625,12 +638,12 @@
                                 }
 
                                 // Work around for chrome, if nothing gets queried, the transaction gets aborted.
-                                if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE
-                                    || linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM) {
+                                //if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE
+                                //    || linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM) {
                                     linq2indexedDB.prototype.core.objectStore(transArgs[0], anOtherObjectStore).then(function (objArgs) {
                                         objArgs[1].get(1);
                                     });
-                                }
+                                //}
                             });
                         }, function () {
                             ok(false, "Database error");
@@ -698,16 +711,20 @@
                     initionalSituationObjectStore(function () {
                         linq2indexedDB.prototype.core.db(dbName).then(function (args) {
                             linq2indexedDB.prototype.core.transaction(args[0], [objectStoreName], linq2indexedDB.prototype.core.transactionTypes.READ_WRITE).then(function (transArgs) {
+
+                            }, function () {
+                                ok(false, "transaction error");
+                                start();
+                            }, function (transArgs) {
                                 linq2indexedDB.prototype.core.createObjectStore(transArgs[0], "obj").then(function () {
                                     ok(false, "object store created");
+                                    transArgs[0].db.close();
+                                    start();
                                 }, function (objArgs) {
                                     equal(objArgs.type, "InvalidStateError", objArgs.message);
                                     transArgs[0].db.close();
                                     start();
                                 });
-                            }, function () {
-                                ok(false, "transaction error");
-                                start();
                             });
                         }, function () {
                             ok(false, "Database error");
@@ -750,9 +767,10 @@
                                 linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
                                     ok(true, "Object store open");
                                     // Work around for chrome, if nothing gets queried, the transaction gets aborted.
-                                    if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE) {
+                                    //if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE
+                                    //    || linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM) {
                                         objArgs[1].get(1);
-                                    }
+                                    //}
                                 });
                             });
                         }, function () {
@@ -771,8 +789,13 @@
                                 equal(transArgs.type, "abort", "Transaction aborted");
                                 start();
                             }, function (transArgs) {
-                                linq2indexedDB.prototype.core.objectStore(transArgs[0], "anOtherObjectStore").then(function () {
+                                linq2indexedDB.prototype.core.objectStore(transArgs[0], "anOtherObjectStore").then(function (objArgs) {
                                     ok(false, "Object store open");
+                                    // Work around for chrome, if nothing gets queried, the transaction gets aborted.
+                                    //if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE
+                                    //    || linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM) {
+                                    objArgs[1].get(1);
+                                    //}
                                 }, function (objArgs) {
                                     equal(objArgs.type, "NotFoundError", objArgs.message);
                                 });
@@ -793,8 +816,13 @@
                                 equal(transArgs.type, "abort", "Transaction aborted");
                                 start();
                             }, function (transArgs) {
-                                linq2indexedDB.prototype.core.objectStore(transArgs[0], anOtherObjectStoreName).then(function () {
+                                linq2indexedDB.prototype.core.objectStore(transArgs[0], anOtherObjectStoreName).then(function (objArgs) {
                                     ok(false, "Object store open");
+                                    // Work around for chrome, if nothing gets queried, the transaction gets aborted.
+                                    //if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE
+                                    //    || linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM) {
+                                    objArgs[1].get(1);
+                                    //}
                                 }, function (objArgs) {
                                     equal(objArgs.type, "NotFoundError", objArgs.message);
                                 });
@@ -855,16 +883,20 @@
                     initionalSituationObjectStore(function () {
                         linq2indexedDB.prototype.core.db(dbName).then(function (args) {
                             linq2indexedDB.prototype.core.transaction(args[0], [objectStoreName], linq2indexedDB.prototype.core.transactionTypes.READ_WRITE).then(function (transArgs) {
+                                
+                            }, function () {
+                                ok(false, "transaction error");
+                                start();
+                            }, function (transArgs) {
                                 linq2indexedDB.prototype.core.deleteObjectStore(transArgs[0], "obj").then(function () {
-                                    ok(false, "object store created");
+                                    ok(false, "object store deleted");
+                                    transArgs[0].db.close();
+                                    start();
                                 }, function (objArgs) {
                                     equal(objArgs.type, "InvalidStateError", objArgs.message);
                                     transArgs[0].db.close();
                                     start();
                                 });
-                            }, function () {
-                                ok(false, "transaction error");
-                                start();
                             });
                         }, function () {
                             ok(false, "Database error");
@@ -886,9 +918,11 @@
                             }, function (transArgs) {
                                 linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
                                     // Work around for chrome, if nothing gets queried, the transaction gets aborted.
-                                    if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE) {
+                                    
+                                    //if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE
+                                    //    || linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM) {
                                         objArgs[1].get(1);
-                                    }
+                                    //}
                                     if (objArgs[1].indexNames.contains(indexProperty + linq2indexedDB.prototype.core.indexSuffix)) {
                                         ok(true, "Index present");
                                     }
@@ -924,9 +958,11 @@
                             }, function (transArgs) {
                                 linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
                                     // Work around for chrome, if nothing gets queried, the transaction gets aborted.
-                                    if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE) {
+                                    
+                                    //if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE
+                                    //    || linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM) {
                                         objArgs[1].get(1);
-                                    }
+                                    //}
                                     if (objArgs[1].indexNames.contains(indexProperty + linq2indexedDB.prototype.core.indexSuffix)) {
                                         ok(true, "Index present");
                                     }
@@ -974,9 +1010,11 @@
                                 linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
                                     linq2indexedDB.prototype.core.index(objArgs[1], indexProperty).then(function (indexArgs) {
                                         ok(true, "Index open");
-                                        if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE) {
+                                        
+                                        //if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE
+                                        //    || linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM) {
                                             indexArgs[1].get(1);
-                                        }
+                                        //}
                                     }, function () {
                                         ok(false, "Index error");
                                         start();
@@ -1037,9 +1075,10 @@
                                     linq2indexedDB.prototype.core.index(objArgs[1], anotherIndex, true).then(function (indexArgs) {
                                         ok(true, "Index open");
 
-                                        if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE) {
+                                        //if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE
+                                        //    || linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM) {
                                             indexArgs[1].get(1);
-                                        }
+                                       // }
 
                                         indexArgs[0].db.close();
                                         start();
@@ -1071,9 +1110,10 @@
                             }, function (transArgs) {
                                 linq2indexedDB.prototype.core.objectStore(transArgs[0], objectStoreName).then(function (objArgs) {
                                     // Work around for chrome, if nothing gets queried, the transaction gets aborted.
-                                    if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE) {
+                                    //if (linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.GOOGLE
+                                    //    || linq2indexedDB.prototype.core.implementation == linq2indexedDB.prototype.core.implementations.SHIM) {
                                         objArgs[1].get(1);
-                                    }
+                                    //}
                                     if (!objArgs[1].indexNames.contains(indexProperty + linq2indexedDB.prototype.core.indexSuffix)) {
                                         ok(true, "Index is no longer present");
                                     }
