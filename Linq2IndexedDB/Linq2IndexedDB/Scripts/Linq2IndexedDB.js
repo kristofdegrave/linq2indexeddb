@@ -2,7 +2,7 @@
 /// <reference path="IndexedDBShim.min.js" />
 
 var linq2indexedDB;
-var enableLogging = true;
+var enableLogging = false;
 
 // Initializes the linq2indexeddb object.
 (function () {
@@ -89,11 +89,9 @@ var enableLogging = true;
             }
         };
 
-        enableLogging = enableDebugging;
+        linq2indexedDB.prototype.utilities.debug(enableDebugging);
         if (enableDebugging) {
             returnObject.viewer = viewer(dbConfig);
-            linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.warning, "Debugging enabled: be carefull when using in production enviroment. Complex objects get written to  the log and may cause memory leaks.")
-            
         } else {
             returnObject.viewer = null;
         }
@@ -1351,6 +1349,10 @@ var enableLogging = true;
                 }
             }
             return obj;
+        },
+        debug: function(enable) {
+            enableLogging = enable;
+            linq2indexedDB.prototype.utilities.log(linq2indexedDB.prototype.utilities.severity.warning, "Debugging enabled: be carefull when using in production enviroment. Complex objects get written to  the log and may cause memory leaks.");
         },
         severity: {
             information: 0,
