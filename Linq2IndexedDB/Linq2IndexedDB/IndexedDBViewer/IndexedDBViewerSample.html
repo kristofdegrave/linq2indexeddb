@@ -2,9 +2,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
         <title>..:: IndexedDBViewer ::..</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+        <link href="../Content/IndexedDBViewer.css" rel="stylesheet" />
         <script type="text/javascript" src="../Scripts/jquery-1.8.2.js"> </script>
+        <script type="text/javascript" src="../Scripts/IndexedDBShim.min.js"></script>
         <script type="text/javascript" src="../Scripts/Linq2IndexedDB.js"> </script>
-        <script>
+        <script type="text/javascript">
             var indexedDBName = "Consumption database";
             var applicationVersion = 1;
             var CONSUMPTIONTYPE = "ConsumptionType";
@@ -26,11 +29,10 @@
             dbConfig.version = applicationVersion;
             dbConfig.definition = databaseDefinition;
 
-            var db = window.linq2indexedDB(indexedDBName, dbConfig, true);
+            var db = window.linq2indexedDB(indexedDBName, dbConfig, false);
             db.initialize();
         </script>
         <script type="text/javascript" src="../Scripts/IndexedDBViewer.js"></script>
-        <link href="../Content/IndexedDBViewer.css" rel="stylesheet" />
     </head>
     <body>
         <div id="indexedDBViewer" data-dbName="Consumption database"></div>

@@ -24,7 +24,7 @@ dbConfig.version = applicationVersion;
 //dbConfig.objectStoreConfiguration = ObjStores;
 dbConfig.definition = databaseDefinition;
 
-var db = window.linq2indexedDB(indexedDBName, dbConfig, true);
+var db = window.linq2indexedDB(indexedDBName, dbConfig, false);
 
 $(function() {
     $("#tabs").tabs({
