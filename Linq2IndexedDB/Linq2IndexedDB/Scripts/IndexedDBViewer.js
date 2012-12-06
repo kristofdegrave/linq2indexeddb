@@ -12,10 +12,10 @@ $(function () {
 
         navigation.addClass('nav');
 
-        linq2indexedDB.prototype.core.db(dbName).then(function () {
+        linq2indexedDB.core.db(dbName).then(function () {
             var connection = arguments[0][0];
 
-            linq2indexedDB.prototype.core.dbStructureChanged.addListener(linq2indexedDB.prototype.core.databaseEvents.databaseBlocked, function () {
+            linq2indexedDB.core.dbStructureChanged.addListener(linq2indexedDB.core.databaseEvents.databaseBlocked, function () {
                 connection.close();
             });
 
@@ -25,7 +25,7 @@ $(function () {
                 var storeName = connection.objectStoreNames[i];
                 var menuObjectStore = expandableListItem('indexedDBViewerMenuObjectStore' + storeName, storeName, menuObjectStores, viewDb, { dbName: dbName, objectStore: storeName, index: null });
 
-                linq2indexedDB.prototype.core.objectStore(linq2indexedDB.prototype.core.transaction(connection, storeName, linq2indexedDB.prototype.core.transactionTypes.READ_ONLY, false), storeName).then(function (args) {
+                linq2indexedDB.core.objectStore(linq2indexedDB.core.transaction(connection, storeName, linq2indexedDB.core.transactionTypes.READ_ONLY, false), storeName).then(function (args) {
                     var store = args[1];
 
                     var menuObjectStore = retrieveOrCreateElement('indexedDBViewerMenuObjectStore' + storeName, 'li', menuObjectStores);
@@ -60,7 +60,7 @@ $(function () {
             }
         }
 
-        linq2indexedDB.prototype.core.db(dbName).then(function () {
+        linq2indexedDB.core.db(dbName).then(function () {
             var connection = arguments[0][0];
 
             if (objectStore == null) {
@@ -81,20 +81,20 @@ $(function () {
                 content.append("<br/>");
             }
 
-            linq2indexedDB.prototype.core.dbStructureChanged.addListener(linq2indexedDB.prototype.core.databaseEvents.databaseBlocked, function () {
+            linq2indexedDB.core.dbStructureChanged.addListener(linq2indexedDB.core.databaseEvents.databaseBlocked, function () {
                 connection.close();
             });
 
             for (var i = 0; i < connection.objectStoreNames.length; i++) {
                 var storeName = connection.objectStoreNames[i];
-                linq2indexedDB.prototype.core.objectStore(linq2indexedDB.prototype.core.transaction(connection, storeName, linq2indexedDB.prototype.core.transactionTypes.READ_ONLY, false), storeName).then(function (args) {
+                linq2indexedDB.core.objectStore(linq2indexedDB.core.transaction(connection, storeName, linq2indexedDB.core.transactionTypes.READ_ONLY, false), storeName).then(function (args) {
                     var store = args[1];
                     if (objectStore == null) {
                         viewObjectStoreDefinition(store.name, store.keyPath, store.autoIncrement, content);
                     }
                     else {
                         if (index == null && store.name == objectStore) {
-                            linq2indexedDB.prototype.core.cursor(store).then(function () {
+                            linq2indexedDB.core.cursor(store).then(function () {
 
                             }, function () {
                             }, function (args1) {
@@ -104,14 +104,14 @@ $(function () {
                         }
                     }
                     for (var j = 0; j < store.indexNames.length; j++) {
-                        linq2indexedDB.prototype.core.index(store, store.indexNames[j], false).then(function (args1) {
+                        linq2indexedDB.core.index(store, store.indexNames[j], false).then(function (args1) {
                             var ix = args1[1];
                             if (objectStore == null) {
                                 viewIndexDefinition(ix.name, ix.keyPath, ix.objectStore.name, ix.multiEntry || ix.multiRow, ix.unique, content);
                             }
                             else {
                                 if (index != null && ix.name == index) {
-                                    linq2indexedDB.prototype.core.cursor(ix).then(function () {
+                                    linq2indexedDB.core.cursor(ix).then(function () {
                                         var x = 1;
                                     }, function () {
                                     }, function (args1) {

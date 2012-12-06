@@ -1,3 +1,5 @@
+/// <reference path="Scripts/Linq2IndexedDB.js" />
+
 $(document).ready(function () {
   var db;
 
@@ -25,7 +27,7 @@ $(document).ready(function () {
               ]
   }];
 
-  db = window.linq2indexedDB("testDB", dbConfig, false);
+  db = new linq2indexedDB.DbContext("testDB", dbConfig, false);
 
   var urls = ["google", "bing", "yahoo", "reddit", "msn", "aol"];
 
@@ -38,11 +40,11 @@ $(document).ready(function () {
   "project": -1,
   "accessTime": 0
   };
-  db.linq.from("tester").update(data);
+  db.tester.update(data);
 
   var bd = document.getElementById("addsomething");
 
   bd.addEventListener("click", function() {
-    db.linq.from("tester").where("tabid").equals(4).select().then();
+    db.tester.where("tabid").equals(4).select().then();
   }, false);
 });

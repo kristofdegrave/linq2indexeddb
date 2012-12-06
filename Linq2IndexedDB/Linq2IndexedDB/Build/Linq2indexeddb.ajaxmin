@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<root>
+  <output path="Scripts\Linq2IndexedDB.js">
+    <arguments>-clobber -reorder -strict:true -pretty</arguments>
+    <input path="Source\Global.js"/>
+    <input path="Source\Extensions.js"/>
+    <input path="Source\About.js"/>
+    <input path="Source\Event.js"/>
+    <input path="Source\Logging.js"/>
+    <input path="Source\Json.js"/>
+    <input path="Source\Util.js"/>
+    <input path="Source\Promise.jQuery.js"/>
+    <input path="Source\Core.js"/>
+    <input path="Source\DbContext.js"/>
+    <input path="Source\Filters.js"/>
+    <input path="Source\Worker.js"/>
+  </output>
+  <!--<output path="Scripts\Linq2IndexedDB.min.js">
+    <input path="Source\Global.js"/>
+    <input path="Source\Linq2IndexedDB.linq.js"/>
+    <input path="Source\Linq2IndexedDB.filters.js"/>
+    <input path="Source\Linq2IndexedDB.utilities.js"/>
+    <input path="Source\Linq2IndexedDB.core.js"/>
+    <arguments>-clobber</arguments>
+  </output>-->
+</root>

@@ -14,7 +14,6 @@
     <RootNamespace>Linq2IndexedDB</RootNamespace>
     <AssemblyName>Linq2IndexedDB</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <UseIISExpress>false</UseIISExpress>
     <SccProjectName>SAK</SccProjectName>
     <SccLocalPath>SAK</SccLocalPath>
     <SccAuxPath>SAK</SccAuxPath>
@@ -28,6 +27,7 @@
     <IISExpressAnonymousAuthentication />
     <IISExpressWindowsAuthentication />
     <IISExpressUseClassicPipelineMode />
+    <UseIISExpress>true</UseIISExpress>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -49,6 +49,9 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AjaxMin">
+      <HintPath>..\packages\AjaxMin.4.75.4713.17606\lib\net40\AjaxMin.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Web.DynamicData" />
     <Reference Include="System.Web.Entity" />
@@ -67,6 +70,8 @@
     <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Build\AjaxMin.dll" />
+    <Content Include="Build\AjaxMinTask.dll" />
     <Content Include="Content\IndexedDBViewer.css" />
     <Content Include="Content\themes\base\images\ui-bg_flat_0_aaaaaa_40x100.png" />
     <Content Include="Content\themes\base\images\ui-bg_flat_75_ffffff_40x100.png" />
@@ -128,9 +133,9 @@
     <Content Include="Content\themes\base\minified\jquery.ui.tabs.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.theme.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.tooltip.min.css" />
+    <Content Include="HTMLPage1.htm" />
     <Content Include="IndexedDBViewer\IndexedDBViewerSample.html" />
     <Content Include="Samples\await.html" />
-    <Content Include="Samples\index.htm" />
     <Content Include="Scripts\IndexedDBShim.min.js" />
     <Content Include="Scripts\jquery-1.8.2-vsdoc.js" />
     <Content Include="Scripts\jquery-1.8.2.js" />
@@ -139,8 +144,23 @@
     <Content Include="Scripts\jquery-ui-1.9.0.min.js" />
     <Content Include="Scripts\Linq2IndexedDB.BindingListProvider.js" />
     <Content Include="Scripts\modernizr-2.6.2.js" />
+    <Content Include="Source\About.js" />
+    <Content Include="Source\Event.js" />
+    <Content Include="Source\Promise.js" />
+    <Content Include="Source\Util.js" />
+    <Content Include="Source\Worker.js" />
+    <Content Include="Source\Extensions.js" />
+    <Content Include="Source\Json.js" />
+    <Content Include="Source\Core.js" />
+    <Content Include="Source\Filters.js" />
+    <Content Include="Source\Global.js" />
+    <Content Include="Source\DbContext.js" />
+    <Content Include="Source\Logging.js" />
+    <Content Include="Source\Promise.jQuery.js" />
+    <Content Include="Source\Promise.WinJS.js" />
     <Content Include="testfile.html" />
     <Content Include="testscript.js" />
+    <Content Include="JavaScript1.js" />
     <Content Include="Tests\Stresstest.htm" />
     <Content Include="Scripts\IndexedDBViewer.js" />
     <Content Include="Samples\Consumptions.css" />
@@ -173,7 +193,13 @@
   <ItemGroup>
     <Content Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="Build\AjaxMin.tasks" />
+    <None Include="Build\AjaxMinTask.targets" />
+    <None Include="Build\Linq2indexeddb.ajaxmin">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
@@ -185,12 +211,11 @@
     <VisualStudio>
       <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
         <WebProjectProperties>
-          <UseIIS>False</UseIIS>
+          <UseIIS>True</UseIIS>
           <AutoAssignPort>True</AutoAssignPort>
           <DevelopmentServerPort>50046</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
-          <IISUrl>
-          </IISUrl>
+          <IISUrl>http://localhost:50046/</IISUrl>
           <NTLMAuthentication>False</NTLMAuthentication>
           <UseCustomServer>False</UseCustomServer>
           <CustomServerUrl>
@@ -207,4 +232,24 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <!--<Import Project="$(MSBuildProjectDirectory)\Build\AjaxMin.tasks" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      -->
+  <!--<JS Include="**\*.js" Exclude="**\*.min.js;Scripts\*.js" />-->
+  <!--
+      <JS Include="Scripts\Linq2IndexedDB.js" Exclude="**\*.min.js" />
+    </ItemGroup>
+    <AjaxMin JsSourceFiles="@(JS)" JsSourceExtensionPattern="\.js$" JsTargetExtension=".min.js" />
+  </Target>-->
+  <Import Project="$(MSBuildProjectDirectory)\Build\AjaxMinTask.targets" />
+  <UsingTask TaskName="AjaxMinManifestTask" AssemblyFile="AjaxMinTask.dll" />
+  <!-- target to build all ajaxmin manifest files in the project -->
+  <Target Name="BuildAjaxMinManifests" AfterTargets="Build">
+    <Message Text="Processing AjaxMin Manifests" Importance="high" />
+    <CreateItem Include="@(None)" Condition="'%(Extension)'=='.ajaxmin'">
+      <Output TaskParameter="Include" ItemName="AjaxMinManifests" />
+    </CreateItem>
+    <AjaxMinManifestTask ProjectDefaultSwitches="-define:$(DefineConstants))" Configuration="$(Configuration)" TreatWarningsAsErrors="false" InputFolder="$(ProjectDir)\" OutputFolder="$(ProjectDir)\" Manifests="@(AjaxMinManifests)" />
+  </Target>
 </Project>

@@ -1,0 +1,33 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <script src="JavaScript1.js" type="text/javascript"></script>
+    <script type="text/javascript">
+
+        //var x = {};
+
+        //x.logging = "b";
+        function x(name) {
+            this.name = name;
+            this.yyy = function () { }
+            this.logging = "a"
+            //            return {
+            //                yyy: function () { },
+            //                logging: true
+            //            }
+        }
+
+        //x.logging = "b";
+        x.prototype.logging = "c";
+        x.prototype.test = function () { return this.name; }
+
+        var y = new x("");
+
+        var z = y.logging;
+    </script>
+</head>
+<body>
+
+</body>
+</html>

@@ -24,7 +24,7 @@ dbConfig.version = applicationVersion;
 //dbConfig.objectStoreConfiguration = ObjStores;
 dbConfig.definition = databaseDefinition;
 
-var db = window.linq2indexedDB(indexedDBName, dbConfig, false);
+var db = new linq2indexedDB.DbContext(indexedDBName, dbConfig, true);
 
 $(function() {
     $("#tabs").tabs({
@@ -32,15 +32,9 @@ $(function() {
     });
 
     $('#cboTypeConsumption').empty();
-
-    //db.deleteDatabase().then(function(){
-    db.initialize().then(function() {
-        db.linq.from(CONSUMPTIONTYPE).select().then(function() {
-        }, handleError, function(data) {
-            InitializeConsumptionType(data);
-        });
-    }, handleError);
-    //});
+    db.ConsumptionType.select().then(null, handleError, function (data) {
+        InitializeConsumptionType(data);
+    });
 
     if (!Modernizr.inputtypes.date) {
         $('input[type=date]').datepicker();
@@ -101,7 +95,7 @@ function loadConsumptionType(id) {
     var consumptionType = GetConsumptionType(id);
     $('#consumptions-data-' + consumptionType.Description).empty();
 
-    db.linq.from(CONSUMPTION).where("ConsumptionTypeId").equals(id).orderByDesc("Date").select().then(function() {
+    db.Consumption.where("ConsumptionTypeId").equals(id).orderByDesc("Date").select().then(function() {
     }, handleError, function(data) {
         showConsumption(data, consumptionType);
     });
@@ -109,12 +103,12 @@ function loadConsumptionType(id) {
 
 function saveConsumption(consumption) {
     if (consumption.Id && consumption.Id != 0) {
-        db.linq.from(CONSUMPTION).update(consumption).then(function(data) {
+        db.Consumption.update(consumption).then(function(data) {
             //loadConsumptionType(consumption.ConsumptionTypeId);
             showConsumption(data.object, GetConsumptionType(data.object.ConsumptionTypeId));
         }, handleError);
     } else {
-        db.linq.from(CONSUMPTION).insert(consumption).then(function(data) {
+        db.Consumption.insert(consumption).then(function(data) {
             //loadConsumptionType(consumption.ConsumptionTypeId);
             showConsumption(data.object, GetConsumptionType(data.object.ConsumptionTypeId));
         }, handleError);
@@ -122,14 +116,14 @@ function saveConsumption(consumption) {
 }
 
 function deleteConsumption(id) {
-    db.linq.from(CONSUMPTION).remove(id).then(function() {
+    db.Consumption.remove(id).then(function() {
         //loadConsumptionType(consumptionTypeId);
         $('#consumptionId-' + id).remove();
     }, handleError);
 }
 
 function getConsumption(id) {
-    db.linq.from(CONSUMPTION).get(id).then(InitializeUpdate, handleError);
+    db.Consumption.get(id).then(InitializeUpdate, handleError);
 }
 
 function InitializeConsumptionType(consumptionType) {

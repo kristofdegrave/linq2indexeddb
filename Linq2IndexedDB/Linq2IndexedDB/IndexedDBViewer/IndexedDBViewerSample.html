@@ -29,8 +29,7 @@
             dbConfig.version = applicationVersion;
             dbConfig.definition = databaseDefinition;
 
-            var db = window.linq2indexedDB(indexedDBName, dbConfig, false);
-            db.initialize();
+            var db = new linq2indexedDB.DbContext(indexedDBName, dbConfig, false);
         </script>
         <script type="text/javascript" src="../Scripts/IndexedDBViewer.js"></script>
     </head>
