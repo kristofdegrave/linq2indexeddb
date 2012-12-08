@@ -1,4 +1,6 @@
-﻿(function (window, linq2indexedDB, JSON) {
+﻿// ReSharper disable InconsistentNaming
+(function (window, linq2indexedDB, JSON) {
+// ReSharper restore InconsistentNaming
     "use strict";
 
     // Private Fields
@@ -22,16 +24,16 @@
     function worker(data, filters, sortClauses) {
         return linq2indexedDB.promises.promise(function (pw) {
             if (typeof (window) !== "undefined" && typeof (window.Worker) !== "undefined") {
-                var worker = new Worker(linq2indexedDB.workers.location);
-                worker.onmessage = function (event) {
+                var webworker = new Worker(linq2indexedDB.workers.location);
+                webworker.onmessage = function (event) {
                     pw.complete(this, event.data);
-                    worker.terminate();
+                    webworker.terminate();
                 };
-                worker.onerror = pw.error;
+                webworker.onerror = pw.error;
 
                 var filtersString = JSON.stringify(filters, linq2indexedDB.json.serialize);
 
-                worker.postMessage({ data: data, filters: filtersString, sortClauses: sortClauses });
+                webworker.postMessage({ data: data, filters: filtersString, sortClauses: sortClauses });
             } else {
                 // Fallback when there are no webworkers present. Beware, this runs on the UI thread and can block the UI
                 pw.complete(this, filterSort(data, filters, sortClauses));

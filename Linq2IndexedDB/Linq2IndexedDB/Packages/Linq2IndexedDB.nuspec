@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>Linq2IndexedDB</id>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <title>Linq2IndexedDB</title>
     <authors>Kristof Degrave,Parashuram Narasimhan</authors>
     <owners>Kristof Degrave,Parashuram Narasimhan</owners>
@@ -40,6 +40,7 @@
   </metadata>
   <files>
     <file src="..\Scripts\IndexedDBShim.min.js" target="Content\Scripts" />
-    <file src="..\Scripts\Linq2IndexedDB.js" target="Content\Scripts" />
+    <file src="..\Destination\Web\Linq2IndexedDB.js" target="Content\Scripts" />
+    <file src="..\Destination\Web\Linq2IndexedDB.min.js" target="Content\Scripts" />
   </files>
 </package>  

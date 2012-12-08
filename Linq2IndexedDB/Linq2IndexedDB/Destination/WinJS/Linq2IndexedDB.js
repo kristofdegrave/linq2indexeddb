@@ -197,30 +197,28 @@ Array.prototype.contains = function(obj)
     }
     linq2indexedDB.util = {isArray: isArray}
 })(linq2indexedDB);
-(function(window, $, linq2indexedDB)
+(function(WinJS, linq2indexedDB)
 {
-    if (typeof(window) !== "undefined" && (typeof($) === "undefined" || typeof($.Deferred) === "undefined"))
-        throw"linq2indexedDB: No jQuery framework that supports promises found. Please ensure jQuery is referenced before the linq2indexedDB.js file and the version is higher then 1.7.1";
-    function jQueryPromise(promise)
+    function winJsPromise(promise)
     {
-        return $.Deferred(function(dfd)
+        return new WinJS.Promise(function(completed, error, progress)
             {
                 promise({
                     complete: function(context, args)
                     {
-                        dfd.resolveWith(context, [args])
+                        completed(args)
                     }, error: function(context, args)
                         {
-                            dfd.rejectWith(context, [args])
+                            error(args)
                         }, progress: function(context, args)
                         {
-                            dfd.notifyWith(context, [args])
+                            progress(args)
                         }
                 })
-            }).promise()
+            })
     }
-    linq2indexedDB.promises = {promise: jQueryPromise}
-})(win, $, linq2indexedDB);
+    linq2indexedDB.promises = {promise: winJsPromise}
+})(WinJS, linq2indexedDB);
 (function(window, linq2indexedDB, isMetroApp)
 {
     var defaultDatabaseName = "Default";

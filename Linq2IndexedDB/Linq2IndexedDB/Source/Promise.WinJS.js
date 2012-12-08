@@ -1,16 +1,18 @@
-﻿(function (WinJS, linq2indexedDB) {
+﻿// ReSharper disable InconsistentNaming
+(function(WinJS, linq2indexedDB) {
+    // ReSharper restore InconsistentNaming
     "use strict";
 
-    function winJSPromise(promise) {
-        return new WinJS.Promise(function (completed, error, progress) {
+    function winJsPromise(promise) {
+        return new WinJS.Promise(function(completed, error, progress) {
             promise({
-                complete: function (context, args) {
+                complete: function(context, args) {
                     completed(args);
                 },
-                error: function (context, args) {
+                error: function(context, args) {
                     error(args);
                 },
-                progress: function (context, args) {
+                progress: function(context, args) {
                     progress(args);
                 }
             });
@@ -18,6 +20,6 @@
     }
 
     linq2indexedDB.promises = {
-        promise: winJSPromise
+        promise: winJsPromise
     };
-})(WinJS, linq2indexedDB)
+})(WinJS, linq2indexedDB);

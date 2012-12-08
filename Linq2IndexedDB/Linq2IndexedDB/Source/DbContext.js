@@ -1,8 +1,10 @@
 ﻿// Initializes the linq2indexeddb object.
+// ReSharper disable InconsistentNaming
 (function (linq2indexedDB) {
+// ReSharper restore InconsistentNaming
     "use strict";
 
-    function DbContext(name, configuration, enableDebugging) {
+    function dbContext(name, configuration, enableDebugging) {
         /// <summary>Creates a new or opens an existing database for the given name</summary>
         /// <param name="name" type="String">The name of the database</param>
         /// <param name="configuration" type="Object">
@@ -27,7 +29,7 @@
             if (configuration.schema) {
                 var appVersion = dbConfig.version || -1;
                 for (var key in configuration.schema) {
-                    if (typeof key === "number") {
+                    if (!isNaN(key)) {
                         appVersion = dbConfig.version > key ? dbConfig.version : key;
                     }
                 }
@@ -58,7 +60,7 @@
         this.viewer = viewer(dbConfig);
     }
 
-    DbContext.prototype = function () {
+    dbContext.prototype = function () {
         var queryBuilderObj = function (objectStoreName, dbConfig) {
             this.from = objectStoreName;
             this.where = [];
@@ -438,27 +440,27 @@
             });
         }
 
-        function databind(queryBuilder, provider, bindingList) {
-            var operations = {
-                insert: function (data) {
-                    insert(queryBuilder, data);
-                },
-                update: function (data) {
-                    update(queryBuilder, data);
-                },
-                remove: function (data) {
-                    //remove(queryBuilder, data);
-                }
-            };
+        //function databind(queryBuilder, provider, bindingList) {
+        //    var operations = {
+        //        insert: function (data) {
+        //            insert(queryBuilder, data);
+        //        },
+        //        update: function (data) {
+        //            update(queryBuilder, data);
+        //        },
+        //        remove: function (/*data*/) {
+        //            //remove(queryBuilder, data);
+        //        }
+        //    };
 
-            var list = provider(bindingList, operations);
+        //    var list = provider(bindingList, operations);
 
-            select(queryBuilder).then(function (data) {
-                provider.populate(data);
-            });
+        //    select(queryBuilder).then(function (data) {
+        //        provider.populate(data);
+        //    });
 
-            return list;
-        }
+        //    return list;
+        //}
 
         function executeQuery(queryBuilder, transactionType, callBack) {
             return linq2indexedDB.promises.promise(function (pw) {
@@ -616,8 +618,8 @@
             return linq2indexedDB.promises.promise(function (pw) {
                 linq2indexedDB.core.db(dbConfig.name, dbConfig.version).then(function (args) /*db*/ {
                     var db = args[0];
-                    for (var i = 0; i < db.objectStoreNames.length; i++) {
-                        var name = db.objectStoreNames[i];
+                    for (var k = 0; k < db.objectStoreNames.length; k++) {
+                        var name = db.objectStoreNames[k];
                         self[name] = self.from(name);
                     }
                     linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "Close dbconnection");
@@ -837,6 +839,6 @@
         }
     }
 
-    linq2indexedDB.DbContext = DbContext;
+    linq2indexedDB.DbContext = dbContext;
 })(linq2indexedDB);
 

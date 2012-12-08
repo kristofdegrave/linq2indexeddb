@@ -1,4 +1,6 @@
-﻿(function (linq2indexedDB) {
+﻿// ReSharper disable InconsistentNaming
+(function (linq2indexedDB) {
+// ReSharper restore InconsistentNaming
     //Copyright (c) 2010 Nicholas C. Zakas. All rights reserved.
     //MIT License
     function eventTarget() {
@@ -59,5 +61,5 @@
     };
     // End copyright
 
-    linq2indexedDB.event = eventTarget;
+    linq2indexedDB.Event = eventTarget;
 })(linq2indexedDB);

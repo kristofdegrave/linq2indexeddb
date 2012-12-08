@@ -1,7 +1,9 @@
 ﻿/**************************
  * Logging functionality. *
  **************************/
+// ReSharper disable InconsistentNaming
 (function (linq2indexedDB) {
+// ReSharper restore InconsistentNaming
     "use strict";
 
     var severityEnum = {
@@ -34,12 +36,12 @@
     }
 
     function log(severity) {
-        if (typeof (console) === undefined
+        if (typeof (console) === "undefined"
             || !linq2indexedDB.logging.enabled) {
             return false;
         }
 
-        var currtime = (function currentTime() {
+        var currtime = (function() {
             var time = new Date();
             return time.getHours() + ':' + time.getMinutes() + ':' + time.getSeconds() + '.' + time.getMilliseconds();
         })();

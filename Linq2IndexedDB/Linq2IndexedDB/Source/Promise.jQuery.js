@@ -1,4 +1,6 @@
-﻿(function (window, $, linq2indexedDB) {
+﻿// ReSharper disable InconsistentNaming
+(function (window, $, linq2indexedDB) {
+// ReSharper restore InconsistentNaming
     "use strict";
 
     if (typeof (window) !== "undefined" && (typeof ($) === "undefined" || typeof ($.Deferred) === "undefined")) {

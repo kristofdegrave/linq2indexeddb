@@ -1,4 +1,6 @@
-﻿(function (linq2indexedDB) {
+﻿// ReSharper disable InconsistentNaming
+(function (linq2indexedDB) {
+// ReSharper restore InconsistentNaming
     "use strict";
 
     function isArray(array) {

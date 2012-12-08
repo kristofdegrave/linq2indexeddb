@@ -1,7 +1,9 @@
-﻿(function (linq2indexedDB) {
+﻿// ReSharper disable InconsistentNaming
+(function (linq2indexedDB) {
+// ReSharper restore InconsistentNaming
     "use strict";
 
-    function JSONComparer(propertyName, descending) {
+    function jsonComparer(propertyName, descending) {
         return {
             sort: function (valueX, valueY) {
                 if (descending) {
@@ -59,7 +61,7 @@
     }
 
     linq2indexedDB.json = {
-        comparer: JSONComparer,
+        comparer: jsonComparer,
         serialize: serialize,
         deserialize: deserialize,
         getPropertyValue: getPropertyValue,

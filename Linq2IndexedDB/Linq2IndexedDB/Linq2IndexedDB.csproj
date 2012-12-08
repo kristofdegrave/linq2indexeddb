@@ -133,6 +133,10 @@
     <Content Include="Content\themes\base\minified\jquery.ui.tabs.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.theme.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.tooltip.min.css" />
+    <Content Include="Destination\Web\Linq2IndexedDB.js" />
+    <Content Include="Destination\Web\Linq2IndexedDB.min.js" />
+    <Content Include="Destination\WinJS\Linq2IndexedDB.js" />
+    <Content Include="Destination\WinJS\Linq2IndexedDB.min.js" />
     <Content Include="HTMLPage1.htm" />
     <Content Include="IndexedDBViewer\IndexedDBViewerSample.html" />
     <Content Include="Samples\await.html" />
@@ -161,6 +165,16 @@
     <Content Include="testfile.html" />
     <Content Include="testscript.js" />
     <Content Include="JavaScript1.js" />
+    <Content Include="Tests\core.count.js" />
+    <Content Include="Tests\core.cursor.js" />
+    <Content Include="Tests\core.database.js" />
+    <Content Include="Tests\core.get.js" />
+    <Content Include="Tests\core.index.js" />
+    <Content Include="Tests\core.insert.js" />
+    <Content Include="Tests\core.objectStore.js" />
+    <Content Include="Tests\core.remove.js" />
+    <Content Include="Tests\core.update.js" />
+    <Content Include="Tests\InitializeTest.js" />
     <Content Include="Tests\Stresstest.htm" />
     <Content Include="Scripts\IndexedDBViewer.js" />
     <Content Include="Samples\Consumptions.css" />
@@ -199,7 +213,9 @@
     <None Include="Build\Linq2indexeddb.ajaxmin">
       <SubType>Designer</SubType>
     </None>
+    <Content Include="Tests\core.transaction.js" />
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

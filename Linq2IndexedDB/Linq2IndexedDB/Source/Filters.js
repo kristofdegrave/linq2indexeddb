@@ -1,5 +1,7 @@
 ﻿// Namespace linq2indexedDB.prototype.linq
+// ReSharper disable InconsistentNaming
 (function (linq2indexedDB) {
+// ReSharper restore InconsistentNaming
     var filters = {};
     var equalsFilter = createFilter("equals"
                                    , true
@@ -53,8 +55,8 @@
                                        ///     returns a function to retrieve the necessary values for the filter
                                        /// </returns>
                                        return function (minValue, maxValue, minValueIncluded, maxValueIncluded) {
-                                           var isMinValueIncluded = typeof (minValueIncluded) === undefined ? false : minValueIncluded;
-                                           var isMasValueIncluded = typeof (maxValueIncluded) === undefined ? false : maxValueIncluded;
+                                           var isMinValueIncluded = typeof (minValueIncluded) === "undefined" ? false : minValueIncluded;
+                                           var isMasValueIncluded = typeof (maxValueIncluded) === "undefined" ? false : maxValueIncluded;
                                            if (typeof (minValue) === "undefined") {
                                                throw "linq2indexedDB: minValue needs to be provided to the between clause";
                                            }
@@ -95,7 +97,7 @@
                                            if (typeof (value) === "undefined") {
                                                throw "linq2indexedDB: value needs to be provided to the greatherThan clause";
                                            }
-                                           var isValueIncluded = typeof (valueIncluded) === undefined ? false : valueIncluded;
+                                           var isValueIncluded = typeof (valueIncluded) === "undefined" ? false : valueIncluded;
 
                                            filterMetaData.value = value;
                                            filterMetaData.valueIncluded = isValueIncluded;
@@ -128,7 +130,7 @@
                                            if (typeof (value) === "undefined") {
                                                throw "linq2indexedDB: value needs to be provided to the smallerThan clause";
                                            }
-                                           var isValueIncluded = typeof (valueIncluded) === undefined ? false : valueIncluded;
+                                           var isValueIncluded = typeof (valueIncluded) === "undefined" ? false : valueIncluded;
 
                                            filterMetaData.value = value;
                                            filterMetaData.valueIncluded = isValueIncluded;

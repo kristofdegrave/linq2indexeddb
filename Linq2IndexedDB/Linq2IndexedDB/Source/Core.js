@@ -2,7 +2,9 @@
     // UI Thread 
 
     // Namespace linq2indexedDB.core
+// ReSharper disable InconsistentNaming
     (function (window, linq2indexedDB, isMetroApp) {
+// ReSharper restore InconsistentNaming
         "use strict"; 
 
         // Region variables
@@ -231,13 +233,13 @@
                     if (nonExistingObjectStores.length > 0 && autoGenerateAllowed) {
                         // setTimeout is necessary when multiple request to generate an index come together.
                         // This can result in a deadlock situation, there for the setTimeout
-                        setTimeout(function (db) {
+                        setTimeout(function (con) {
                             upgradingDatabase = true;
                             var version = getDatabaseVersion(db) + 1;
-                            var dbName = db.name;
-                            linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "Transaction database upgrade needed: ", db);
+                            var dbName = con.name;
+                            linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "Transaction database upgrade needed: ", con);
                             // Closing the current connections so it won't block the upgrade.
-                            closeConnection(db);
+                            closeConnection(con);
                             // Open a new connection with the new version
                             core.db(dbName, version).then(function (args /*dbConnection, event*/) {
                                 upgradingDatabase = false;
@@ -789,18 +791,15 @@
                     }
                     pw.error(this, error);
                 }
-                finally {
-                    keyRange = null;
-                }
             },
             keyCursor: function (pw, index, range, direction) {
                 linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "keyCursor Started", index, range, direction);
                 var returnData = [];
+                var txn = index.objectStore.transaction;
 
                 try {
                     var request;
                     var keyRange = range;
-                    var txn = index.objectStore.transaction;
 
                     if (!keyRange) {
                         keyRange = core.keyRange.lowerBound(0);
@@ -866,7 +865,6 @@
                                         }
                                         catch (updateEx) {
                                             var updateError = wrapException(updateEx, "keyCursor - update");
-                                            var txn = index.objectStore.transaction;
 
                                             if ((updateEx.DATA_ERR && updateEx.code == updateEx.DATA_ERR) || updateEx.name == "DataError") {
                                                 updateError.type = "DataError";
@@ -907,7 +905,6 @@
                                         }
                                         catch (deleteEx) {
                                             var deleteError = wrapException(deleteEx, "keyCursor - delete");
-                                            var txn = index.objectStore.transaction;
 
                                             if ((deleteEx.READ_ONLY_ERR && deleteEx.code == deleteEx.READ_ONLY_ERR) || deleteEx.name == "ReadOnlyError") {
                                                 deleteError.type = "ReadOnlyError";
@@ -1415,36 +1412,6 @@
             }
         };
 
-        var sync = {
-            db: function (name, version, upgradeCallback, transactionTimeout) {
-                var connection;
-                try {
-                    // Initializing defaults
-                    name = name ? name : defaultDatabaseName;
-                    upgradeCallback = upgradeCallback ? upgradeCallback : function () { };
-                    transactionTimeout = transactionTimeout ? transactionTimeout : 1000;
-
-                    // Creating a new database conection
-                    if (version) {
-                        linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "db opening", name, version);
-                        connection = self.indexedDB.open(name, version, upgradeCallback);
-                    } else {
-                        linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "db opening", name);
-                        connection = self.indexedDB.open(name);
-                    }
-
-                    return connection;
-                } catch (ex) {
-                    var error = wrapException(ex, "db");
-                    if ((ex.INVALID_ACCESS_ERR && ex.code == ex.INVALID_ACCESS_ERR) || ex.name == "InvalidAccessError") {
-                        error.type = "InvalidAccessError";
-                        error.message = "You are trying to open a database with a negative version number.";
-                    }
-                    linq2indexedDB.logging.logError(error);
-                }
-            }
-        };
-
         var core = {
             db: function (name, version) {
                 return linq2indexedDB.promises.promise(function (pw) {
@@ -1711,8 +1678,8 @@
             closeDatabaseConnection: closeConnection,
             abortTransaction: abortTransaction,
             transactionTypes: transactionTypes,
-            dbStructureChanged: new linq2indexedDB.event(),
-            dbDataChanged: new linq2indexedDB.event(),
+            dbStructureChanged: new linq2indexedDB.Event(),
+            dbDataChanged: new linq2indexedDB.Event(),
             databaseEvents: dbEvents,
             dataEvents: dataEvents,
             implementation: implementation,
@@ -1767,7 +1734,7 @@
                 db = target.objectStore.transaction.db;
             }
 
-            if (typeof (db) !== "undefined" && typeof (db.close) != "undefined") {
+            if (typeof (db) !== "undefined" && db != null && typeof (db.close) != "undefined") {
                 linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "Close database Connection: ", db);
                 db.close();
             }
@@ -1955,13 +1922,17 @@
             });
         };
 
+// ReSharper disable InconsistentNaming
         function IDBSuccessHandler(pw, request) {
+// ReSharper restore InconsistentNaming
             request.onsuccess = function (e) {
                 pw.complete(e.target, [e.target.result, e]);
             };
         };
 
+// ReSharper disable InconsistentNaming
         function IDBErrorHandler(pw, request) {
+// ReSharper restore InconsistentNaming
             request.onerror = function (e) {
                 if (e) {
                     pw.error(e.target, [e.target.errorCode, e]);
@@ -1972,7 +1943,9 @@
             };
         };
 
+// ReSharper disable InconsistentNaming
         function IDBAbortHandler(pw, request) {
+// ReSharper restore InconsistentNaming
             request.onabort = function (e) {
                 if (e) {
                     pw.error(e.target, [e.target.errorCode, e]);
@@ -1983,13 +1956,17 @@
             };
         };
 
+// ReSharper disable InconsistentNaming
         function IDBVersionChangeHandler(pw, request) {
+// ReSharper restore InconsistentNaming
             request.onversionchange = function (e) {
                 pw.progress(e.target, [e.target.result, e]);
             };
         };
 
+// ReSharper disable InconsistentNaming
         function IDBCompleteHandler(pw, request) {
+// ReSharper restore InconsistentNaming
             request.oncomplete = function (e) {
                 if (!e) {
                     pw.complete(this, [this]);
@@ -2000,12 +1977,16 @@
             };
         };
 
+// ReSharper disable InconsistentNaming
         function IDBRequestHandler(pw, request) {
+// ReSharper restore InconsistentNaming
             IDBSuccessHandler(pw, request);
             IDBErrorHandler(pw, request);
         };
 
+// ReSharper disable InconsistentNaming
         function IDBCursorRequestHandler(pw, request) {
+// ReSharper restore InconsistentNaming
             request.onsuccess = function (e) {
                 if (!e.target.result) {
                     pw.complete(e.target, [e.target.result, e]);
@@ -2016,27 +1997,35 @@
             IDBErrorHandler(pw, request);
         };
 
+// ReSharper disable InconsistentNaming
         function IDBBlockedRequestHandler(pw, request) {
+// ReSharper restore InconsistentNaming
             IDBRequestHandler(pw, request);
             request.onblocked = function (e) {
                 pw.progress(e.target, ["blocked", e]);
             };
         };
 
+// ReSharper disable InconsistentNaming
         function IDBOpenDbRequestHandler(pw, request) {
+// ReSharper restore InconsistentNaming
             IDBBlockedRequestHandler(pw, request);
             request.onupgradeneeded = function (e) {
                 pw.progress(e.target, [e.target.transaction, e]);
             };
         };
 
+// ReSharper disable InconsistentNaming
         function IDBDatabaseHandler(pw, database) {
+// ReSharper restore InconsistentNaming
             IDBAbortHandler(pw, database);
             IDBErrorHandler(pw, database);
             IDBVersionChangeHandler(pw, database);
         };
 
+// ReSharper disable InconsistentNaming
         function IDBTransactionHandler(pw, txn) {
+// ReSharper restore InconsistentNaming
             IDBCompleteHandler(pw, txn);
             IDBAbortHandler(pw, txn);
             IDBErrorHandler(pw, txn);

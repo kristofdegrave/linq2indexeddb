@@ -19,7 +19,7 @@
     <tags>IndexedDB, HTML5, IndexedDBViewer, Storage, Viewer</tags>
     <dependencies>
       <dependency id="jQuery" version="1.8.2" />
-      <dependency id="Linq2IndexedDB" version="1.0.20" />
+      <dependency id="Linq2IndexedDB" version="1.1.0" />
     </dependencies>
   </metadata>
   <files>
