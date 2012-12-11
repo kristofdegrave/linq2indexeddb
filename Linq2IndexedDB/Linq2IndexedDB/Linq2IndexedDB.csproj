@@ -141,9 +141,9 @@
     <Content Include="IndexedDBViewer\IndexedDBViewerSample.html" />
     <Content Include="Samples\await.html" />
     <Content Include="Scripts\IndexedDBShim.min.js" />
-    <Content Include="Scripts\jquery-1.8.2-vsdoc.js" />
-    <Content Include="Scripts\jquery-1.8.2.js" />
-    <Content Include="Scripts\jquery-1.8.2.min.js" />
+    <None Include="Scripts\jquery-1.8.3.intellisense.js" />
+    <Content Include="Scripts\jquery-1.8.3.js" />
+    <Content Include="Scripts\jquery-1.8.3.min.js" />
     <Content Include="Scripts\jquery-ui-1.9.0.js" />
     <Content Include="Scripts\jquery-ui-1.9.0.min.js" />
     <Content Include="Scripts\Linq2IndexedDB.BindingListProvider.js" />

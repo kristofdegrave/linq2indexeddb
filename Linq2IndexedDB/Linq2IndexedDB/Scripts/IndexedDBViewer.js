@@ -1,4 +1,4 @@
-﻿/// <reference path="jquery-1.8.2.js" />
+﻿/// <reference path="jquery-1.8.3.js" />
 /// <reference path="Linq2IndexedDB.js" />
 
 $(function () {

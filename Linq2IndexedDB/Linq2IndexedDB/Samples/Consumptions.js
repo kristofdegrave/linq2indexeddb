@@ -1,5 +1,5 @@
 ﻿/// <reference path="../Scripts/jquery-1.7.2.js" />
-/// <reference path="../Scripts/jquery-ui-1.8.20.js" />
+/// <reference path="../Scripts/jquery-ui-1.8.30.js" />
 /// <reference path="../Scripts/Linq2IndexedDB.js" />
 /// <reference path="../Scripts/modernizr-2.5.3.js" />
 
