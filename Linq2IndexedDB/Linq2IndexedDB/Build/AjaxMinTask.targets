@@ -13,7 +13,7 @@
                              Configuration="$(Configuration)"
                              TreatWarningsAsErrors="false"
                              InputFolder="$(ProjectDir)"
-                             OutputFolder="$(ProjectDir)Content\"
+                             OutputFolder="$(ProjectDir)"
                              Manifests="@(AjaxMinManifests)" />
     </Target>
 </Project>

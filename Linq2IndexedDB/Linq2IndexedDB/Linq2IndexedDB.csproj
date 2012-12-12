@@ -208,7 +208,6 @@
     <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Build\AjaxMin.tasks" />
     <None Include="Build\AjaxMinTask.targets" />
     <None Include="Build\Linq2indexeddb.ajaxmin">
       <SubType>Designer</SubType>
@@ -248,24 +247,5 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <!--<Import Project="$(MSBuildProjectDirectory)\Build\AjaxMin.tasks" />
-  <Target Name="AfterBuild">
-    <ItemGroup>
-      -->
-  <!--<JS Include="**\*.js" Exclude="**\*.min.js;Scripts\*.js" />-->
-  <!--
-      <JS Include="Scripts\Linq2IndexedDB.js" Exclude="**\*.min.js" />
-    </ItemGroup>
-    <AjaxMin JsSourceFiles="@(JS)" JsSourceExtensionPattern="\.js$" JsTargetExtension=".min.js" />
-  </Target>-->
   <Import Project="$(MSBuildProjectDirectory)\Build\AjaxMinTask.targets" />
-  <UsingTask TaskName="AjaxMinManifestTask" AssemblyFile="AjaxMinTask.dll" />
-  <!-- target to build all ajaxmin manifest files in the project -->
-  <Target Name="BuildAjaxMinManifests" AfterTargets="Build">
-    <Message Text="Processing AjaxMin Manifests" Importance="high" />
-    <CreateItem Include="@(None)" Condition="'%(Extension)'=='.ajaxmin'">
-      <Output TaskParameter="Include" ItemName="AjaxMinManifests" />
-    </CreateItem>
-    <AjaxMinManifestTask ProjectDefaultSwitches="-define:$(DefineConstants))" Configuration="$(Configuration)" TreatWarningsAsErrors="false" InputFolder="$(ProjectDir)\" OutputFolder="$(ProjectDir)\" Manifests="@(AjaxMinManifests)" />
-  </Target>
 </Project>
