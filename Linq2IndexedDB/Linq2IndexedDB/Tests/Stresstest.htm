@@ -25,12 +25,12 @@
                 dbConfig.version = applicationVersion;
                 dbConfig.definition = databaseDefinition;
 
-                var db = window.linq2indexedDB(indexedDBName, dbConfig, true);
+                var db = new linq2indexedDB.DbContext(indexedDBName, dbConfig, true);
 
                 db.deleteDatabase().then(function () {
                     $("#txtLog").val("");
                     for (var i = 0; i < 10000; i++) {
-                        db.linq.from("insert").insert({ data: "data" }).then(function (e) {
+                        db.from("insert").insert({ data: "data" }).then(function (e) {
                             var tekst = $("#txtLog").val();
                             tekst += "Key: " + e.key + "\n\r";
                             $("#txtLog").val(tekst);

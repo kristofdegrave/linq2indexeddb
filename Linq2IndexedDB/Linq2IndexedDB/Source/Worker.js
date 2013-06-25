@@ -1,10 +1,23 @@
-﻿// ReSharper disable InconsistentNaming
+﻿/// <reference path="_references.js" />
+
+// ReSharper disable InconsistentNaming
 (function (window, linq2indexedDB, JSON) {
 // ReSharper restore InconsistentNaming
     "use strict";
 
     // Private Fields
-    var defaultFileLocationWorker = "/Scripts/Linq2IndexedDB.js";
+    var defaultFileLocationWorker = ""; //"/Scripts/Linq2IndexedDB.js";
+
+    if (typeof (window) !== "undefined") {
+        // Set the defaultFileLocationWorker
+        for (var i = 0; i < window.document.scripts.length; i++) {
+            if (window.document.scripts[i].src.indexOf("Linq2IndexedDB") > -1) {
+                defaultFileLocationWorker = window.document.scripts[i].src;
+                linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "Worker location set to: ", defaultFileLocationWorker);
+                break;
+            }
+        }
+    }
 
     // Web Worker Thread
     if (typeof (window) === "undefined") {

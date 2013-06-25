@@ -82,7 +82,7 @@ Array.prototype.contains = function(obj)
     }
     function log(severity)
     {
-        if (typeof(console) === "undefined" || !linq2indexedDB.logging.enabled)
+        if (typeof(console) === undefined || !linq2indexedDB.logging.enabled)
             return false;
         var currtime = (function()
             {
@@ -219,7 +219,7 @@ Array.prototype.contains = function(obj)
     }
     linq2indexedDB.promises = {promise: winJsPromise}
 })(WinJS, linq2indexedDB);
-(function(window, linq2indexedDB, isMetroApp)
+(function(window, linq2indexedDB, isMetroApp, undefined)
 {
     var defaultDatabaseName = "Default";
     var implementations = {
@@ -1809,7 +1809,7 @@ Array.prototype.contains = function(obj)
                         {
                             async.deleteDb(pw, name)
                         })
-                }, closeDatabaseConnection: closeConnection, abortTransaction: abortTransaction, transactionTypes: transactionTypes, dbStructureChanged: new linq2indexedDB.Event, dbDataChanged: new linq2indexedDB.Event, databaseEvents: dbEvents, dataEvents: dataEvents, implementation: implementation, implementations: implementations, indexSuffix: "_Index", keyRange: window.IDBKeyRange
+                }, closeDatabaseConnection: closeConnection, abortTransaction: abortTransaction, transactionTypes: transactionTypes, dbStructureChanged: new linq2indexedDB.Event, dbDataChanged: new linq2indexedDB.Event, databaseEvents: dbEvents, dataEvents: dataEvents, implementation: implementation, implementations: implementations, indexSuffix: "_Index", keyRange: (typeof(window) !== "undefined") ? window.IDBKeyRange : undefined
         };
     function getDatabaseVersion(db)
     {
@@ -3000,7 +3000,15 @@ Array.prototype.contains = function(obj)
 })(linq2indexedDB);
 (function(window, linq2indexedDB, JSON)
 {
-    var defaultFileLocationWorker = "/Scripts/Linq2IndexedDB.js";
+    var defaultFileLocationWorker = "";
+    if (typeof(window) !== "undefined")
+        for (var i = 0; i < window.document.scripts.length; i++)
+            if (window.document.scripts[i].src.indexOf("Linq2IndexedDB") > -1)
+            {
+                defaultFileLocationWorker = window.document.scripts[i].src;
+                linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "Worker location set to: ", defaultFileLocationWorker);
+                break
+            }
     if (typeof(window) === "undefined")
         self.onmessage = function(event)
         {
@@ -3100,4 +3108,4 @@ Array.prototype.contains = function(obj)
     linq2indexedDB.workers = {
         location: defaultFileLocationWorker, worker: worker
     }
-})(win, linq2indexedDB, JSON)
+})(win, linq2indexedDB, JSON);

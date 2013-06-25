@@ -1,4 +1,6 @@
-﻿// ReSharper disable InconsistentNaming
+﻿/// <reference path="_references.js" />
+
+// ReSharper disable InconsistentNaming
 (function (window, $, linq2indexedDB) {
 // ReSharper restore InconsistentNaming
     "use strict";

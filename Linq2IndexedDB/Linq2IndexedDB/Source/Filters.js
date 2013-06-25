@@ -1,4 +1,6 @@
-﻿// Namespace linq2indexedDB.prototype.linq
+﻿/// <reference path="_references.js" />
+
+// Namespace linq2indexedDB.prototype.linq
 // ReSharper disable InconsistentNaming
 (function (linq2indexedDB) {
 // ReSharper restore InconsistentNaming

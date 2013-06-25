@@ -3,7 +3,7 @@
 
     // Namespace linq2indexedDB.core
 // ReSharper disable InconsistentNaming
-    (function (window, linq2indexedDB, isMetroApp) {
+    (function (window, linq2indexedDB, isMetroApp, undefined) {
 // ReSharper restore InconsistentNaming
         "use strict"; 
 
@@ -1685,9 +1685,9 @@
             implementation: implementation,
             implementations: implementations,
             indexSuffix: "_Index",
-            keyRange: window.IDBKeyRange
+            keyRange: (typeof(window) !== "undefined") ? window.IDBKeyRange : undefined
         };
-
+        
         // Region Functions
 
         function getDatabaseVersion(db) {

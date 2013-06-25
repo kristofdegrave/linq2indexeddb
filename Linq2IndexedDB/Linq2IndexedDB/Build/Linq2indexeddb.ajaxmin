@@ -2,7 +2,7 @@
 <root>
   <!-- Debug -->
   <output path="Scripts\Linq2IndexedDB.js">
-    <arguments>-clobber -strict:true -pretty</arguments>
+    <arguments>-clobber -strict:true -pretty -braces:new -term</arguments>
     <input path="Source\Global.js"/>
     <input path="Source\Extensions.js"/>
     <input path="Source\About.js"/>
@@ -18,7 +18,7 @@
   </output>
   <!-- Web release -->
   <output path="Destination\Web\Linq2IndexedDB.js">
-    <arguments>-clobber -strict:true -pretty</arguments>
+    <arguments>-clobber -strict:true -pretty -braces:new -term</arguments>
     <input path="Source\Global.js"/>
     <input path="Source\Extensions.js"/>
     <input path="Source\About.js"/>
@@ -49,7 +49,7 @@
   </output>
   <!-- WinJS release -->
   <output path="Destination\WinJS\Linq2IndexedDB.js">
-    <arguments>-clobber -strict:true -pretty</arguments>
+    <arguments>-clobber -strict:true -pretty -braces:new -term</arguments>
     <input path="Source\Global.js"/>
     <input path="Source\Extensions.js"/>
     <input path="Source\About.js"/>

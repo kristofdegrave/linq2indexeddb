@@ -49,8 +49,9 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AjaxMin">
-      <HintPath>..\packages\AjaxMin.4.75.4713.17606\lib\net40\AjaxMin.dll</HintPath>
+    <Reference Include="AjaxMin, Version=4.94.4916.15475, Culture=neutral, PublicKeyToken=21ef50ce11b5d80f, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\AjaxMin.4.94.4916.15482\lib\net40\AjaxMin.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Web.DynamicData" />
@@ -162,6 +163,7 @@
     <Content Include="Source\Logging.js" />
     <Content Include="Source\Promise.jQuery.js" />
     <Content Include="Source\Promise.WinJS.js" />
+    <Content Include="Source\_references.js" />
     <Content Include="testfile.html" />
     <Content Include="testscript.js" />
     <Content Include="JavaScript1.js" />
@@ -247,5 +249,5 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <Import Project="$(MSBuildProjectDirectory)\Build\AjaxMinTask.targets" />
+  <Import Project="$(MSBuildProjectDirectory)\Build\AjaxMinTask.targets" Condition="'$(MSBuildProjectDirectory)' != ''" />
 </Project>

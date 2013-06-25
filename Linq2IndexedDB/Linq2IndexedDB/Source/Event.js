@@ -1,4 +1,6 @@
-﻿// ReSharper disable InconsistentNaming
+﻿/// <reference path="_references.js" />
+
+// ReSharper disable InconsistentNaming
 (function (linq2indexedDB) {
 // ReSharper restore InconsistentNaming
     //Copyright (c) 2010 Nicholas C. Zakas. All rights reserved.

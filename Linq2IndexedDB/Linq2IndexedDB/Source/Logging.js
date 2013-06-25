@@ -36,7 +36,7 @@
     }
 
     function log(severity) {
-        if (typeof (console) === "undefined"
+        if (typeof (console) === undefined
             || !linq2indexedDB.logging.enabled) {
             return false;
         }

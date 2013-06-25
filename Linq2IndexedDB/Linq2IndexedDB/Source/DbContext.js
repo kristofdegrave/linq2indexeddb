@@ -1,4 +1,6 @@
-﻿// Initializes the linq2indexeddb object.
+﻿/// <reference path="_references.js" />
+
+// Initializes the linq2indexeddb object.
 // ReSharper disable InconsistentNaming
 (function (linq2indexedDB) {
 // ReSharper restore InconsistentNaming
