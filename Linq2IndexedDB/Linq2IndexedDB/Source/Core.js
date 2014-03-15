@@ -539,7 +539,7 @@
                     }
                     if (ex.name == "TransactionInactiveError") {
                         error.type = "TransactionInactiveError";
-                        error.message = "You are trying to open an object store (" + indexName + ") outside a transaction.";
+                        error.message = "You are trying to open an index (" + indexName + ") outside a transaction.";
                     }
                     // index exception
                     linq2indexedDB.logging.logError(error);
@@ -829,8 +829,8 @@
                             linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "keyCursor progress", result, e);
                             if (result.value) {
                                 var progressObj = {
-                                    data: result.value,
-                                    key: result.primaryKey,
+                                    key: result.key,
+                                    primaryKey: result.primaryKey,
                                     skip: function (number) {
                                         linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "keyCursor skip", result, e);
                                         try {

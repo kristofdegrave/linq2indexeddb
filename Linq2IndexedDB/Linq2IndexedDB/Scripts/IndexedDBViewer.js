@@ -302,7 +302,7 @@ $(function () {
     });
 
     $(window).bind('mouseleave', function () {
-        $(window).unbind('mousemove', resize);
+        //$(window).unbind('mousemove', resize);
     });
 
     function resize(event) {

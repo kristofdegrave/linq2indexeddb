@@ -684,7 +684,7 @@ Array.prototype.contains = function(obj)
                         if (ex.name == "TransactionInactiveError")
                         {
                             error.type = "TransactionInactiveError";
-                            error.message = "You are trying to open an object store (" + indexName + ") outside a transaction."
+                            error.message = "You are trying to open an index (" + indexName + ") outside a transaction."
                         }
                         linq2indexedDB.logging.logError(error);
                         if (error.type != "TransactionInactiveError")
@@ -969,7 +969,7 @@ Array.prototype.contains = function(obj)
                             if (result.value)
                             {
                                 var progressObj = {
-                                        data: result.value, key: result.primaryKey, skip: function(number)
+                                        key: result.key, primaryKey: result.primaryKey, skip: function(number)
                                             {
                                                 linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "keyCursor skip", result, e);
                                                 try
