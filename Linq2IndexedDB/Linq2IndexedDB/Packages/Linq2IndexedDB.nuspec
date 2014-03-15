@@ -24,11 +24,15 @@
       - Opera Mobile 11 +
 
       Using the Linq2IndexededDB viewer you can view the structure + content of your database while you are debugging your application.
+
+      Warning: This version has some braking changes, for more info see the release notes at https://linq2indexeddb.codeplex.com/releases/view/119709
     </description>
     <summary>
       Linq2indexeddb makes it easier for JavaScript developpers to make use of the client side database: IndexedDB.
 
-      Inclusive a viewer to view the structure + content at all times
+      Inclusive a viewer to view the structure + content at all times.
+
+      Warning: This version has some braking changes, for more info see the release notes at https://linq2indexeddb.codeplex.com/releases/view/119709
     </summary>
     <language>en-US</language>
     <tags>IndexedDB, HTML5, LINQ, Linq2IndexedDB, jQuery</tags>
