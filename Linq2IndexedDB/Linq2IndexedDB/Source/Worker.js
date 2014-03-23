@@ -26,7 +26,7 @@
             var filtersString = event.data.filters || "[]";
             var sortClauses = event.data.sortClauses || [];
             var filters = JSON.parse(filtersString, linq2indexedDB.json.deserialize);
-            var returnData = filterSort(data, filters, sortClauses);
+            var returnData = filterSort(data, filters, sortClauses, event.data.limit);
 
             postMessage(returnData);
             return;
@@ -34,7 +34,7 @@
     }
 
     // Private Functions
-    function worker(data, filters, sortClauses) {
+    function worker(data, filters, sortClauses, limit) {
         return linq2indexedDB.promises.promise(function (pw) {
             if (typeof (window) !== "undefined" && typeof (window.Worker) !== "undefined") {
                 var webworker = new Worker(linq2indexedDB.workers.location);
@@ -46,21 +46,30 @@
 
                 var filtersString = JSON.stringify(filters, linq2indexedDB.json.serialize);
 
-                webworker.postMessage({ data: data, filters: filtersString, sortClauses: sortClauses });
+                webworker.postMessage({ data: data, filters: filtersString, sortClauses: sortClauses, limit: limit });
             } else {
                 // Fallback when there are no webworkers present. Beware, this runs on the UI thread and can block the UI
-                pw.complete(this, filterSort(data, filters, sortClauses));
+                pw.complete(this, filterSort(data, filters, sortClauses, limit));
             }
         });
     }
 
-    function filterSort(data, filters, sortClauses) {
+    function filterSort(data, filters, sortClauses, limit) {
         var returnData = [];
 
         for (var i = 0; i < data.length; i++) {
+            if (sortClauses.length == 0 && limit && i == limit)
+            {
+                break;
+            }
+
             if (isDataValid(data[i].data, filters)) {
                 returnData = addToSortedArray(returnData, data[i], sortClauses);
             }
+        }
+
+        if (limit) {
+            returnData = returnData.splice(0, limit);
         }
 
         return returnData;

@@ -74,6 +74,7 @@
             this.update = [];
             this.remove = [];
             this.clear = false;
+            this.limit;
             this.dbConfig = dbConfig;
         };
 
@@ -105,11 +106,15 @@
                     /// <param name="propertyName" type="String">The name of the property you want to sort on.</param>
                     return orderBy(new queryBuilderObj(objectStoreName, self.dbConfig), propertyName, true);
                 },
-                select: function (propertyNames) {
+                select: function (propertyNames, limit) {
                     /// <summary>Selects the data.</summary>
-                    /// <param name="propertyNames" type="Array">A list of the names of the properties you want to select.</param>
+                    /// <param name="propertyNames" type="Array">
+                    /// A list of the names of the properties you want to select. 
+                    /// Passing undifined or an empty array returns all properties
+                    /// </param>
+                    /// <param name="limit" type="int">limits the number of results returned</param>
                     /// <returns type="Array">A list with the selected objects.</returns>
-                    return select(new queryBuilderObj(objectStoreName, self.dbConfig), propertyNames);
+                    return select(new queryBuilderObj(objectStoreName, self.dbConfig), propertyNames, limit);
                 },
                 insert: function (data, key) {
                     /// <summary>inserts data.</summary>
@@ -232,10 +237,15 @@
                     /// <param name="propertyName" type="String">The name of the property you want to sort on.</param>
                     return orderBy(queryBuilder, propertyName, true);
                 },
-                select: function (propertyNames) {
+                select: function (propertyNames, limit) {
                     /// <summary>Selects the data.</summary>
-                    /// <param name="propertyNames" type="Array">A list of the names of the properties you want to select.</param>
-                    return select(queryBuilder, propertyNames);
+                    /// <param name="propertyNames" type="Array">
+                    /// A list of the names of the properties you want to select. 
+                    /// Passing undifined or an empty array returns all properties
+                    /// </param>
+                    /// <param name="limit" type="int">limits the number of results returned</param>
+                    /// <returns type="Array">A list with the selected objects.</returns>
+                    return select(queryBuilder, propertyNames, limit);
                 },
                 remove: function () {
                     return remove(queryBuilder);
@@ -259,15 +269,22 @@
                     /// <param name="propertyName" type="String">The name of the property you want to sort on.</param>
                     return orderBy(queryBuilder, propertyName, true);
                 },
-                select: function (propertyNames) {
+                select: function (propertyNames, limit) {
                     /// <summary>Selects the data.</summary>
-                    /// <param name="propertyNames" type="Array">A list of the names of the properties you want to select.</param>
-                    return select(queryBuilder, propertyNames);
+                    /// <param name="propertyNames" type="Array">
+                    /// A list of the names of the properties you want to select. 
+                    /// Passing undifined or an empty array returns all properties
+                    /// </param>
+                    /// <param name="limit" type="int">limits the number of results returned</param>
+                    /// <returns type="Array">A list with the selected objects.</returns>
+                    return select(queryBuilder, propertyNames, limit);
                 }
             };
         }
 
-        function select(queryBuilder, propertyNames) {
+        function select(queryBuilder, propertyNames, limit) {
+            queryBuilder.limit = limit;
+
             if (propertyNames) {
                 if (!linq2indexedDB.util.isArray(propertyNames)) {
                     propertyNames = [propertyNames];
@@ -514,16 +531,19 @@
                     cursorPromise.then(
                         function (args1 /*data*/) {
                             var data = args1[0];
-
-                            linq2indexedDB.workers.worker(data, whereClauses, queryBuilder.sortClauses).then(function (d) {
-                                // No need to notify again if it allready happend in the onProgress method of the cursor.
-                                if (returnData.length == 0) {
+                            
+                            if (returnData.length == 0) {
+                                linq2indexedDB.workers.worker(data, whereClauses, queryBuilder.sortClauses, queryBuilder.limit).then(function (d) {
+                                    // No need to notify again if it allready happend in the onProgress method of the cursor.
                                     for (var j = 0; j < d.length; j++) {
                                         pw.progress(this, [d[j]] /*[obj]*/);
                                     }
-                                }
-                                pw.complete(this, d /*[returnData]*/);
-                            });
+                                    pw.complete(this, d /*[returnData]*/);
+                                });
+                            }
+                            else {
+                                pw.complete(this, returnData);
+                            }
                         },
                         pw.error,
                         function (args1 /*data*/) {
@@ -533,6 +553,11 @@
                             if (whereClauses.length == 0 && queryBuilder.sortClauses.length == 0) {
                                 returnData.push({ data: args1[0].data, key: args1[0].key });
                                 pw.progress(this, args1 /*[obj]*/);
+                                if (queryBuilder.limit && returnData.length == queryBuilder.limit)
+                                {
+                                    pw.complete(this, returnData);
+                                    linq2indexedDB.core.abortTransaction(args1[2].currentTarget.transaction);
+                                }
                             }
                         }
                     );

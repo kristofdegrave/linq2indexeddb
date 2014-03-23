@@ -2288,6 +2288,7 @@ Array.prototype.contains = function(obj)
                 this.update = [];
                 this.remove = [];
                 this.clear = false;
+                this.limit;
                 this.dbConfig = dbConfig
             };
         queryBuilderObj.prototype = {executeQuery: function()
@@ -2307,9 +2308,9 @@ Array.prototype.contains = function(obj)
                         }, orderByDesc: function(propertyName)
                         {
                             return orderBy(new queryBuilderObj(objectStoreName, self.dbConfig), propertyName, true)
-                        }, select: function(propertyNames)
+                        }, select: function(propertyNames, limit)
                         {
-                            return select(new queryBuilderObj(objectStoreName, self.dbConfig), propertyNames)
+                            return select(new queryBuilderObj(objectStoreName, self.dbConfig), propertyNames, limit)
                         }, insert: function(data, key)
                         {
                             return insert(new queryBuilderObj(objectStoreName, self.dbConfig), data, key)
@@ -2377,9 +2378,9 @@ Array.prototype.contains = function(obj)
                         }, orderByDesc: function(propertyName)
                         {
                             return orderBy(queryBuilder, propertyName, true)
-                        }, select: function(propertyNames)
+                        }, select: function(propertyNames, limit)
                         {
-                            return select(queryBuilder, propertyNames)
+                            return select(queryBuilder, propertyNames, limit)
                         }, remove: function()
                         {
                             return remove(queryBuilder)
@@ -2401,14 +2402,15 @@ Array.prototype.contains = function(obj)
                     }, orderByDesc: function(propertyName)
                         {
                             return orderBy(queryBuilder, propertyName, true)
-                        }, select: function(propertyNames)
+                        }, select: function(propertyNames, limit)
                         {
-                            return select(queryBuilder, propertyNames)
+                            return select(queryBuilder, propertyNames, limit)
                         }
                 }
         }
-        function select(queryBuilder, propertyNames)
+        function select(queryBuilder, propertyNames, limit)
         {
+            queryBuilder.limit = limit;
             if (propertyNames)
             {
                 if (!linq2indexedDB.util.isArray(propertyNames))
@@ -2648,13 +2650,15 @@ Array.prototype.contains = function(obj)
                     cursorPromise.then(function(args1)
                     {
                         var data = args1[0];
-                        linq2indexedDB.workers.worker(data, whereClauses, queryBuilder.sortClauses).then(function(d)
-                        {
-                            if (returnData.length == 0)
+                        if (returnData.length == 0)
+                            linq2indexedDB.workers.worker(data, whereClauses, queryBuilder.sortClauses, queryBuilder.limit).then(function(d)
+                            {
                                 for (var j = 0; j < d.length; j++)
                                     pw.progress(this, [d[j]]);
-                            pw.complete(this, d)
-                        })
+                                pw.complete(this, d)
+                            });
+                        else
+                            pw.complete(this, returnData)
                     }, pw.error, function(args1)
                     {
                         if (whereClauses.length == 0 && queryBuilder.sortClauses.length == 0)
@@ -2662,7 +2666,12 @@ Array.prototype.contains = function(obj)
                             returnData.push({
                                 data: args1[0].data, key: args1[0].key
                             });
-                            pw.progress(this, args1)
+                            pw.progress(this, args1);
+                            if (queryBuilder.limit && returnData.length == queryBuilder.limit)
+                            {
+                                pw.complete(this, returnData);
+                                linq2indexedDB.core.abortTransaction(args1[2].currentTarget.transaction)
+                            }
                         }
                     })
                 }
@@ -3123,11 +3132,11 @@ Array.prototype.contains = function(obj)
             var filtersString = event.data.filters || "[]";
             var sortClauses = event.data.sortClauses || [];
             var filters = JSON.parse(filtersString, linq2indexedDB.json.deserialize);
-            var returnData = filterSort(data, filters, sortClauses);
+            var returnData = filterSort(data, filters, sortClauses, event.data.limit);
             postMessage(returnData);
             return
         };
-    function worker(data, filters, sortClauses)
+    function worker(data, filters, sortClauses, limit)
     {
         return linq2indexedDB.promises.promise(function(pw)
             {
@@ -3142,19 +3151,25 @@ Array.prototype.contains = function(obj)
                     webworker.onerror = pw.error;
                     var filtersString = JSON.stringify(filters, linq2indexedDB.json.serialize);
                     webworker.postMessage({
-                        data: data, filters: filtersString, sortClauses: sortClauses
+                        data: data, filters: filtersString, sortClauses: sortClauses, limit: limit
                     })
                 }
                 else
-                    pw.complete(this, filterSort(data, filters, sortClauses))
+                    pw.complete(this, filterSort(data, filters, sortClauses, limit))
             })
     }
-    function filterSort(data, filters, sortClauses)
+    function filterSort(data, filters, sortClauses, limit)
     {
         var returnData = [];
         for (var i = 0; i < data.length; i++)
+        {
+            if (sortClauses.length == 0 && limit && i == limit)
+                break;
             if (isDataValid(data[i].data, filters))
-                returnData = addToSortedArray(returnData, data[i], sortClauses);
+                returnData = addToSortedArray(returnData, data[i], sortClauses)
+        }
+        if (limit)
+            returnData = returnData.splice(0, limit);
         return returnData
     }
     function isDataValid(data, filters)
