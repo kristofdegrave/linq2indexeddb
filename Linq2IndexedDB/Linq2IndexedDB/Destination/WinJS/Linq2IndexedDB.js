@@ -1312,6 +1312,98 @@ Array.prototype.contains = function(obj)
                             abortTransaction(txn);
                         pw.error(this, error)
                     }
+                }, insertBatch: function(pw, objectStore, dataArray)
+                {
+                    linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "Insert Batch Started", objectStore, dataArray);
+                    if (!linq2indexedDB.util.isArray(dataArray))
+                        dataArray = [dataArray];
+                    var itemsToProcess = dataArray.length - 1;
+                    var dataresults = [];
+                    for (var i = 0; i < dataArray.length; i++)
+                        try
+                        {
+                            var request;
+                            request = objectStore.add(dataArray[i]);
+                            request.data = dataArray[i];
+                            var req = handlers.IDBRequest(request);
+                            req.then(function(args)
+                            {
+                                var result = args[0];
+                                var e = args[1];
+                                var data = e.target.data;
+                                itemsToProcess--;
+                                if (objectStore.keyPath)
+                                    data[objectStore.keyPath] = result;
+                                dataresults.push(data);
+                                linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "Insert completed", data, result, objectStore.transaction, e);
+                                pw.progress(this, [data, result, objectStore.transaction, e]);
+                                if (itemsToProcess == 0)
+                                {
+                                    core.dbDataChanged.fire({
+                                        type: dataEvents.dataInserted, data: dataresults, objectStore: objectStore
+                                    });
+                                    linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "Insert Batch completed", dataresults, objectStore.transaction);
+                                    pw.complete(this, [dataresults, objectStore.transaction])
+                                }
+                            }, function(args)
+                            {
+                                var err = wrapError(args[1], "insert");
+                                if (args[1].target && args[1].target.errorCode == 4)
+                                    err.type = "ConstraintError";
+                                if (err.type == "ConstraintError")
+                                {
+                                    var duplicateKey = key;
+                                    if (!duplicateKey && objectStore.keyPath)
+                                        duplicateKey = data[objectStore.keyPath];
+                                    err.message = "A record for the key (" + duplicateKey + ") already exists in the database or one of the properties of the provided data has a unique index declared."
+                                }
+                                abortTransaction(objectStore.transaction);
+                                linq2indexedDB.logging.logError(err);
+                                pw.error(this, err)
+                            })
+                        }
+                        catch(ex)
+                        {
+                            var error = wrapException(ex, "insert");
+                            var txn = objectStore.transaction;
+                            if (error.code == ex.DATA_ERR || ex.name == "DataError")
+                            {
+                                error.type = "DataError";
+                                var possibleKey = key;
+                                if (!possibleKey && objectStore.keyPath)
+                                    possibleKey = data[objectStore.keyPath];
+                                if (!possibleKey)
+                                    error.message = "There is no key provided for the data you want to insert for an object store without autoIncrement.";
+                                else if (key && objectStore.keyPath)
+                                    error.message = "An external key is provided while the object store expects a keyPath key.";
+                                else if (typeof possibleKey !== "string" && typeof possibleKey !== "number" && typeof possibleKey !== "Date" && !linq2indexedDB.util.isArray(possibleKey))
+                                    error.message = "The provided key isn't a valid key (must be an array, string, date or number)."
+                            }
+                            if ((ex.READ_ONLY_ERR && ex.code == ex.READ_ONLY_ERR) || ex.name == "ReadOnlyError")
+                            {
+                                error.type = "ReadOnlyError";
+                                error.message = "You are trying to insert data in a readonly transaction."
+                            }
+                            if (ex.name == "TransactionInactiveError")
+                            {
+                                error.type = "TransactionInactiveError";
+                                error.message = "You are trying to insert data on an inactieve transaction. (The transaction was already aborted or committed)"
+                            }
+                            if ((ex.DATA_CLONE_ERR && ex.code == ex.DATA_CLONE_ERR) || ex.name == "DataCloneError")
+                            {
+                                error.type = "DataCloneError";
+                                error.message = "The data you are trying to insert could not be cloned. Your data probably contains a function which can not be cloned by default. Try using the serialize method to insert the data."
+                            }
+                            if ((ex.INVALID_STATE_ERR && ex.code == ex.INVALID_STATE_ERR) || (ex.NOT_ALLOWED_ERR && ex.code == ex.NOT_ALLOWED_ERR) || ex.name == "InvalidStateError")
+                            {
+                                error.type = "InvalidStateError";
+                                error.message = "You are trying to insert data on a removed object store."
+                            }
+                            linq2indexedDB.logging.logError(error);
+                            if (error.type != "TransactionInactiveError")
+                                abortTransaction(txn);
+                            pw.error(this, error)
+                        }
                 }, update: function(pw, objectStore, data, key)
                 {
                     linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "Update Started", objectStore, data, key);
@@ -1566,9 +1658,6 @@ Array.prototype.contains = function(obj)
                                 }, function(args)
                                 {
                                     pw.error(this, args)
-                                }, function(args)
-                                {
-                                    pw.progress(this, args)
                                 });
                             else if (isMetroApp)
                                 setTimeout(function()
@@ -1757,6 +1846,21 @@ Array.prototype.contains = function(obj)
                                 });
                             else
                                 async.insert(pw, objectStore, data, key)
+                        })
+                }, insertBatch: function(objectStore, data)
+                {
+                    return linq2indexedDB.promises.promise(function(pw)
+                        {
+                            if (objectStore.then)
+                                objectStore.then(function(args)
+                                {
+                                    async.insertBatch(pw, args[1], data)
+                                }, function(args)
+                                {
+                                    pw.error(this, args)
+                                });
+                            else
+                                async.insertBatch(pw, objectStore, data)
                         })
                 }, update: function(objectStore, data, key)
                 {
@@ -2335,18 +2439,18 @@ Array.prototype.contains = function(obj)
                     if (linq2indexedDB.util.isArray(qb.insert[0].data) && !qb.insert[0].key)
                     {
                         var returnData = [];
-                        for (var i = 0; i < qb.insert[0].data.length; i++)
-                            linq2indexedDB.core.insert(objectStorePromis, qb.insert[0].data[i]).then(function(args)
-                            {
-                                pw.progress(this, {
-                                    object: args[0], key: args[1]
-                                });
-                                returnData.push({
-                                    object: args[0], key: args[1]
-                                });
-                                if (returnData.length == qb.insert[0].data.length)
-                                    pw.complete(this, returnData)
-                            }, pw.error)
+                        linq2indexedDB.core.insertBatch(objectStorePromis, qb.insert[0].data).then(function(args)
+                        {
+                            pw.complete(this, returnData)
+                        }, pw.error, function(args)
+                        {
+                            pw.progress(this, {
+                                object: args[0], key: args[1]
+                            });
+                            returnData.push({
+                                object: args[0], key: args[1]
+                            })
+                        })
                     }
                     else
                         linq2indexedDB.core.insert(objectStorePromis, qb.insert[0].data, qb.insert[0].key).then(function(args)
@@ -2710,7 +2814,8 @@ Array.prototype.contains = function(obj)
         {
             dbView.name = null;
             dbView.version = null;
-            dbView.ObjectStores = []
+            dbView.ObjectStores = [];
+            refresh = false
         });
         linq2indexedDB.core.dbDataChanged.addListener([linq2indexedDB.core.dataEvents.dataInserted, linq2indexedDB.core.dataEvents.dataRemoved, linq2indexedDB.core.dataEvents.dataUpdated, linq2indexedDB.core.dataEvents.objectStoreCleared], function()
         {

@@ -25,20 +25,112 @@
                 dbConfig.version = applicationVersion;
                 dbConfig.definition = databaseDefinition;
 
-                var db = new linq2indexedDB.DbContext(indexedDBName, dbConfig, true);
+                var db = new linq2indexedDB.DbContext(indexedDBName, dbConfig, false);
 
                 db.deleteDatabase().then(function () {
-                    $("#txtLog").val("");
-                    for (var i = 0; i < 10000; i++) {
-                        db.from("insert").insert({ data: "data" }).then(function (e) {
-                            var tekst = $("#txtLog").val();
-                            tekst += "Key: " + e.key + "\n\r";
-                            $("#txtLog").val(tekst);
-                        }, function (e) {
-                            var d = e;
-                        });
+                    var list = [];
+                    for (var i = 0; i < 50000; i++) {
+                        list.push({ data: "data", key: i + 1 });
                     }
+                    db.initialize().then(function () {
+                        var start = new Date().getTime();
+                        db.from("insert").insert(list).then(function () {
+                            var stop = new Date().getTime();
+                            $("#txtLog").val("Write: " + (stop - start));
+
+                            start = new Date().getTime();
+                            db.from("insert").select().then(function () {
+                                var stop = new Date().getTime();
+                                $("#txtLog").val($("#txtLog").val() + "\r Read: " + (stop - start));
+                            });
+                        });
+                    });
                 });
+
+                //db.deleteDatabase().then(function () {
+                //    $("#txtLog").val("");
+                //    db.initialize();
+                //    var start = new Date().getTime();
+                //    var dbconn = linq2indexedDB.core.db("inserts");
+                //    var trans = linq2indexedDB.core.transaction(dbconn, ["insert"], IDBTransaction.READ_WRITE);
+                //    var obj = linq2indexedDB.core.objectStore(trans, "insert");
+                //    obj.then(function (args) {
+                //        objectstore = args[1];
+                //        for (var i = 0; i < 50000; i++) {
+                //            var req = objectstore.add({ data: "data" });
+                //        }
+
+                //    });
+                //    trans.then(function () {
+                //        var stop = new Date().getTime();
+                //        $("#txtLog").val(stop - start);
+                //    });
+                //    //for (var i = 0; i < 5000; i++) {
+                //        //linq2indexedDB.core.insert(obj, { data: "data" }).then(function (e) {
+                //        //        var tekst = $("#txtLog").val();
+                //        //        tekst += new Date() + " Key: " + e[1] + "\r";
+                //        //        $("#txtLog").val(tekst);
+                //        //    }, function (e) {
+                //        //        var d = e;
+                //        //    });
+                //        //db.from("insert").insert({ data: "data" }).then(function (e) {
+                //        //    var tekst = $("#txtLog").val();
+                //        //    tekst += new Date() + " Key: " + e.key + "\r";
+                //        //    $("#txtLog").val(tekst);
+                //        //}, function (e) {
+                //        //    var d = e;
+                //        //});
+                //    //}
+                //});
+
+                //linq2indexedDB.logging.enabled = true;
+                //linq2indexedDB.core.deleteDb("inserts").then(function () {
+                //        $("#txtLog").val("");
+                //        var start = new Date().getTime();
+                //        var dbconn = linq2indexedDB.core.db("inserts", 1);
+                //        var trans = linq2indexedDB.core.transaction(dbconn, ["insert"], IDBTransaction.READ_WRITE, true);
+                //        var obj = linq2indexedDB.core.objectStore(trans, "insert");
+                //        //obj.then(function (args) {
+                //        //    objectstore = args[1];
+                //        //    for (var i = 0; i < 5000; i++) {
+                //        //        var req = objectstore.add({ data: "data" });
+                //        //    }
+
+                //        //});
+                //        trans.then(function () {
+                //            var stop = new Date().getTime();
+                //            var tekst = $("#txtLog").val();
+                //            tekst += "\r";
+                //            tekst += stop - start;
+                //            $("#txtLog").val(tekst);
+                //        }, function () {
+                //        },
+                //        function () {
+                //            start = new Date().getTime();
+                //        });
+
+                //        var list = [];
+
+                //        for (var i = 0; i < 50000; i++) {
+                //            list.push({ data: "data", key: i+1 });
+                //            //linq2indexedDB.core.insert(obj, { data: "data" });//.then(function (e) {
+                //            //        var tekst = $("#txtLog").val();
+                //            //        tekst += new Date() + " Key: " + e[1] + "\r";
+                //            //        $("#txtLog").val(tekst);
+                //            //    }, function (e) {
+                //            //        var d = e;
+                //            //    });
+                //            //db.from("insert").insert({ data: "data" }).then(function (e) {
+                //            //    var tekst = $("#txtLog").val();
+                //            //    tekst += new Date() + " Key: " + e.key + "\r";
+                //            //    $("#txtLog").val(tekst);
+                //            //}, function (e) {
+                //            //    var d = e;
+                //            //});
+                //        }
+                //        linq2indexedDB.core.insertBatch(obj, list);
+                //        //db.from("insert").insert({ data: "data" })
+                //    });
             });
         </script>
     </head>

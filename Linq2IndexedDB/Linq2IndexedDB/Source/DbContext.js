@@ -295,15 +295,25 @@
                 var objectStorePromis = linq2indexedDB.core.objectStore(transaction, qb.from);
                 if (linq2indexedDB.util.isArray(qb.insert[0].data) && !qb.insert[0].key) {
                     var returnData = [];
-                    for (var i = 0; i < qb.insert[0].data.length; i++) {
-                        linq2indexedDB.core.insert(objectStorePromis, qb.insert[0].data[i]).then(function (args /*storedData, storedkey*/) {
-                            pw.progress(this, { object: args[0], key: args[1] }/*[storedData, storedkey]*/);
-                            returnData.push({ object: args[0], key: args[1] });
-                            if (returnData.length == qb.insert[0].data.length) {
-                                pw.complete(this, returnData);
-                            }
-                        }, pw.error);
-                    }
+                    linq2indexedDB.core.insertBatch(objectStorePromis, qb.insert[0].data).then(function (args /*results*/) {
+                        pw.complete(this, returnData);
+                    },
+                    pw.error,
+                    function (args /*storedData, storedkey*/) {
+                        pw.progress(this, { object: args[0], key: args[1] }/*[storedData, storedkey]*/);
+                        returnData.push({ object: args[0], key: args[1] });
+                    });
+
+                    //var returnData = [];
+                    //for (var i = 0; i < qb.insert[0].data.length; i++) {
+                    //    linq2indexedDB.core.insert(objectStorePromis, qb.insert[0].data[i]).then(function (args /*storedData, storedkey*/) {
+                    //        pw.progress(this, { object: args[0], key: args[1] }/*[storedData, storedkey]*/);
+                    //        returnData.push({ object: args[0], key: args[1] });
+                    //        if (returnData.length == qb.insert[0].data.length) {
+                    //            pw.complete(this, returnData);
+                    //        }
+                    //    }, pw.error);
+                    //}
                 }
                 else {
                     linq2indexedDB.core.insert(objectStorePromis, qb.insert[0].data, qb.insert[0].key).then(function (args /*storedData, storedkey*/) {
@@ -692,6 +702,7 @@
             dbView.name = null;
             dbView.version = null;
             dbView.ObjectStores = [];
+            refresh = false;
         });
         linq2indexedDB.core.dbDataChanged.addListener([linq2indexedDB.core.dataEvents.dataInserted, linq2indexedDB.core.dataEvents.dataRemoved, linq2indexedDB.core.dataEvents.dataUpdated, linq2indexedDB.core.dataEvents.objectStoreCleared], function () {
             dbView.refresh();
