@@ -462,6 +462,7 @@
             },
             index: function (pw, objectStore, propertyName, autoGenerateAllowed) {
                 linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "Index started", objectStore, propertyName, autoGenerateAllowed);
+
                 var indexName = propertyName;
                 if (propertyName.indexOf(core.indexSuffix) == -1) {
                     indexName = indexName + core.indexSuffix;
@@ -552,9 +553,13 @@
             createIndex: function (pw, objectStore, propertyName, indexOptions) {
                 linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "createIndex started", objectStore, propertyName, indexOptions);
                 try {
-                    var indexName = propertyName;
-                    if (propertyName.indexOf(core.indexSuffix) == -1) {
-                        indexName = indexName + core.indexSuffix;
+                   
+                    var indexName = indexOptions.indexName
+                    if (!indexName) {
+                        indexName = propertyName;
+                        if (propertyName.indexOf(core.indexSuffix) == -1) {
+                            indexName = indexName + core.indexSuffix;
+                        }
                     }
 
                     if (!objectStore.indexNames.contains(indexName)) {
@@ -582,11 +587,18 @@
                     pw.error(this, error);
                 }
             },
-            deleteIndex: function (pw, objectStore, propertyName) {
-                linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "deleteIndex started", objectStore, propertyName);
-                var indexName = propertyName;
-                if (propertyName.indexOf(core.indexSuffix) == -1) {
-                    indexName = indexName + core.indexSuffix;
+            deleteIndex: function (pw, objectStore, index) {
+                linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "deleteIndex started", objectStore, index);
+
+                var indexName;
+
+                if (objectStore.indexNames.contains(index))
+                {
+                    indexName = index;
+                }
+
+                if (objectStore.indexNames.contains(index + core.indexSuffix)) {
+                    indexName = index + core.indexSuffix;
                 }
 
                 try {

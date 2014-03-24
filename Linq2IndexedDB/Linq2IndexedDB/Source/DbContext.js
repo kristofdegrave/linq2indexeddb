@@ -833,7 +833,10 @@
                 for (var j = 0; j < definition.indexes.length; j++) {
                     var indexDefinition = definition.indexes[j];
                     if (indexDefinition.remove) {
-                        linq2indexedDB.core.deleteIndex(linq2indexedDB.core.objectStore(txn, indexDefinition.objectStoreName), indexDefinition.propertyName);
+                        var indexName = indexDefinition.propertyName;
+                        if (indexDefinition.indexOptions && indexDefinition.indexOptions.indexName) indexName = indexDefinition.indexOptions.indexName;
+
+                        linq2indexedDB.core.deleteIndex(linq2indexedDB.core.objectStore(txn, indexDefinition.objectStoreName), indexName);
                     } else {
                         linq2indexedDB.core.createIndex(linq2indexedDB.core.objectStore(txn, indexDefinition.objectStoreName), indexDefinition.propertyName, indexDefinition.indexOptions);
                     }
