@@ -554,7 +554,7 @@
                 linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "createIndex started", objectStore, propertyName, indexOptions);
                 try {
                    
-                    var indexName = indexOptions.indexName
+                    var indexName = indexOptions && indexOptions.indexName
                     if (!indexName) {
                         indexName = propertyName;
                         if (propertyName.indexOf(core.indexSuffix) == -1) {

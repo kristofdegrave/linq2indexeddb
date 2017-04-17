@@ -23,11 +23,11 @@
 
                 var db = new linq2indexedDB.DbContext("test", null, true);
                 db.deleteDatabase().then(function() {
-                    db.from("person").insert({ Name: "test1", Firstname: "test1", Age: 1, location: { country: "Belgium", city: "Ghent" }, test: "5" });
-                    db.from("person").insert({ Name: "test2", Firstname: "test2", Age: 2, location: { country: "Belgium", city: "Brussels" }, test: "15" });
-                    db.from("person").insert({ Name: "test3", Firstname: "test3", Age: 3, location: { country: "Belgium", city: "Bruges" }, test:"51" });
-                    db.from("person").insert({ Name: "test4", Firstname: "test4", Age: 4, location: { country: "Belgium", city: "Brussels" }, test: "1" });
-                    db.from("person").insert([{ Name: "test10", Firstname: "test10", test: "33" }, { Name: "test100", Firstname: "test100" }]);
+                    db.from("person").insert({ Name: "test1", Firstname: "test1", Age: 1, location: { country: "Belgium", city: "Ghent" }, test: "5", date: new Date(2017,01,01), t: 1 });
+                    db.from("person").insert({ Name: "test2", Firstname: "test2", Age: 2, location: { country: "Belgium", city: "Brussels" }, test: "15", date: new Date(2017, 03, 01), t: 1 });
+                    db.from("person").insert({ Name: "test3", Firstname: "test3", Age: 3, location: { country: "Belgium", city: "Bruges" }, test: "51", date: new Date(2017, 05, 01), t: 1 });
+                    db.from("person").insert({ Name: "test4", Firstname: "test4", Age: 4, location: { country: "Belgium", city: "Brussels" }, test: "1", date: new Date(2017, 07, 01), t: 1 });
+                    db.from("person").insert([{ Name: "test10", Firstname: "test10", test: "33", t: 1 }, { Name: "test100", Firstname: "test100", date: new Date(2017, 09, 01), t: 1 }]);
 
                     
                     //db.from("person").insert({ Name: "test11", Firstname: "test11", Age: 11 }).then(function () {
@@ -49,12 +49,13 @@
                         //    $("#txtLog").val(tekst);
                         //});
                         
-                        db.from("person").where("test").inArray(["51"]).select().then(function (e) {
-                        }, null, function (data) {
-                            var tekst = $("#txtLog").val();
-                            tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + " city: " + linq2indexedDB.json.getPropertyValue(data, "location.city") + "\n\r";
-                            $("#txtLog").val(tekst);
-                        });
+
+                        //db.from("person").where("test").inArray(["51"]).select().then(function (e) {
+                        //}, null, function (data) {
+                        //    var tekst = $("#txtLog").val();
+                        //    tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + " city: " + linq2indexedDB.json.getPropertyValue(data, "location.city") + "\n\r";
+                        //    $("#txtLog").val(tekst);
+                        //});
 
                         //var x = search("test1"); //db.from("person").where("Name").equals("test1").select(); //search("test1");
 
@@ -179,12 +180,21 @@
 
                     $("#btnExecute").click(function () {
                         $("#txtLog").val("");
-                        db.from("person").where("Name").like("test").select().then(function () {
+                        db.from("person").where("t").equals(1).and("date").smallerThan(new Date(2017, 05, 02))/*.and(function (data) {
+                            return data.date < d;
+                        })*/.select().then(function (e) {
                         }, null, function (data) {
+                            debugger;
                             var tekst = $("#txtLog").val();
                             tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + " city: " + linq2indexedDB.json.getPropertyValue(data, "location.city") + "\n\r";
                             $("#txtLog").val(tekst);
                         });
+                        //db.from("person").where("Name").like("test").select().then(function () {
+                        //}, null, function (data) {
+                        //    var tekst = $("#txtLog").val();
+                        //    tekst += "Name: " + data["Name"] + " Firstname: " + data["Firstname"] + " city: " + linq2indexedDB.json.getPropertyValue(data, "location.city") + "\n\r";
+                        //    $("#txtLog").val(tekst);
+                        //});
                     });
                 });
                 

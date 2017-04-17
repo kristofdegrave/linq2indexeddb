@@ -157,6 +157,8 @@ Array.prototype.contains = function(obj)
             var endArgs = value.indexOf(')');
             return new Function(value.substring(startArgs, endArgs), value.substring(startBody, endBody))
         }
+        if (/^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$/.test(value))
+            return new Date(value);
         return value
     }
     function getPropertyValue(data, propertyName)
@@ -696,9 +698,13 @@ Array.prototype.contains = function(obj)
                     linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "createIndex started", objectStore, propertyName, indexOptions);
                     try
                     {
-                        var indexName = propertyName;
-                        if (propertyName.indexOf(core.indexSuffix) == -1)
-                            indexName = indexName + core.indexSuffix;
+                        var indexName = indexOptions && indexOptions.indexName;
+                        if (!indexName)
+                        {
+                            indexName = propertyName;
+                            if (propertyName.indexOf(core.indexSuffix) == -1)
+                                indexName = indexName + core.indexSuffix
+                        }
                         if (!objectStore.indexNames.contains(indexName))
                         {
                             var index = objectStore.createIndex(indexName, propertyName, {
@@ -729,12 +735,14 @@ Array.prototype.contains = function(obj)
                         linq2indexedDB.logging.logError(error);
                         pw.error(this, error)
                     }
-                }, deleteIndex: function(pw, objectStore, propertyName)
+                }, deleteIndex: function(pw, objectStore, index)
                 {
-                    linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "deleteIndex started", objectStore, propertyName);
-                    var indexName = propertyName;
-                    if (propertyName.indexOf(core.indexSuffix) == -1)
-                        indexName = indexName + core.indexSuffix;
+                    linq2indexedDB.logging.log(linq2indexedDB.logging.severity.information, "deleteIndex started", objectStore, index);
+                    var indexName;
+                    if (objectStore.indexNames.contains(index))
+                        indexName = index;
+                    if (objectStore.indexNames.contains(index + core.indexSuffix))
+                        indexName = index + core.indexSuffix;
                     try
                     {
                         objectStore.deleteIndex(indexName);
@@ -2921,7 +2929,12 @@ Array.prototype.contains = function(obj)
                 {
                     var indexDefinition = definition.indexes[j];
                     if (indexDefinition.remove)
-                        linq2indexedDB.core.deleteIndex(linq2indexedDB.core.objectStore(txn, indexDefinition.objectStoreName), indexDefinition.propertyName);
+                    {
+                        var indexName = indexDefinition.propertyName;
+                        if (indexDefinition.indexOptions && indexDefinition.indexOptions.indexName)
+                            indexName = indexDefinition.indexOptions.indexName;
+                        linq2indexedDB.core.deleteIndex(linq2indexedDB.core.objectStore(txn, indexDefinition.objectStoreName), indexName)
+                    }
                     else
                         linq2indexedDB.core.createIndex(linq2indexedDB.core.objectStore(txn, indexDefinition.objectStoreName), indexDefinition.propertyName, indexDefinition.indexOptions)
                 }
