@@ -1,0 +1,23 @@
+{
+    "env": {
+        "browser": true,
+        "es6": true,
+        "node": true,
+        "commonjs": true
+    },
+    "extends": [
+        "./../node_modules/eslintconfiguration/eslintrc-basic.js",
+        "./../node_modules/eslintconfiguration/eslintrc-best-practices-error.js",
+        "./../node_modules/eslintconfiguration/eslintrc-es6.js",
+        "./../node_modules/eslintconfiguration/eslintrc-es6-stylistic-warn.js",
+        "./../node_modules/eslintconfiguration/eslintrc-stylistic-warn.js",
+        "./../node_modules/eslintconfiguration/eslintrc-variables-error.js"
+    ],
+    //"parser": "babel-eslint",
+    "parserOptions": {
+        "ecmaVersion": 6,
+        "sourceType": "module"
+    },
+    "globals": {
+    }
+}
