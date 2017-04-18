@@ -6,6 +6,7 @@
         "commonjs": true
     },
     "extends": [
+        "eslint:recommended",
         "./../node_modules/eslintconfiguration/eslintrc-basic.js",
         "./../node_modules/eslintconfiguration/eslintrc-best-practices-error.js",
         "./../node_modules/eslintconfiguration/eslintrc-es6.js",

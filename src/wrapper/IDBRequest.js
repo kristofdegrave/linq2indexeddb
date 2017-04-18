@@ -1,19 +1,21 @@
 /**
  * https://w3c.github.io/IndexedDB/#idbrequest
  */
-
 class IDBRequest {
     constructor(request) {
         this._request = request;
         this.promise = new Promise((resolve, reject) => {
             request.onsuccess = event => {
                 resolve(event);
-                if (this.onsuccess){
+                if (this.onsuccess) {
                     this.onsuccess(event);
                 }
             };
             request.onerror = event => {
                 reject(event);
+                if (this.onerror) {
+                    this.onerror(event);
+                }
             };
         });
     }
@@ -32,19 +34,19 @@ class IDBRequest {
     get readyState() {
         return this.originalRequest.readyState;
     }
-    get onsuccess(){
+    get onsuccess() {
         return this._onsuccess;
     }
-    set onsuccess(value){
+    set onsuccess(value) {
         this._onsuccess = value;
     }
-    get onerror(){
+    get onerror() {
         return this._onerror;
     }
-    set onerror(value){
+    set onerror(value) {
         this._onerror = value;
     }
-    get originalRequest(){
+    get originalRequest() {
         return this._request;
     }
 }
