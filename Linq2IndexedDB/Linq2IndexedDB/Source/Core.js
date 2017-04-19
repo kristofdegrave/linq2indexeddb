@@ -83,7 +83,7 @@
                         function (args /*db, e*/) {
                             var db = args[0];
                             var e = args[1];
-                            // Database connection established
+                            // Database connection established 
 
                             // Handle the events on the database.
                             handlers.IDBDatabase(db).then(

@@ -3,21 +3,7 @@
  */
 class IDBRequest {
     constructor(request) {
-        this._request = request;
-        this.promise = new Promise((resolve, reject) => {
-            request.onsuccess = event => {
-                resolve(event);
-                if (this.onsuccess) {
-                    this.onsuccess(event);
-                }
-            };
-            request.onerror = event => {
-                reject(event);
-                if (this.onerror) {
-                    this.onerror(event);
-                }
-            };
-        });
+        this._setRequest(request);
     }
     get result() {
         return this.originalRequest.result;
@@ -48,6 +34,26 @@ class IDBRequest {
     }
     get originalRequest() {
         return this._request;
+    }
+    get promise(){
+        return this._promise;
+    }
+    _setRequest(request) {
+        this._request = request;
+        this.promise = new Promise((resolve, reject) => {
+            request.onsuccess = event => {
+                resolve(event);
+                if (this.onsuccess) {
+                    this.onsuccess(event);
+                }
+            };
+            request.onerror = event => {
+                reject(event);
+                if (this.onerror) {
+                    this.onerror(event);
+                }
+            };
+        });
     }
 }
 
