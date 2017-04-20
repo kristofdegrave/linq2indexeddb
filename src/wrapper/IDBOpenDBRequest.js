@@ -1,11 +1,12 @@
 /**
  * https://w3c.github.io/IndexedDB/#idbrequest
  */
-import IDBRequest from "./IDBRequest";
 import IDBDatabase from "./IDBDatabase";
+import IDBRequest from "./IDBRequest";
 
 const zero = 0;
 const minusone = -1;
+const one = 1;
 
 class IDBOpenDBRequest extends IDBRequest {
     constructor(request, version) {
@@ -28,57 +29,7 @@ class IDBOpenDBRequest extends IDBRequest {
         this._request = request;
         this.promise = new Promise((resolve, reject) => {
             request.onsuccess = event => {
-                if (event &&
-                    event.target &&
-                    event.target.result &&
-                    event.target.result.setVersion) {
-                    let dbVersion = parseInt(event.target.result.version, 10);
-
-                    if (isNaN(dbVersion) || dbVersion < zero) {
-                        dbVersion = zero;
-                    }
-                    if (dbVersion < this._version || this._version === minusone || event.target.result.version === ""){
-                        const setVersionRequest = new IDBOpenDBRequest(event.target.result.setVersion(this._version || 1));
-                        
-                        setVersionRequest.onsuccess = ev => {
-                            const idb = new IDBDatabase(ev.target);
-
-                            if (this._version === minusone) {
-                                for (let index = 0; index < idb.objectStoreNames.length; index++) {
-                                    idb.deleteObjectStore(idb.objectStoreNames[index]);
-                                }
-                                idb.close();
-                            } else if (this.onupgradeneeded) {
-                                const upgardeEvent = {
-                                    newVersion: this._verion || zero,
-                                    oldVersion: dbVersion,
-                                    originalEvent: ev,
-                                    target: idb,
-                                    type: "upgradeneeded"
-                                };
-                                        
-                                this.onupgradeneeded(upgardeEvent);
-                            }
-                        }
-                        setVersionRequest.onblocked = ev => {
-                            if (this.onblocked) {
-                                this.onblocked(ev);
-                            }
-                        };
-                        setVersionRequest.onerror = ev => {
-                            reject(ev);
-                            if (this.onerror) {
-                                this.onerror(ev);
-                            }
-                        };
-                    } else {
-                        event.target = new IDBDatabase(event.target);
-                        resolve(event);
-                        if (this.onsuccess) {
-                            this.onsuccess(event);
-                        }
-                    }
-                } else {
+                if (!this._handelUpgradeVersion(event.target.result, resolve, reject)) {
                     resolve(event);
                     if (this.onsuccess) {
                         this.onsuccess(event);
@@ -102,6 +53,54 @@ class IDBOpenDBRequest extends IDBRequest {
                 this.onupgradeneeded(event);
             }
         };
+    }
+    _handelUpgradeVersion(db, resolve, reject){
+        if (db && db.setVersion) {
+            let dbVersion = parseInt(db.version, 10);
+
+            if (isNaN(dbVersion) || dbVersion < zero) {
+                dbVersion = zero;
+            }
+            if (dbVersion < this._version || this._version === minusone || db.version === ""){
+                const request = new IDBOpenDBRequest(db.setVersion(this._version || one));
+                
+                request.onsuccess = event => {
+                    const idb = new IDBDatabase(event.target);
+
+                    if (this._version === minusone) {
+                        for (let index = 0; index < idb.objectStoreNames.length; index++) {
+                            idb.deleteObjectStore(idb.objectStoreNames[index]);
+                        }
+                        idb.close();
+                    } else if (this.onupgradeneeded) {
+                        const upgardeEvent = {
+                            newVersion: this._verion || zero,
+                            oldVersion: dbVersion,
+                            originalEvent: event,
+                            target: idb,
+                            type: "upgradeneeded"
+                        };
+                                
+                        this.onupgradeneeded(upgardeEvent);
+                    }
+                }
+                request.onblocked = event => {
+                    if (this.onblocked) {
+                        this.onblocked(event);
+                    }
+                };
+                request.onerror = event => {
+                    reject(event);
+                    if (this.onerror) {
+                        this.onerror(event);  
+                    }
+                };
+
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 

@@ -1,94 +1,81 @@
 import { IMPLEMENTATION } from "./../common/enums";
-import Log from "./../common/log"
+import Log from "./../common/log";
 
 class Enviroment {
     constructor(){
-        this._implementation = this._initialize();
+        this._implementation = Enviroment.initialize();
     }
 
-    get implementation(){
+    get implementation() {
         return this._implementation;
     }
-    get indexedDB(){
-        switch(this.implementation){
-            case IMPLEMENTATION.MICROSOFTPROTOTYPE:
-            try {
-                return new ActiveXObject("SQLCE.Factory.4.0");
-            } catch (ex) {
-                Log.exception("Initializing IE prototype exception", ex);
-            }
-            case IMPLEMENTATION.MOCK:
-                return window.indexedDBmock;
-            case IMPLEMENTATION.GOOGLE:
-                return window.webkitIndexedDB;
-            case IMPLEMENTATION.MICROSOFT:
-                return window.msIndexedDB;
-            case IMPLEMENTATION.MOZILLA:
-                return window.mozIndexedDB;
-            case IMPLEMENTATION.NATIVE:
-                return window.indexedDB;
-            default:
+    get indexedDB() {
+        switch (this.implementation){
+        case IMPLEMENTATION.MOCK:
+            return window.indexedDBmock;
+        case IMPLEMENTATION.GOOGLE:
+            return window.webkitIndexedDB;
+        case IMPLEMENTATION.MICROSOFT:
+            return window.msIndexedDB;
+        case IMPLEMENTATION.MOZILLA:
+            return window.mozIndexedDB;
+        case IMPLEMENTATION.NATIVE:
+            return window.indexedDB;
+        default:
             return;
         }
     }
-    get IDBCursor(){
-        switch(this.implementation){
-            case IMPLEMENTATION.MICROSOFTPROTOTYPE:
-                // TODO
-                return window.IDBCursor;
-            case IMPLEMENTATION.MOCK:
-                return window.IDBCursormock;
-            case IMPLEMENTATION.GOOGLE:
-                return window.IDBCursor || window.webkitIDBCursor;
-            case IMPLEMENTATION.MICROSOFT:
-            case IMPLEMENTATION.MOZILLA:
-            case IMPLEMENTATION.NATIVE:
-                return window.IDBCursor;
-            default:
+    /*get IDBCursor() {
+        switch (this.implementation){
+        case IMPLEMENTATION.MOCK:
+            return window.IDBCursormock;
+        case IMPLEMENTATION.GOOGLE:
+            return window.IDBCursor || window.webkitIDBCursor;
+        case IMPLEMENTATION.MICROSOFT:
+        case IMPLEMENTATION.MOZILLA:
+        case IMPLEMENTATION.NATIVE:
+            return window.IDBCursor;
+        default:
             return;
         }
     }
     get IDBDatabase(){
-        switch(this.implementation){
-            case IMPLEMENTATION.MICROSOFTPROTOTYPE:
-                // TODO
-                return window.IDBDatabase;
-            case IMPLEMENTATION.MOCK:
-                return window.IDBDatabasemock;
-            case IMPLEMENTATION.GOOGLE:
-                return window.IDBDatabase || window.webkitIDBDatabase;
-            case IMPLEMENTATION.MICROSOFT:
-            case IMPLEMENTATION.MOZILLA:
-            case IMPLEMENTATION.NATIVE:
-                return window.IDBDatabase;
-            default:
+        switch (this.implementation) {
+        case IMPLEMENTATION.MOCK:
+            return window.IDBDatabasemock;
+        case IMPLEMENTATION.GOOGLE:
+            return window.IDBDatabase || window.webkitIDBDatabase;
+        case IMPLEMENTATION.MICROSOFT:
+        case IMPLEMENTATION.MOZILLA:
+        case IMPLEMENTATION.NATIVE:
+            return window.IDBDatabase;
+        default:
             return;
         }
     }
     get IDBDatabaseException(){
-        switch(this.implementation){
-            case IMPLEMENTATION.MICROSOFTPROTOTYPE:
-            case IMPLEMENTATION.MOCK:
-                return {
-                    UNKNOWN_ERR: 0,
-                    NON_TRANSIENT_ERR: 1,
-                    NOT_FOUND_ERR: 2,
-                    CONSTRAINT_ERR: 3,
-                    DATA_ERR: 4,
-                    NOT_ALLOWED_ERR: 5,
-                    SERIAL_ERR: 11,
-                    RECOVERABLE_ERR: 21,
-                    TRANSIENT_ERR: 31,
-                    TIMEOUT_ERR: 32,
-                    DEADLOCK_ERR: 33
-                };
-            case IMPLEMENTATION.GOOGLE:
-                return window.IDBDatabaseException || window.webkitIDBDatabaseException;
-            case IMPLEMENTATION.MICROSOFT:
-            case IMPLEMENTATION.MOZILLA:
-            case IMPLEMENTATION.NATIVE:
-                return window.IDBDatabaseException;
-            default:
+        switch (this.implementation) {
+        case IMPLEMENTATION.MOCK:
+            return {
+                UNKNOWN_ERR: 0,
+                NON_TRANSIENT_ERR: 1,
+                NOT_FOUND_ERR: 2,
+                CONSTRAINT_ERR: 3,
+                DATA_ERR: 4,
+                NOT_ALLOWED_ERR: 5,
+                SERIAL_ERR: 11,
+                RECOVERABLE_ERR: 21,
+                TRANSIENT_ERR: 31,
+                TIMEOUT_ERR: 32,
+                DEADLOCK_ERR: 33
+            };
+        case IMPLEMENTATION.GOOGLE:
+            return window.IDBDatabaseException || window.webkitIDBDatabaseException;
+        case IMPLEMENTATION.MICROSOFT:
+        case IMPLEMENTATION.MOZILLA:
+        case IMPLEMENTATION.NATIVE:
+            return window.IDBDatabaseException;
+        default:
             return;
         }
     }
@@ -237,45 +224,40 @@ class Enviroment {
             default:
             return;
         }
-    }
+    }*/
 
-    _initialize(){
-        if(typeof (window) === "undefined"){
+    static initialize() {
+        if (typeof window === "undefined"){
             Log.info("No window element present!");
+
             return IMPLEMENTATION.NONE;
         }
-        if(window.indexedDBmock){
+        if (window.indexedDBmock){
             Log.info("Mock implementation");
+
             return IMPLEMENTATION.MOCK;
         }
-        if(window.indexedDB){
+        if (window.indexedDB){
             Log.info("Native implementation");
+
             return IMPLEMENTATION.NATIVE;
         }
-        if(window.mozIndexedDB){
+        if (window.mozIndexedDB){
             Log.info("Mozilla implementation");
+
             return IMPLEMENTATION.MOZILLA;
         }
-        if(window.webkitIndexedDB){
+        if (window.webkitIndexedDB){
             Log.info("Google implementation");
+
             return IMPLEMENTATION.GOOGLE;
         }
-        if(window.msIndexedDB){
+        if (window.msIndexedDB){
             Log.info("Microsoft implementation");
+            
             return IMPLEMENTATION.MICROSOFT;
         }
-        if(navigator.appName == 'Microsoft Internet Explorer'){
-            window.indexedDB.json = window.JSON || {
-                parse: function (txt) {
-                    if (txt === "[]") { return []; }
-                    if (txt === "{}") { return {}; }
-                    throw { message: "Unrecognized JSON to parse: " + txt };
-                }
-            };
 
-            Log.info("Microsoft prototype implementation");
-            return IMPLEMENTATION.MICROSOFTPROTOTYPE;
-        }
         return IMPLEMENTATION.NONE;
     }
 }

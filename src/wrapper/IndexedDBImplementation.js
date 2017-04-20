@@ -28,21 +28,6 @@ class IndexedDBImplementation {
         } else if (window.msIndexedDB){
             Log.info("Microsoft implementation");
             this._implementation = IMPLEMENTATION.MICROSOFT;
-        } else if (navigator.appName === "Microsoft Internet Explorer"){
-            window.indexedDB.json = window.JSON || {
-                parse(txt) {
-                    if (txt === "[]") { 
-                        return [];
-                    }
-                    if (txt === "{}") { 
-                        return {};
-                    }
-                    throw {message: `Unrecognized JSON to parse: ${txt}`};
-                }
-            };
-
-            Log.info("Microsoft prototype implementation");
-            this._implementation = IMPLEMENTATION.MICROSOFTPROTOTYPE;
         }
         this._implementation = IMPLEMENTATION.NONE;
     }
