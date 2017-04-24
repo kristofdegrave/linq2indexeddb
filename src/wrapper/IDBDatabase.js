@@ -68,10 +68,10 @@ class IDBDatabase {
         this._onversionchange = value;
     }
 
-    get originalDb(){
+    get originalDb() {
         return this._db;
     }
-    get promise(){
+    get promise() {
         return this._promise;
     }
 
@@ -89,7 +89,7 @@ class IDBDatabase {
         // as fallback add autoIncrement option as third parameter
         return new IDBObjectStore(this.originalDb.createObjectStore(name, options, options.autoIncrement));
     }
-    deleteObjectStore(name){
+    deleteObjectStore(name) {
         this.originalDb.deleteObjectStore(name);
     }
 }

@@ -55,10 +55,10 @@ class IDBTransation {
     set onabort(value) {
         this._onabort = value;
     }
-    get originalTransation(){
+    get originalTransation() {
         return this._transation;
     }
-    get promise(){
+    get promise() {
         return this._promise;
     }
 }

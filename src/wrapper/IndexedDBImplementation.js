@@ -1,11 +1,11 @@
-import { IMPLEMENTATION } from "./../common/enums";
+import {IMPLEMENTATION} from "./../common/enums";
 import Log from "./../common/log";
 
 class IndexedDBImplementation {
-    constructor(){
+    constructor() {
         this._implementation = this._initialize();
     }
-    get Implementation(){
+    get Implementation() {
         return this._implementation;
     }
 
@@ -13,7 +13,7 @@ class IndexedDBImplementation {
         if (typeof window === "undefined") {
             Log.info("No window element present!");
             this._implementation = IMPLEMENTATION.NONE;
-        } else if ( window.indexedDBmock){
+        } else if (window.indexedDBmock) {
             Log.info("Mock implementation");
             this._implementation = IMPLEMENTATION.MOCK;
         } else if (window.indexedDB) {
@@ -25,7 +25,7 @@ class IndexedDBImplementation {
         } else if (window.webkitIndexedDB) {
             Log.info("Google implementation");
             this._implementation = IMPLEMENTATION.GOOGLE;
-        } else if (window.msIndexedDB){
+        } else if (window.msIndexedDB) {
             Log.info("Microsoft implementation");
             this._implementation = IMPLEMENTATION.MICROSOFT;
         }

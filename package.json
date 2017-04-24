@@ -8,6 +8,7 @@
     "test": "tests"
   },
   "scripts": {
+    "build": "webpack --config webpack.config.js",
     "test": "karma start linq2indexeddb.karma.config.js"
   },
   "repository": {
@@ -27,20 +28,30 @@
   "devDependencies": {
     "babel-core": "^6.24.1",
     "babel-loader": "^6.4.1",
+    "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.3.3",
     "eslint": "^3.19.0",
     "eslint-loader": "^1.7.1",
     "eslintconfiguration": "git+https://github.com/kristofdegrave/eslintConfiguration.git",
+    "istanbul": "^0.4.5",
+    "istanbul-instrumenter-loader": "^2.0.0",
     "jasmine-core": "^2.5.2",
     "karma": "^1.6.0",
     "karma-chrome-launcher": "^2.0.0",
+    "karma-coverage": "^1.1.1",
+    "karma-coverage-istanbul-reporter": "^1.2.0",
+    "karma-edge-launcher": "^0.4.1",
     "karma-firefox-launcher": "^1.0.1",
     "karma-ie-launcher": "^1.0.0",
     "karma-jasmine": "^1.1.0",
     "karma-opera-launcher": "^1.0.0",
     "karma-safari-launcher": "^1.0.0",
-    "webpack": "^2.3.3"
+    "karma-sourcemap-loader": "^0.3.7",
+    "karma-spec-reporter": "0.0.31",
+    "karma-webpack": "^2.0.3",
+    "webpack": "^2.4.1",
+    "webpack-dev-server": "^2.4.2"
   },
   "dependencies": {
     "babel-runtime": "^6.23.0"

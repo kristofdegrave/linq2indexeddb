@@ -35,12 +35,12 @@ class IDBRequest {
     get originalRequest() {
         return this._request;
     }
-    get promise(){
+    get promise() {
         return this._promise;
     }
     _setRequest(request) {
         this._request = request;
-        this.promise = new Promise((resolve, reject) => {
+        this._promise = new Promise((resolve, reject) => {
             request.onsuccess = event => {
                 resolve(event);
                 if (this.onsuccess) {

@@ -27,8 +27,14 @@ class IDBOpenDBRequest extends IDBRequest {
     }
     _setRequest(request) {
         this._request = request;
-        this.promise = new Promise((resolve, reject) => {
+        this._promise = new Promise((resolve, reject) => {
             request.onsuccess = event => {
+                //if (this._version === zero) {
+                //    throw new {
+                //        message: "The version of the database can't be zero.",
+                //        name: "TypeError"
+                //    };
+                //}
                 if (!this._handelUpgradeVersion(event.target.result, resolve, reject)) {
                     resolve(event);
                     if (this.onsuccess) {
@@ -54,16 +60,16 @@ class IDBOpenDBRequest extends IDBRequest {
             }
         };
     }
-    _handelUpgradeVersion(db, resolve, reject){
+    _handelUpgradeVersion(db, resolve, reject) {
         if (db && db.setVersion) {
             let dbVersion = parseInt(db.version, 10);
 
             if (isNaN(dbVersion) || dbVersion < zero) {
                 dbVersion = zero;
             }
-            if (dbVersion < this._version || this._version === minusone || db.version === ""){
+            if (dbVersion < this._version || this._version === minusone || db.version === "") {
                 const request = new IDBOpenDBRequest(db.setVersion(this._version || one));
-                
+
                 request.onsuccess = event => {
                     const idb = new IDBDatabase(event.target);
 
@@ -74,16 +80,16 @@ class IDBOpenDBRequest extends IDBRequest {
                         idb.close();
                     } else if (this.onupgradeneeded) {
                         const upgardeEvent = {
-                            newVersion: this._verion || zero,
+                            newVersion: this._version || one,
                             oldVersion: dbVersion,
                             originalEvent: event,
                             target: idb,
                             type: "upgradeneeded"
                         };
-                                
+
                         this.onupgradeneeded(upgardeEvent);
                     }
-                }
+                };
                 request.onblocked = event => {
                     if (this.onblocked) {
                         this.onblocked(event);
@@ -92,7 +98,7 @@ class IDBOpenDBRequest extends IDBRequest {
                 request.onerror = event => {
                     reject(event);
                     if (this.onerror) {
-                        this.onerror(event);  
+                        this.onerror(event);
                     }
                 };
 

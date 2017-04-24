@@ -4,26 +4,22 @@ const packageSettings = require("./package.json");
 
 module.exports = {
     devtool: 'source-map', // 'cheap-eval-source-map'
-    context: path.join(__dirname, './src'),
+    context: path.join(__dirname, 'src'),
     entry: {
-        "linq2indexedDB": "_index.js",
-        "linq2indexedDB.min": "_index.js"
+        "indexedDB": "_index.js"
     },
     output: {
         path: path.resolve(__dirname, "dist"),
-        filename: `[name].js`,
+        filename: "linq2indexedDB.js",
         library: "linq2indexedDB",
         libraryTarget: "umd",
         umdNamedDefine: true
     },
-    externals:{
-        "jquery": "jquery"
-    },
     module: {
         rules:[
-            { 
+            /*{ 
                 enforce: "pre",
-                test: /\.js?$/, 
+                test: /\.js$/, 
                 loader: "eslint-loader",
                 exclude: /node_modules/,
                 options: {
@@ -32,7 +28,7 @@ module.exports = {
                     failOnError: false,
                     fix: true
                 }
-            },
+            },*/
             {
                 test: /\.js$/,
                 exclude: /node_modules/,
@@ -63,14 +59,23 @@ module.exports = {
                         }
                     }
                 ]
-            }    
+            },
+            { 
+                enforce: "post",
+                test: /\.js$/, 
+                loader: "istanbul-instrumenter-loader",
+                exclude: /node_modules/,
+                options:{
+                    esModules: true
+                }
+            },    
         ]
     },
     target: "web",
     resolve: {
         mainFiles: ["_index", "index"],
         modules: [
-            path.resolve("./App"),
+            path.resolve("./src"),
             "node_modules"
         ]
     },

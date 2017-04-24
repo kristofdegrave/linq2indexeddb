@@ -1,8 +1,8 @@
-import { IMPLEMENTATION } from "./../common/enums";
+import {IMPLEMENTATION} from "./../common/enums";
 import Log from "./../common/log";
 
 class Enviroment {
-    constructor(){
+    constructor() {
         this._implementation = Enviroment.initialize();
     }
 
@@ -10,7 +10,7 @@ class Enviroment {
         return this._implementation;
     }
     get indexedDB() {
-        switch (this.implementation){
+        switch (this.implementation) {
         case IMPLEMENTATION.MOCK:
             return window.indexedDBmock;
         case IMPLEMENTATION.GOOGLE:
@@ -25,7 +25,7 @@ class Enviroment {
             return;
         }
     }
-    /*get IDBCursor() {
+    /* get IDBCursor() {
         switch (this.implementation){
         case IMPLEMENTATION.MOCK:
             return window.IDBCursormock;
@@ -227,34 +227,34 @@ class Enviroment {
     }*/
 
     static initialize() {
-        if (typeof window === "undefined"){
+        if (typeof window === "undefined") {
             Log.info("No window element present!");
 
             return IMPLEMENTATION.NONE;
         }
-        if (window.indexedDBmock){
+        if (window.indexedDBmock) {
             Log.info("Mock implementation");
 
             return IMPLEMENTATION.MOCK;
         }
-        if (window.indexedDB){
+        if (window.indexedDB) {
             Log.info("Native implementation");
 
             return IMPLEMENTATION.NATIVE;
         }
-        if (window.mozIndexedDB){
+        if (window.mozIndexedDB) {
             Log.info("Mozilla implementation");
 
             return IMPLEMENTATION.MOZILLA;
         }
-        if (window.webkitIndexedDB){
+        if (window.webkitIndexedDB) {
             Log.info("Google implementation");
 
             return IMPLEMENTATION.GOOGLE;
         }
-        if (window.msIndexedDB){
+        if (window.msIndexedDB) {
             Log.info("Microsoft implementation");
-            
+
             return IMPLEMENTATION.MICROSOFT;
         }
 
