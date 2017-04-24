@@ -6,7 +6,7 @@ before_script:
   - sh -e /etc/init.d/xvfb start
 script:
  - npm build
- - npm test-travis
+ - npm run test-travis
 #before_deploy:
 # - git config --global user.email "builds@travis-ci.com"
 # - git config --global user.name "Travis CI"
