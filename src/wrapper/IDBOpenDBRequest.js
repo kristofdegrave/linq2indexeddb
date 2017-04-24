@@ -29,12 +29,12 @@ class IDBOpenDBRequest extends IDBRequest {
         this._request = request;
         this._promise = new Promise((resolve, reject) => {
             request.onsuccess = event => {
-                //if (this._version === zero) {
+                // if (this._version === zero) {
                 //    throw new {
                 //        message: "The version of the database can't be zero.",
                 //        name: "TypeError"
                 //    };
-                //}
+                // }
                 if (!this._handelUpgradeVersion(event.target.result, resolve, reject)) {
                     resolve(event);
                     if (this.onsuccess) {

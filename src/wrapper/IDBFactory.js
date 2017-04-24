@@ -26,19 +26,17 @@ class IDBFactory {
         }
         try {
             return new IDBOpenDBRequest(this._indexedDB.open(name, version), version);
-        }
-        catch (ex) {
+        } catch (ex) {
             if (ex && ex.name === "InvalidAccessError") {
                 throw new {
                     message: ex.message,
                     name: "TypeError"
-                };
-            }
-            else {
+                }();
+            } else {
                 throw ex;
             }
         }
     }
 }
 
-export default new IDBFactory();
+export default IDBFactory;

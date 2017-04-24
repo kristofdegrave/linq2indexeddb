@@ -1,6 +1,6 @@
-import IDBTransactionMode from "./IDBTransactionMode";
-import IDBTransaction from "./IDBTransation";
 import IDBObjectStore from "./IDBObjectStore";
+import IDBTransaction from "./IDBTransation";
+import IDBTransactionMode from "./IDBTransactionMode";
 
 const zero = 0;
 

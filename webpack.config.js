@@ -6,7 +6,8 @@ module.exports = {
     devtool: 'source-map', // 'cheap-eval-source-map'
     context: path.join(__dirname, 'src'),
     entry: {
-        "indexedDB": "_index.js"
+        "linq2indexedDB": "_index.js",
+        "linq2indexedDB.min": "_index.js"
     },
     output: {
         path: path.resolve(__dirname, "dist"),
@@ -17,7 +18,7 @@ module.exports = {
     },
     module: {
         rules:[
-            /*{ 
+            { 
                 enforce: "pre",
                 test: /\.js$/, 
                 loader: "eslint-loader",
@@ -28,7 +29,7 @@ module.exports = {
                     failOnError: false,
                     fix: true
                 }
-            },*/
+            },
             {
                 test: /\.js$/,
                 exclude: /node_modules/,
@@ -59,7 +60,7 @@ module.exports = {
                         }
                     }
                 ]
-            },
+            }/*,
             { 
                 enforce: "post",
                 test: /\.js$/, 
@@ -68,7 +69,7 @@ module.exports = {
                 options:{
                     esModules: true
                 }
-            },    
+            },*/
         ]
     },
     target: "web",

@@ -22,7 +22,7 @@ class Enviroment {
         case IMPLEMENTATION.NATIVE:
             return window.indexedDB;
         default:
-            return;
+            return null;
         }
     }
     /* get IDBCursor() {

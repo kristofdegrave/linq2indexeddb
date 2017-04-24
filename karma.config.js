@@ -32,7 +32,66 @@ module.exports = function(config) {
         'tests/index.js': ['webpack', 'sourcemap']
     },
 
-    webpack: webpackConfig,
+    webpack: {
+        devtool: 'inline-source-map', // 'cheap-eval-source-map'
+        output: {
+            library: "linq2indexedDB",
+            libraryTarget: "umd",
+            umdNamedDefine: true
+        },
+        module: {
+            rules:[
+                {
+                    test: /\.js$/,
+                    exclude: /node_modules/,
+                    use:[
+                        {
+                            loader: "babel-loader",
+                            options:{
+                                // https://github.com/babel/babel-loader#options
+                                cacheDirectory: true,  
+                                "presets": [                                                                                                                                         
+                                    [
+                                        "env", 
+                                        {
+                                            //http://www.2ality.com/2015/12/babel6-loose-mode.html
+                                            "loose": true,
+                                            "modules": false,
+                                            /*"targets": {
+                                                "browsers": packageSettings.browserslist
+                                            },*/
+                                            useBuiltIns: true
+                                        }
+                                    ]                                                                                                                     
+                                ],
+                                "plugins": [
+                                    "babel-plugin-transform-class-properties",
+                                    "transform-runtime"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                { 
+                    enforce: "post",
+                    test: /\.js$/, 
+                    loader: "istanbul-instrumenter-loader",
+                    exclude: /node_modules/,
+                    options:{
+                        esModules: true
+                    }
+                },    
+            ]
+        },
+        target: "web",
+        resolve: {
+            mainFiles: ["_index", "index"],
+            modules: [
+                //path.resolve("./src"),
+                "node_modules"
+            ]
+        }
+    },
 
     webpackMiddleware: {
       noInfo: true
@@ -78,7 +137,7 @@ module.exports = function(config) {
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
     //browsers: ['Chrome', 'Firefox', 'Safari', 'IE'],
     //browsers: ['Chrome', 'Firefox', 'IE', "Edge"],
-    browsers: ['Chrome'],
+    browsers: ['Edge'],
 
 
     // Continuous Integration mode

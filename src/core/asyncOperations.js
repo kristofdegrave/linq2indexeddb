@@ -1,5 +1,4 @@
-
-import {DEFAULT_NAME} from "./enums";
+import {DEFAULT_NAME} from "./../common/enums";
 import ENV from "./enviroment";
 import Log from "./../common/log";
 
