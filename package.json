@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "webpack --config webpack.config.js",
-    "test": "karma start linq2indexeddb.karma.config.js",
+    "test": "karma start linq2indexeddb.karma.config.js"
   },
   "repository": {
     "type": "git",
