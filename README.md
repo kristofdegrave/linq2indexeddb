@@ -1,1 +1,1 @@
-# linq2indexeddb
+# linq2indexeddb [![Build Status](https://travis-ci.org/kristofdegrave/linq2indexeddb.png)](https://travis-ci.org/kristofdegrave/linq2indexeddb)
