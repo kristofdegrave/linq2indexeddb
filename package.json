@@ -5,12 +5,12 @@
   "main": "src/index.js",
   "directories": {
     "doc": "docs",
-    "test": "tests",
-    "test-travis": "karma start --browsers Firefox --single-run"
+    "test": "tests"
   },
   "scripts": {
     "build": "webpack --config webpack.config.js",
-    "test": "karma start linq2indexeddb.karma.config.js"
+    "test": "karma start linq2indexeddb.karma.config.js",
+    "test-travis": "karma start --browsers Firefox --single-run"
   },
   "repository": {
     "type": "git",
