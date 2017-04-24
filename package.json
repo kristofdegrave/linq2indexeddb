@@ -10,7 +10,6 @@
   "scripts": {
     "build": "webpack --config webpack.config.js",
     "test": "karma start linq2indexeddb.karma.config.js",
-    "test-travis": "karma start linq2indexeddb.karma.config.js --browsers Firefox --single-run"
   },
   "repository": {
     "type": "git",

@@ -4,7 +4,7 @@ var webpack = require("webpack");
 var webpackConfig = require('./webpack.config.js');
 
 module.exports = function(config) {
-  config.set({
+  var configuration = {
 
     // base path that will be used to resolve all patterns (eg. files, exclude)
     basePath: '',
@@ -91,6 +91,13 @@ module.exports = function(config) {
     //concurrency: Infinity,
     concurrency: 4,
 
+    customLaunchers: {
+        Chrome_travis_ci: {
+            base: 'Chrome',
+            flags: ['--no-sandbox']
+        }
+    },
+
     plugins: [
       "karma-webpack",
       "istanbul-instrumenter-loader",
@@ -105,5 +112,11 @@ module.exports = function(config) {
       "karma-jasmine",
       "karma-coverage-istanbul-reporter"
     ]
-  })
+  };
+
+  if (process.env.TRAVIS) {
+      configuration.browsers = ['Chrome_travis_ci'];
+  }
+
+  config.set(configuration);
 }
