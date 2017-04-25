@@ -74,7 +74,7 @@ describe("IDBFactory", () => {
         });
     });
 
-    describe("When I open a existing database without a version", () => {
+    describe("When I open an existing database without a version", () => {
         beforeAll(done => {
             var request = env.indexedDB.open(dbName);
 
@@ -126,7 +126,7 @@ describe("IDBFactory", () => {
                 expect(db.version).toBe(1);
                 db.close();
                 done();
-            });
+            }, () => { done(); });
         });
     });
 
@@ -241,7 +241,7 @@ describe("IDBFactory", () => {
         });
     });
 
-    describe("When I open a existing database with a higher version ", () => {
+    describe("When I open an existing database with a higher version ", () => {
         const version = 2;
 
         beforeAll(done => {
@@ -342,7 +342,7 @@ describe("IDBFactory", () => {
             });
         });
     });
-    describe("When I open a existing database with the same version", () => {
+    describe("When I open an existing database with the same version", () => {
         const version = 1;
 
         beforeAll(done => {
@@ -400,7 +400,7 @@ describe("IDBFactory", () => {
             });
         });
     });
-    describe("When I open a existing database with a lower version", () => {
+    describe("When I open an existing database with a lower version", () => {
         const version = 2;
 
         beforeAll(done => {
@@ -427,4 +427,111 @@ describe("IDBFactory", () => {
             };
         });
     });
+
+    /* Delete database */
+    describe("When I delete an existing database", () => {
+        beforeEach(done => {
+            var request = env.indexedDB.open(dbName);
+
+            request.onsuccess = function(event) {
+                event.target.result.close();
+                done();
+            };
+            request.onerror = function() {
+                done();
+            };
+        });
+        afterEach(done => {
+            var request = env.indexedDB.deleteDatabase(dbName);
+
+            request.onsuccess = function() {
+                done();
+            };
+            request.onerror = function() {
+                done();
+            };
+        });
+        it("should call onsuccess", done => {
+            const request = env.indexedDB.deleteDatabase(dbName);
+
+            request.onsuccess = function(event) {
+                expect(event.target.result).toBe(undefined);
+                done();
+            };
+        });
+        it("should resolve a promise", done => {
+            env.indexedDB.deleteDatabase(dbName).promise.then(event => {
+                expect(event.target.result).toBe(undefined);
+                done();
+            });
+        });
+        describe("with an open connection", () => {
+            let db;
+            beforeEach(done => {
+                const request = env.indexedDB.open(dbName);
+
+                request.onsuccess = function(event) {
+                    db = event.target.result;
+                    done();
+                };
+                request.onerror = function() {
+                    done();
+                };
+            });
+            afterEach(done => {
+                if(db){
+                    db.close();
+                }
+                var request = env.indexedDB.deleteDatabase(dbName);
+
+                request.onsuccess = function() {
+                    done();
+                };
+                request.onerror = function() {
+                    done();
+                };
+            });
+            it("should call onblocked", done => {
+                const request = env.indexedDB.deleteDatabase(dbName);
+
+                request.onblocked = function(event) {
+                    expect(event.type).toBe("blocked");
+                    expect(event.newVersion).toBe(undefined);
+                    //expect(event.oldVersion).toBe(1);
+                    db.close();
+                };
+                request.onsuccess = function(event) {
+                    done();
+                };
+            });
+        });
+    });
+    describe("When I delete a non-existing database", () => {
+        beforeEach(done => {
+            var request = env.indexedDB.deleteDatabase(dbName);
+
+            request.onsuccess = function() {
+                done();
+            };
+            request.onerror = function() {
+                done();
+            };
+        });
+        it("should call onsuccess", done => {
+            const request = env.indexedDB.deleteDatabase(dbName);
+
+            request.onsuccess = function(event) {
+                expect(event.target.result).toBe(undefined);
+                done();
+            };
+        });
+        it("should resolve a promise", done => {
+            env.indexedDB.deleteDatabase(dbName).promise.then(event => {
+                expect(event.target.result).toBe(undefined);
+                done();
+            });
+        });
+    });
+
+    /* cmp */
 });
