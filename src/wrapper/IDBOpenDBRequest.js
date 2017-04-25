@@ -3,6 +3,7 @@
  */
 import IDBDatabase from "./IDBDatabase";
 import IDBRequest from "./IDBRequest";
+import Log from "./../common/log";
 
 const zero = 0;
 const minusone = -1;
@@ -48,17 +49,19 @@ class IDBOpenDBRequest extends IDBRequest {
                     this.onerror(event);
                 }
             };
+            request.onblocked = event => {
+                if (this.onblocked) {
+                    this.onblocked(event);
+                }
+            };
+            request.onupgradeneeded = event => {
+                if (this.onupgradeneeded) {
+                    this.onupgradeneeded(event);
+                }
+            };
         });
-        request.onblocked = event => {
-            if (this.onblocked) {
-                this.onblocked(event);
-            }
-        };
-        request.onupgradeneeded = event => {
-            if (this.onupgradeneeded) {
-                this.onupgradeneeded(event);
-            }
-        };
+
+        this.promise.catch(error => Log.error(error));
     }
     _handelUpgradeVersion(db, resolve, reject) {
         if (db && db.setVersion) {
