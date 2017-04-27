@@ -37,17 +37,17 @@ class IDBOpenDBRequest extends IDBRequest {
                 //    };
                 // }
                 if (!this._handelUpgradeVersion(event.target.result, resolve, reject)) {
-                    resolve(event);
                     if (this.onsuccess) {
                         this.onsuccess(event);
                     }
+                    resolve(event);
                 }
             };
             request.onerror = event => {
-                reject(event);
                 if (this.onerror) {
                     this.onerror(event);
                 }
+                reject(event);
             };
             request.onblocked = event => {
                 if (this.onblocked) {
@@ -60,7 +60,6 @@ class IDBOpenDBRequest extends IDBRequest {
                 }
             };
         });
-
         this.promise.catch(error => Log.error(error));
     }
     _handelUpgradeVersion(db, resolve, reject) {
@@ -99,10 +98,10 @@ class IDBOpenDBRequest extends IDBRequest {
                     }
                 };
                 request.onerror = event => {
-                    reject(event);
                     if (this.onerror) {
                         this.onerror(event);
                     }
+                    reject(event);
                 };
 
                 return true;

@@ -31,7 +31,7 @@ class IDBFactory {
                 throw new {
                     message: ex.message,
                     name: "TypeError"
-                };
+                }();
             } else {
                 throw ex;
             }
