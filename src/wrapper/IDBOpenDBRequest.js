@@ -61,7 +61,7 @@ class IDBOpenDBRequest extends IDBRequest {
             };
         });
         this.promise.catch(error => Log.error(error));
-    }
+    };
     _handelUpgradeVersion(db, resolve, reject) {
         if (db && db.setVersion) {
             let dbVersion = parseInt(db.version, 10);

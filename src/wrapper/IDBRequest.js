@@ -14,8 +14,8 @@ class IDBRequest {
     get source() {
         return this.originalRequest.source;
     }
-    get transation() {
-        return this.originalRequest.transation;
+    get transaction() {
+        return this.originalRequest.transaction;
     }
     get readyState() {
         return this.originalRequest.readyState;

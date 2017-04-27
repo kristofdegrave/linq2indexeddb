@@ -16,6 +16,8 @@ describe("IDBFactory", () => {
                 expect(event.type).toBe("upgradeneeded");
                 expect(event.newVersion).toBe(1);
                 expect(event.oldVersion).toBe(0);
+                expect(request.transaction).toBeDefined();
+                expect(request.transaction.mode).toBe("versionchange");
             };
             request.onsuccess = function(event) {
                 request.result.close();
@@ -99,6 +101,8 @@ describe("IDBFactory", () => {
                 expect(event.type).toBe("upgradeneeded");
                 expect(event.newVersion).toBe(version);
                 expect(event.oldVersion).toBe(0);
+                expect(request.transaction).toBeDefined();
+                expect(request.transaction.mode).toBe("versionchange");
             };
             request.onsuccess = function(event) {
                 request.result.close();
@@ -163,13 +167,15 @@ describe("IDBFactory", () => {
         });
         it("should call onupgradeneeded", done => {
             const request = env.indexedDB.open(dbName, version);
-
             request.onupgradeneeded = function(event) {
                 expect(event.type).toBe("upgradeneeded");
                 expect(event.newVersion).toBe(version);
                 expect(event.oldVersion).toBe(1);
+                expect(request.transaction).toBeDefined();
+                expect(request.transaction.mode).toBe("versionchange");
             };
             request.onsuccess = function(event) {
+                console.log("close");
                 request.result.close();
                 done();
             };
