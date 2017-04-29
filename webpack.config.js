@@ -6,8 +6,8 @@ module.exports = {
     devtool: 'source-map', // 'cheap-eval-source-map'
     context: path.join(__dirname, 'src'),
     entry: {
-        "linq2indexedDB": "_index.js",
-        "linq2indexedDB.min": "_index.js"
+        "linq2indexedDB": "_index.js"/*,
+        "linq2indexedDB.min": "_index.js"*/
     },
     output: {
         path: path.resolve(__dirname, "dist"),

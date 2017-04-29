@@ -1,21 +1,24 @@
 /**
  * https://w3c.github.io/IndexedDB/#idbrequest
  */
+import IDBDatabase from "./IDBDatabase";
+import Log from "./../common/log";
+
 class IDBRequest {
     constructor(request) {
         this._setRequest(request);
     }
     get result() {
-        return this.originalRequest.result;
+        return this._result; // new IDBDatabase(this.originalRequest.result);
     }
     get error() {
         return this.originalRequest.error;
     }
     get source() {
-        return this.originalRequest.source;
+        return this._source; //this.originalRequest.source;
     }
     get transaction() {
-        return this.originalRequest.transaction;
+        return this._transaction; //this.originalRequest.transaction;
     }
     get readyState() {
         return this.originalRequest.readyState;
@@ -24,12 +27,14 @@ class IDBRequest {
         return this._onsuccess;
     }
     set onsuccess(value) {
+        Log.debug("IDBRequest - added onsuccess callback");
         this._onsuccess = value;
     }
     get onerror() {
         return this._onerror;
     }
     set onerror(value) {
+        Log.debug("IDBRequest - added onerror callback");
         this._onerror = value;
     }
     get originalRequest() {
@@ -41,18 +46,28 @@ class IDBRequest {
     _setRequest(request) {
         this._request = request;
         this._promise = new Promise((resolve, reject) => {
-            request.onsuccess = event => {
-                resolve(event);
-                if (this.onsuccess) {
-                    this.onsuccess(event);
-                }
-            };
-            request.onerror = event => {
-                reject(event);
-                if (this.onerror) {
-                    this.onerror(event);
-                }
-            };
+            try {
+                request.onsuccess = event => {
+                    Log.debug("IDBRequest - onsuccess triggered");
+                    this._result = new IDBDatabase(request.result);
+                    event.wrappedTarget = this;
+                    if (this.onsuccess) {
+                        this.onsuccess(event);
+                    }
+                    resolve(event);
+                };
+                request.onerror = event => {
+                    Log.debug("IDBRequest - onerror triggered");
+                    event.wrappedTarget = this;
+                    if (this.onerror) {
+                        this.onerror(event);
+                    }
+                    reject(event);
+                };
+            } catch (error) {
+                Log.exception("IDBRequest - exception", error);
+                reject(error);
+            }
         });
     }
 }

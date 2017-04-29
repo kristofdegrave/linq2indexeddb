@@ -6,6 +6,9 @@ describe("IDBFactory", () => {
     afterEach(done => {
         env.indexedDB.deleteDatabase(dbName).promise.then(() =>done());        
     });
+    afterAll(done => {
+        env.indexedDB.deleteDatabase(dbName);        
+    });
 
     /* Open without version */
     describe("When I open a non-existing database without a version", () => {
@@ -38,7 +41,7 @@ describe("IDBFactory", () => {
         });
         it("should resolve a promise", done => {
             env.indexedDB.open(dbName).promise.then(event => {
-                const db = event.target.result;
+                const db = event.wrappedTarget.result;
 
                 expect(db.name).toBe(dbName);
                 expect(db.version).toBe(1);
@@ -82,7 +85,7 @@ describe("IDBFactory", () => {
         });
         it("should resolve a promise", done => {
             env.indexedDB.open(dbName).promise.then(event => {
-                const db = event.target.result;
+                const db = event.wrappedTarget.result;
                 expect(db.name).toBe(dbName);
                 expect(db.version).toBe(1);
                 db.close();
@@ -123,7 +126,7 @@ describe("IDBFactory", () => {
         });
         it("should resolve a promise", done => {
             env.indexedDB.open(dbName, version).promise.then(event => {
-                const db = event.target.result;
+                const db = event.wrappedTarget.result;
 
                 expect(db.name).toBe(dbName);
                 expect(db.version).toBe(version);
@@ -175,7 +178,6 @@ describe("IDBFactory", () => {
                 expect(request.transaction.mode).toBe("versionchange");
             };
             request.onsuccess = function(event) {
-                console.log("close");
                 request.result.close();
                 done();
             };
@@ -194,7 +196,7 @@ describe("IDBFactory", () => {
         });
         it("should resolve a promise", done => {
             env.indexedDB.open(dbName, version).promise.then(event => {
-                const db = event.target.result;
+                const db = event.wrappedTarget.result;
 
                 expect(db.name).toBe(dbName);
                 expect(db.version).toBe(version);
@@ -217,8 +219,8 @@ describe("IDBFactory", () => {
 
                 request.onblocked = function(event) {
                     expect(event.type).toBe("blocked");
-                    //expect(event.newVersion).toBe(version);
-                    //expect(event.oldVersion).toBe(1);
+                    expect(event.newVersion).toBe(version);
+                    expect(event.oldVersion).toBe(1);
                     db.close();
                 };
                 request.onsuccess = function(event) {
@@ -264,7 +266,7 @@ describe("IDBFactory", () => {
         });
         it("should resolve a promise", done => {
             env.indexedDB.open(dbName, version).promise.then(event => {
-                const db = event.target.result;
+                const db = event.wrappedTarget.result;
 
                 expect(db.name).toBe(dbName);
                 expect(db.version).toBe(version);
@@ -293,7 +295,7 @@ describe("IDBFactory", () => {
         });
         it("should reject a promise", done => {
             env.indexedDB.open(dbName, 1).promise.then(() => {}, event => {
-                expect(event.target.error.name).toBe("VersionError");
+                expect(event.wrappedTarget.error.name).toBe("VersionError");
                 done();
             });
         });
@@ -319,7 +321,8 @@ describe("IDBFactory", () => {
         });
         it("should resolve a promise", done => {
             env.indexedDB.deleteDatabase(dbName).promise.then(event => {
-                expect(event.target.result).toBe(undefined);
+                const db = event.wrappedTarget.result;
+                expect(db).toBe(undefined);
                 done();
             });
         });
@@ -338,8 +341,8 @@ describe("IDBFactory", () => {
 
                 request.onblocked = function(event) {
                     expect(event.type).toBe("blocked");
-                    //expect(event.newVersion).toBeNull();
-                    //expect(event.oldVersion).toBe(1);
+                    expect(event.newVersion).toBeNull();
+                    expect(event.oldVersion).toBe(1);
                     db.close();
                 };
                 request.onsuccess = function(event) {
@@ -369,7 +372,8 @@ describe("IDBFactory", () => {
         });
         it("should resolve a promise", done => {
             env.indexedDB.deleteDatabase(dbName).promise.then(event => {
-                expect(event.target.result).toBe(undefined);
+                const db = event.wrappedTarget.result;
+                expect(db).toBe(undefined);
                 done();
             });
         });
