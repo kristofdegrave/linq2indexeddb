@@ -1,4 +1,4 @@
-import Log from "./Log";
+/*import Log from "./log";
 
 export default class Event {
 
@@ -25,4 +25,4 @@ export default class Event {
             cb(...params);
         }
     }
-}
+}*/

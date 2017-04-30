@@ -7,11 +7,9 @@ describe("IDBDatabase", () => {
     beforeEach(done => {
         var request = env.indexedDB.open(dbName);      
         request.onupgradeneeded = () => {
-            console.log("upgrade");
             request.transaction.db.createObjectStore(objectStoreName);
         }
         request.onsuccess = () => {
-            console.log("success");
             request.result.close();
             done();
         }  
@@ -53,17 +51,14 @@ describe("IDBDatabase", () => {
             it("should call onversionchange", done => {
                 const request = env.indexedDB.open(dbName);
                 request.onsuccess = function(event) {
-                    console.log("success", done);
                     const db = request.result;
                     db.onversionchange = event => {
-                        console.log("versionchange", done);
                         expect(event.type).toBe("versionchange");
                         expect(event.oldVersion).toBe(db.version);
                         expect(event.newVersion).toBe(db.version + 1);
                         db.close();
                     };
                     env.indexedDB.open(dbName, db.version + 1).promise.then(event => {
-                        console.log("success upgrade", done);
                         event.wrappedTarget.result.close();
                         done();
                     });

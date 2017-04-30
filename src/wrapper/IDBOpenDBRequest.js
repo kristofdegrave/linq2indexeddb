@@ -102,17 +102,18 @@ class IDBOpenDBRequest extends IDBRequest {
                     this._transaction = new IDBTransaction(request.transaction);
                     this._transaction.promise.then(() => {
                         this._transaction = null;
-                    });
+                    }, () => { /* Handle to avoid unhandled promise rejection */ });
                     event.wrappedTarget = this;
                     if (this.onupgradeneeded) {
                         this.onupgradeneeded(event);
                     }
                 };
             } catch (ex) {
-                Log.exception("IDBOpenDBRequest - exception", ex);
+                Log.error("IDBOpenDBRequest - exception", ex);
                 reject(ex);
             }
         });
+        this.promise.catch(() => {});
     }
     _handelUpgradeVersion(db, resolve, reject) {
         if (db && db.setVersion) {

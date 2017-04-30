@@ -65,7 +65,7 @@ class IDBRequest {
                     reject(event);
                 };
             } catch (error) {
-                Log.exception("IDBRequest - exception", error);
+                Log.error("IDBRequest - exception", error);
                 reject(error);
             }
         });

@@ -52,7 +52,7 @@ class IDBDatabase {
                     };
                 }
             } catch (error) {
-                Log.exception("IDBDatabase - exception", error);
+                Log.error("IDBDatabase - exception", error);
                 reject(error);
             }
         });
@@ -122,7 +122,7 @@ class IDBDatabase {
         try {
             return new IDBObjectStore(this.originalDb.createObjectStore(name, options, options.autoIncrement));
         } catch (ex) {
-            Log.exception("IDBDatabase - createObjectStore exception", ex);
+            Log.error("IDBDatabase - createObjectStore exception", ex);
         }
     }
     deleteObjectStore(name) {

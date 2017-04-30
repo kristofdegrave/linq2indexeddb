@@ -32,7 +32,7 @@ class IDBTransaction {
                     reject(event);
                 };
             } catch (error) {
-                Log.exception("IDBTransaction - exception", error);
+                Log.error("IDBTransaction - exception", error);
                 reject(error);
             }
         });

@@ -16,17 +16,22 @@ class IDBFactory {
         return this._indexedDB.cmp(key1, key2);
     }
     deleteDatabase(name) {
+        Log.debug("IDBFactory - delete database", name );
         let request;
 
-        Log.debug("IDBFactory - delete database", name);
-        if ("deleteDatabase" in this._indexedDB) {
-            request = new IDBOpenDBRequest(this._indexedDB.deleteDatabase(name), null, this._connections[name] || []);
-        } else {
-            request = new IDBOpenDBRequest(this._indexedDB.open(name, minuseone), minuseone, this._connections[name] || []);
-        }
-        request.promise.then(() => {
-            this._connections[name] = null;
-        });
+        try {
+            if ("deleteDatabase" in this._indexedDB) {
+                // todo review firefox does something wrong
+                request = new IDBOpenDBRequest(this._indexedDB.deleteDatabase(name), null, this._connections[name] || []);
+            } else {
+                request = new IDBOpenDBRequest(this._indexedDB.open(name, minuseone), minuseone, this._connections[name] || []);
+            }
+            request.promise.then(() => {
+                this._connections[name] = null;
+            }, () => { /* Handle to avoid unhandled promise rejection */ });
+        } catch (ex) {
+            Log.error("IDBFactory - delete database error", ex, name);
+        } 
 
         return request;
     }
@@ -54,12 +59,12 @@ class IDBFactory {
                     if (index >= 0) {
                         this._connections[name].splice(index, 1);
                     }
-                });
-            })
+                }, () => { /* Handle to avoid unhandled promise rejection */ });
+            }, () => { /* Handle to avoid unhandled promise rejection */ });
 
             return request;
         } catch (ex) {
-            Log.exception("IDBFactory - open database error", ex, name, version);
+            Log.error("IDBFactory - open database error", ex, name, version);
             if (ex && ex.name === "InvalidAccessError") {
                 throw new {
                     message: ex.message,
