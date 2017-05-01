@@ -2,8 +2,8 @@ import * as env from "./../../src/_index";
 
 const dbName = "dbname";
 
-env.log.setDebugLevel();
-env.log.logger = console;
+/*env.log.setDebugLevel();
+env.log.logger = console;*/
 
 describe("IDBFactory", () => {
     afterEach(done => {
