@@ -1,10 +1,16 @@
 import IDBDatabase from "./IDBDatabase";
+import IDBObjectStore from "./IDBObjectStore";
 import Log from "./../common/log";
 
 class IDBTransaction {
-    constructor(transation) {
+    constructor(transation, objectStoreNames, db) {
         this._transation = transation;
-        this._db = new IDBDatabase(transation.db);
+        this._db = db || new IDBDatabase(transation.db);
+        // Not supported in IE & Edge
+        this._objectStoreNames = objectStoreNames;
+        if (this.mode === "versionchange" && this.db) {
+            this._objectStoreNames = this.db.objectStoreNames;
+        }
         this._promise = new Promise((resolve, reject) => {
             try {
                 transation.oncomplete = event => {
@@ -39,7 +45,11 @@ class IDBTransaction {
     }
 
     get objectStoreNames() {
-        return this.originalTransation.objectStoreNames;
+        if (this._hasObjectStoreNames) {
+            return this.originalTransation.objectStoreNames;
+        }
+
+        return this._objectStoreNames;
     }
     get mode() {
         return this.originalTransation.mode;
@@ -54,21 +64,21 @@ class IDBTransaction {
         return this._oncomplete;
     }
     set oncomplete(value) {
-        Log.debug("IDBDatabase - added oncomplete callback");
+        Log.debug("IDBTransaction - added oncomplete callback");
         this._oncomplete = value;
     }
     get onerror() {
         return this._onerror;
     }
     set onerror(value) {
-        Log.debug("IDBDatabase - added onerror callback");
+        Log.debug("IDBTransaction - added onerror callback");
         this._onerror = value;
     }
     get onabort() {
         return this._onabort;
     }
     set onabort(value) {
-        Log.debug("IDBDatabase - added onabort callback");
+        Log.debug("IDBTransaction - added onabort callback");
         this._onabort = value;
     }
     get originalTransation() {
@@ -76,6 +86,20 @@ class IDBTransaction {
     }
     get promise() {
         return this._promise;
+    }
+
+    objectStore(name) {
+        Log.debug("IDBTransaction - objectStore", name);
+
+        return new IDBObjectStore(this.originalTransation.objectStore(name));
+    }
+    abort() {
+        Log.debug("IDBTransaction - abort");
+        this.originalTransation.abort();
+    }
+
+    get _hasObjectStoreNames() {
+        return this.originalTransation && "objectStoreNames" in this.originalTransation;
     }
 }
 

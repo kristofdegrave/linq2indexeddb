@@ -1,6 +1,5 @@
 import IDBObjectStore from "./IDBObjectStore";
 import IDBTransaction from "./IDBTransaction";
-import IDBTransactionMode from "./IDBTransactionMode";
 import Log from "./../common/log";
 
 // const zero = 0;
@@ -10,6 +9,7 @@ class IDBDatabase {
         this._db = db;
         this._closeInternal = () => {};
 
+        Log.info("IDBDatabase - objectStoreNames", db.objectStoreNames);
         this._promise = new Promise((resolve, reject) => {
             try {
                 this._closeInternal = () => {
@@ -103,9 +103,13 @@ class IDBDatabase {
         return this._promise;
     }
 
-    transaction(storenames, mode = IDBTransactionMode.READ_ONLY) {
-        Log.debug("IDBDatabase - transaction");
-        return new IDBTransaction(this.originalDb.transaction(storenames, mode));
+    transaction(storenames, mode) {
+        Log.debug("IDBDatabase - transaction", storenames, mode);
+        if (mode) {
+            return new IDBTransaction(this.originalDb.transaction(storenames, mode), storenames, this);
+        }
+        
+        return new IDBTransaction(this.originalDb.transaction(storenames), storenames, this);
     }
     close() {
         Log.debug("IDBDatabase - close");
@@ -131,13 +135,13 @@ class IDBDatabase {
     }
 
     get _hasOnabort() {
-        return this.originalD && "onabort" in this.originalDb;
+        return this.originalDb && "onabort" in this.originalDb;
     }
     get _hasOnclose() {
-        return this.originalD && "onclose" in this.originalDb;
+        return this.originalDb && "onclose" in this.originalDb;
     }
     get _hasOnversionchange() {
-        return this.originalD && "onversionchange" in this.originalDb;
+        return this.originalDb && "onversionchange" in this.originalDb;
     }
     _triggerVersionChange(version) {
         if (!this._hasOnversionchange && this.onversionchange) {
